@@ -21,6 +21,7 @@ st.markdown("""
     .stButton > button { border-radius: 10px; }
     .js-plotly-plot .plotly { width: 100% !important; }
     
+    /* Botones de Plotly resaltados */
     .modebar-btn[data-title="Reset axes"] { background-color: #00d4aa !important; border-radius: 5px !important; padding: 5px !important; }
     .modebar-btn[data-title="Reset axes"] svg { fill: white !important; }
     .modebar-btn[data-title="Pan"] { background-color: #0099ff !important; border-radius: 5px !important; padding: 5px !important; }
@@ -34,7 +35,7 @@ st.markdown("""
 CONTRASEÑA_REGISTRO = "anthuan2027"
 
 SIMBOLOS_CURSOS = {
-    "Aritmética": "", "Álgebra": "", "Geometría": "", 
+    "Aritmética": "🔢", "Álgebra": "🔡", "Geometría": "🌐", 
     "Trigonometría": "📐", "Física": "⚙️", "Química": "🧪"
 }
 
@@ -73,7 +74,7 @@ if 'autenticado' not in st.session_state:
 # ============================================
 # ENCABEZADO Y NAVEGACIÓN
 # ============================================
-st.title("🎓 Estadísticas de Anthuan: Ciclo Semestral básico 2027-1")
+st.title(" Estadísticas de Anthuan: Ciclo Semestral básico 2027-1")
 st.markdown("### 👋 Hola, aquí verás mis estadísticas de rendimiento académico.")
 st.divider()
 
@@ -116,7 +117,7 @@ if st.session_state.vista_actual == 'general':
         col1, col2, col3 = st.columns(3)
         with col1: st.metric("📅 Días registrados", total_dias)
         with col2: st.metric("📝 Ejercicios resueltos", total_ejercicios)
-        with col3: st.metric("⏰ Horas de estudio", f"{int(total_horas)}h")
+        with col3: st.metric(" Horas de estudio", f"{int(total_horas)}h")
         st.divider()
 
         fechas, disc_prom, vel_prom = [], [], []
@@ -141,7 +142,7 @@ if st.session_state.vista_actual == 'general':
         st.divider()
 
         # --- EXÁMENES ---
-        st.subheader("📄 EXÁMENES")
+        st.subheader(" EXÁMENES")
         prom_sem, prom_uni, cnt_sem, cnt_uni = 0, 0, 0, 0
         prec_sem_total, prec_uni_total = 0, 0
         fechas_sim, notas_sim, tipos_sim = [], [], []
@@ -192,7 +193,7 @@ if st.session_state.vista_actual == 'general':
             fig_exam.update_layout(yaxis_title='Nota (0-20)', yaxis=dict(range=[0, 20]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
             st.plotly_chart(fig_exam, use_container_width=True)
         else:
-            st.info("⚠️ Aún no hay datos de exámenes registrados.")
+            st.info("️ Aún no hay datos de exámenes registrados.")
     else:
         st.warning("⚠️ Aún no hay datos registrados.")
 
@@ -227,8 +228,8 @@ elif st.session_state.vista_actual == 'curso':
                 c1, c2 = st.columns(2)
                 with c1:
                     st.write(f"📅 Días estudiados: {s['dias']}")
-                    st.write(f"📝 Ejercicios totales: {s['ejercicios']}")
-                    st.write(f"⏰ Horas totales: {int(s['horas'])}h")
+                    st.write(f" Ejercicios totales: {s['ejercicios']}")
+                    st.write(f" Horas totales: {int(s['horas'])}h")
                 with c2:
                     st.write(f"🔥 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
                     st.write(f"⚡ Velocidad: {int(sum(s['vel'])/len(s['vel']))} ejercicios/h")
@@ -285,7 +286,7 @@ elif st.session_state.vista_actual == 'curso':
         fig_barras.update_layout(barmode='group', yaxis_title='Cantidad', yaxis=dict(range=[0, max(max(ej_tot.values()), max(hr_tot.values()))*1.2]), xaxis_title='Materia', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_barras, use_container_width=True)
     else:
-        st.warning("⚠️ No hay datos de materias registrados.")
+        st.warning("️ No hay datos de materias registrados.")
 
 # ============================================
 # VISTA: REGISTRO
@@ -318,17 +319,14 @@ elif st.session_state.vista_actual == 'registro':
         datos = cargar_datos()
         fecha_hoy = datetime.now().strftime("%Y-%m-%d")
         
-        # Verificar registro diario
         ya_registro_hoy = any(d["fecha"] == fecha_hoy for d in datos["diario"])
-        
-        # Verificar si YA registró CUALQUIER examen hoy (semanal O UNI)
         examen_hoy = [e for e in datos["semanal"] if e["fecha"] == fecha_hoy]
         ya_registro_examen_hoy = len(examen_hoy) > 0
         
         # ============================================
         # REGISTRO DIARIO
         # ============================================
-        st.subheader("📝 Registro Diario")
+        st.subheader(" Registro Diario")
         
         if ya_registro_hoy:
             registro_hoy = next(d for d in datos["diario"] if d["fecha"] == fecha_hoy)
@@ -379,7 +377,6 @@ elif st.session_state.vista_actual == 'registro':
         st.subheader("📄 Registro de exámenes")
         
         if ya_registro_examen_hoy:
-            # Mostrar el examen que ya registró hoy
             examen_registrado = examen_hoy[0]
             st.warning("⚠️ Ya registraste un examen hoy. Solo se permite un examen por día.")
             
@@ -391,32 +388,30 @@ elif st.session_state.vista_actual == 'registro':
                 st.write(f"**Puntaje:** {examen_registrado['Puntaje_Simulacro']}")
                 st.write(f"**Precisión:** {examen_registrado.get('Precisión', 'N/A')}%")
             else:
-                st.write(f"**Tipo:** 🏆 Examen Tipo UNI")
+                st.write(f"**Tipo:**  Examen Tipo UNI")
                 st.write(f"**Nota final:** {examen_registrado['Promedio_Notas']}")
                 st.write(f"**Precisión:** {examen_registrado.get('Promedio_Precision', 'N/A')}%")
         else:
-            # Permitir registrar un examen
             tipo = st.radio("Tipo de examen:", ["🥇 Semanal", "🏆 Tipo UNI"], horizontal=True)
             
-            if tipo == "🥇 Semanal":
+            if tipo == " Semanal":
                 c1, c2 = st.columns(2)
                 with c1: pj = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
                 with c2: co = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
                 
                 precision_calc = (co / 60) * 100
-                st.metric("🎯Precisión", f"{precision_calc:.1f}%")
+                st.metric("Precisión", f"{precision_calc:.1f}%")
                 
                 if st.button("💾 Guardar Examen Semanal", type="primary"):
                     datos["semanal"].append({"fecha": fecha_hoy, "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round(precision_calc, 2)})
                     guardar_datos(datos)
                     st.success("✅ Examen Semanal guardado.")
                     st.balloons()
-                    st.rerun()
             else:
                 st.subheader("🏆 Examen Tipo UNI (3 días)")
                 
                 dias_uni = [
-                    {"nombre": "🌐 Aptitud Académica y Humanidades", "preguntas": 100},
+                    {"nombre": " Aptitud Académica y Humanidades", "preguntas": 100},
                     {"nombre": "🔢 Matemáticas", "preguntas": 40},
                     {"nombre": "🧪 Ciencias", "preguntas": 40}
                 ]
@@ -455,4 +450,3 @@ elif st.session_state.vista_actual == 'registro':
                         guardar_datos(datos)
                         st.success(f"✅ ¡Examen UNI registrado! Nota final: {prom_notas:.2f}")
                         st.balloons()
-                        st.rerun()
