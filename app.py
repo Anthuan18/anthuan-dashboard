@@ -21,6 +21,7 @@ st.markdown("""
     .stButton > button { border-radius: 10px; }
     .js-plotly-plot .plotly { width: 100% !important; }
     
+    /* Botones de Plotly resaltados */
     .modebar-btn[data-title="Reset axes"] { background-color: #00d4aa !important; border-radius: 5px !important; padding: 5px !important; }
     .modebar-btn[data-title="Reset axes"] svg { fill: white !important; }
     .modebar-btn[data-title="Pan"] { background-color: #0099ff !important; border-radius: 5px !important; padding: 5px !important; }
@@ -34,8 +35,12 @@ st.markdown("""
 CONTRASEÑA_REGISTRO = "anthuan2027"
 
 SIMBOLOS_CURSOS = {
-    "Aritmética": "🔢", "Álgebra": "🔡", "Geometría": "🌐", 
-    "Trigonometría": "📐", "Física": "⚙️", "Química": ""
+    "Aritmética": "", 
+    "Álgebra": "", 
+    "Geometría": "", 
+    "Trigonometría": "📐", 
+    "Física": "️", 
+    "Química": ""
 }
 
 HORAS_DISPONIBLES = {0: 6, 1: 6, 2: 6, 3: 6, 4: 6, 5: 7, 6: 13}
@@ -387,7 +392,7 @@ elif st.session_state.vista_actual == 'registro':
                 st.write(f"**Puntaje:** {examen_registrado['Puntaje_Simulacro']}")
                 st.write(f"**Precisión:** {examen_registrado.get('Precisión', 'N/A')}%")
             else:
-                st.write(f"**Tipo:**  Examen Tipo UNI")
+                st.write(f"**Tipo:** 🏆 Examen Tipo UNI")
                 st.write(f"**Nota final:** {examen_registrado['Promedio_Notas']}")
                 st.write(f"**Precisión:** {examen_registrado.get('Promedio_Precision', 'N/A')}%")
         else:
@@ -405,7 +410,7 @@ elif st.session_state.vista_actual == 'registro':
                 with c2: co = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
                 
                 precision_calc = (co / 60) * 100
-                st.metric("Precisión", f"{precision_calc:.1f}%")
+                st.metric("🎯Precisión", f"{precision_calc:.1f}%")
                 
                 if st.button("💾 Guardar Examen Semanal", type="primary"):
                     datos["semanal"].append({"fecha": fecha_hoy, "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round(precision_calc, 2)})
@@ -423,7 +428,7 @@ elif st.session_state.vista_actual == 'registro':
                 
                 dias_datos = []
                 for i, dia_info in enumerate(dias_uni):
-                    with st.expander(f"📅 Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
+                    with st.expander(f" Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
                         col1, col2 = st.columns(2)
                         with col1:
                             puntaje_dia = st.number_input("Puntaje", min_value=0.0, max_value=20.0, step=0.1, key=f"punti_dia_{i}")
