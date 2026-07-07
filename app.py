@@ -128,7 +128,7 @@ if st.session_state.vista_actual == 'general':
         fig, ax = plt.subplots(figsize=(12, 4))
         ax.plot(fechas, disc_prom, color='red', linewidth=3, marker='o', markersize=6)
         ax.set_ylabel('Disciplina (%)', color='red', fontweight='bold')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         ax.tick_params(axis='x', rotation=45)
         ax.grid(True, alpha=0.3)
         plt.tight_layout()
@@ -140,7 +140,7 @@ if st.session_state.vista_actual == 'general':
         fig, ax = plt.subplots(figsize=(12, 4))
         ax.plot(fechas, vel_prom, color='gold', linewidth=3, marker='s', markersize=6)
         ax.set_ylabel('Velocidad (ejercicios/h)', color='gold', fontweight='bold')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         ax.tick_params(axis='x', rotation=45)
         ax.grid(True, alpha=0.3)
         plt.tight_layout()
@@ -148,7 +148,7 @@ if st.session_state.vista_actual == 'general':
         plt.close()
         st.divider()
 
-        st.subheader(" EXÁMENES")
+        st.subheader("🎯 EXÁMENES")
         prom_sem, prom_uni, cnt_sem, cnt_uni = 0, 0, 0, 0
         fechas_sim, notas_sim, tipos_sim = [], [], []
         
@@ -178,7 +178,7 @@ if st.session_state.vista_actual == 'general':
                 ax.scatter(f, n, color='blue' if t=='Semanal' else 'red', marker='o' if t=='Semanal' else 's', s=80, zorder=5, label=t if i==0 else "")
             ax.set_ylabel('Nota (0-20)', fontweight='bold')
             ax.set_ylim(0, 20)
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
             ax.tick_params(axis='x', rotation=45)
             ax.grid(True, alpha=0.3)
             ax.legend()
@@ -240,7 +240,7 @@ elif st.session_state.vista_actual == 'curso':
                         d_mat[m].append(None)
                         v_mat[m].append(None)
 
-        st.subheader(" DISCIPLINA")
+        st.subheader("🔥 DISCIPLINA")
         fig, ax = plt.subplots(figsize=(12, 5))
         for i, m in enumerate(mats):
             val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
@@ -248,7 +248,7 @@ elif st.session_state.vista_actual == 'curso':
                 ff, dd = zip(*val)
                 ax.plot(ff, dd, color=COLORES_MATERIAS[i], linewidth=2, marker='o', label=m)
         ax.set_ylabel('Disciplina (%)')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         ax.tick_params(axis='x', rotation=45)
         ax.legend(loc='best', fontsize='small')
         ax.grid(True, alpha=0.3)
@@ -265,7 +265,7 @@ elif st.session_state.vista_actual == 'curso':
                 ff, vv = zip(*val)
                 ax.plot(ff, vv, color=COLORES_MATERIAS[i], linewidth=2, marker='s', label=m)
         ax.set_ylabel('Velocidad (ejercicios/h)')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         ax.tick_params(axis='x', rotation=45)
         ax.legend(loc='best', fontsize='small')
         ax.grid(True, alpha=0.3)
@@ -316,13 +316,13 @@ elif st.session_state.vista_actual == 'registro':
             else:
                 st.error("❌ Contraseña incorrecta")
     else:
-        st.success(" Sesión iniciada. Puedes registrar tus datos.")
+        st.success("🔓 Sesión iniciada. Puedes registrar tus datos.")
         if st.button("🚪 Cerrar Sesión"):
             st.session_state.autenticado = False
             st.rerun()
         st.divider()
         
-        st.subheader(" Registro Diario")
+        st.subheader("📝 Registro Diario")
         ds = datetime.today().weekday()
         nd = NOMBRES_DIAS[ds]
         hd = HORAS_DISPONIBLES[ds]
@@ -360,7 +360,7 @@ elif st.session_state.vista_actual == 'registro':
         st.divider()
         st.subheader("🏆 Registro de Simulacro")
         tipo = st.radio("Tipo de simulacro:", ["📝 Semanal", "🎓 Tipo UNI"], horizontal=True)
-        if tipo == " Semanal":
+        if tipo == "📝 Semanal":
             c1, c2 = st.columns(2)
             with c1: pj = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
             with c2: co = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
@@ -370,4 +370,4 @@ elif st.session_state.vista_actual == 'registro':
                 st.success("✅ Simulacro Semanal guardado.")
                 st.rerun()
         else:
-            st.write(" Registro Tipo UNI (3 días) - *Funcionalidad disponible próximamente*")
+            st.write("🎓 Registro Tipo UNI (3 días) - *Funcionalidad disponible próximamente*")
