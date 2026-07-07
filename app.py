@@ -55,18 +55,6 @@ st.markdown("""
         background-color: #00bbff !important;
     }
     
-    /* Botón Zoom Box - Color naranja brillante */
-    .modebar-btn[data-title="Zoom"] {
-        background-color: #ff6600 !important;
-        border-radius: 5px !important;
-        padding: 5px !important;
-    }
-    .modebar-btn[data-title="Zoom"] svg {
-        fill: white !important;
-    }
-    .modebar-btn[data-title="Zoom"]:hover {
-        background-color: #ff8833 !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
