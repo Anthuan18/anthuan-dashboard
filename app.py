@@ -357,4 +357,145 @@ elif st.session_state.vista_actual == 'curso':
             xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
             hovermode='x unified',
             height=500,
-           
+            margin=dict(l=50, r=20, t=20, b=50)
+        )
+        st.plotly_chart(fig_disc_mat, use_container_width=True)
+        st.divider()
+
+        # --- GRÁFICO DE VELOCIDAD POR MATERIA (EJE Y DESDE 0) ---
+        st.subheader("⚡ VELOCIDAD")
+        fig_vel_mat = go.Figure()
+        for i, m in enumerate(mats):
+            val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
+            if val:
+                ff, vv = zip(*val)
+                fig_vel_mat.add_trace(go.Scatter(
+                    x=ff, y=vv,
+                    mode='lines+markers',
+                    name=m,
+                    line=dict(color=COLORES_MATERIAS[i], width=2),
+                    marker=dict(size=6),
+                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}} ejer/h<extra></extra>'
+                ))
+        fig_vel_mat.update_layout(
+            yaxis_title='Velocidad (ejercicios/h)',
+            yaxis=dict(range=[0, max(20, max([v for v in sum(v_mat.values(), []) if v is not None])*1.2)]),  # EJE Y DESDE 0
+            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
+            hovermode='x unified',
+            height=500,
+            margin=dict(l=50, r=20, t=20, b=50)
+        )
+        st.plotly_chart(fig_vel_mat, use_container_width=True)
+        st.divider()
+
+        # --- GRÁFICO DE BARRAS (EJE Y DESDE 0) ---
+        st.subheader("📊 EJERCICIOS VS HORAS")
+        ej_tot = {m:0 for m in mats}
+        hr_tot = {m:0 for m in mats}
+        for dia in datos["diario"]:
+            for m, s in dia["materias"].items():
+                if m in ej_tot:
+                    ej_tot[m] += s["Ejercicios_Resueltos"]
+                    hr_tot[m] += s["horas_estudiadas"]
+        
+        fig_barras = go.Figure()
+        fig_barras.add_trace(go.Bar(
+            name='Ejercicios',
+            x=mats,
+            y=[ej_tot[m] for m in mats],
+            marker_color='#3498DB',
+            hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'
+        ))
+        fig_barras.add_trace(go.Bar(
+            name='Horas',
+            x=mats,
+            y=[hr_tot[m] for m in mats],
+            marker_color='#E74C3C',
+            hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>'
+        ))
+        fig_barras.update_layout(
+            barmode='group',
+            yaxis_title='Cantidad',
+            yaxis=dict(range=[0, max(max(ej_tot.values()), max(hr_tot.values()))*1.2]),  # EJE Y DESDE 0
+            xaxis_title='Materia',
+            height=500,
+            margin=dict(l=50, r=20, t=20, b=50)
+        )
+        st.plotly_chart(fig_barras, use_container_width=True)
+    else:
+        st.warning("⚠️ No hay datos de materias registrados.")
+
+# ============================================
+# VISTA: REGISTRO
+# ============================================
+elif st.session_state.vista_actual == 'registro':
+    st.header("🔐 ACCEDER AL REGISTRO")
+    if st.button("⬅️ Volver al inicio", key="back_registro"):
+        st.session_state.vista_actual = 'inicio'
+        st.rerun()
+    st.divider()
+    
+    if not st.session_state.autenticado:
+        pwd = st.text_input("Ingresa la contraseña para registrar datos:", type="password")
+        if st.button("🔓 Desbloquear Registro", type="primary"):
+            if pwd == CONTRASEÑA_REGISTRO:
+                st.session_state.autenticado = True
+                st.rerun()
+            else:
+                st.error("❌ Contraseña incorrecta")
+    else:
+        st.success("🔓 Sesión iniciada. Puedes registrar tus datos.")
+        if st.button("🚪 Cerrar Sesión"):
+            st.session_state.autenticado = False
+            st.rerun()
+        st.divider()
+        
+        st.subheader("📝 Registro Diario")
+        ds = datetime.today().weekday()
+        nd = NOMBRES_DIAS[ds]
+        hd = HORAS_DISPONIBLES[ds]
+        mats = HORARIO_MATERIAS[ds]
+        st.info(f"📅 Hoy es **{nd}**. Tienes **{hd} horas** disponibles.")
+        
+        datos = cargar_datos()
+        reg_mat = {}
+        tot_ej, tot_hr = 0, 0
+        
+        for m in mats:
+            hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
+            st.markdown(f"### 📖 {m}")
+            c1, c2 = st.columns(2)
+            with c1: h_in = st.number_input(f"Horas ({m})", min_value=0, value=0, step=1, key=f"h_{m}")
+            with c2: e_in = st.number_input(f"Ejercicios ({m})", min_value=0, value=0, step=1, key=f"e_{m}")
+            
+            disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
+            vel = e_in / h_in if h_in > 0 else 0
+            reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
+            tot_ej += e_in; tot_hr += h_in
+            st.divider()
+
+        if st.button("💾 Guardar Día", type="primary", use_container_width=True):
+            datos["diario"].append({
+                "fecha": datetime.now().strftime("%Y-%m-%d"), "dia": nd,
+                "horas_disponibles_total": hd, "materias": reg_mat,
+                "Total_Ejercicios_Resueltos_Dia": tot_ej, "Total_Horas_Estudiadas": tot_hr
+            })
+            guardar_datos(datos)
+            st.success(f"✅ ¡Día registrado! {tot_ej} ejercicios.")
+            st.balloons()
+            st.rerun()
+
+        st.divider()
+        st.subheader("🏆 Registro de Simulacro")
+        tipo = st.radio("Tipo de simulacro:", ["📝 Semanal", "🎓 Tipo UNI"], horizontal=True)
+        if tipo == "📝 Semanal":
+            c1, c2 = st.columns(2)
+            with c1: pj = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
+            with c2: co = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
+            if st.button("💾 Guardar Semanal", type="primary"):
+                datos["semanal"].append({"fecha": datetime.now().strftime("%Y-%m-%d"), "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round((co/60)*100, 2)})
+                guardar_datos(datos)
+                st.success("✅ Simulacro Semanal guardado.")
+                st.rerun()
+        else:
+            st.write("🎓 Registro Tipo UNI (3 días) - *Funcionalidad disponible próximamente*")
