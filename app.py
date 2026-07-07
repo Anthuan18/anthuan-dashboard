@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 # ============================================
 st.set_page_config(
     page_title="Dashboard de Anthuan", 
-    page_icon="", 
+    page_icon="🎓", 
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -34,7 +34,7 @@ st.markdown("""
 CONTRASEÑA_REGISTRO = "anthuan2027"
 
 SIMBOLOS_CURSOS = {
-    "Aritmética": "🔢", "Álgebra": "🔡", "Geometría": "🌐", 
+    "Aritmética": "🔢", "Álgebra": "", "Geometría": "🌐", 
     "Trigonometría": "📐", "Física": "⚙️", "Química": "🧪"
 }
 
@@ -91,7 +91,7 @@ if st.session_state.vista_actual == 'inicio':
     st.divider()
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("📥 REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
+        if st.button(" REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
             st.session_state.vista_actual = 'registro'
             st.rerun()
     st.divider()
@@ -115,7 +115,7 @@ if st.session_state.vista_actual == 'general':
         
         col1, col2, col3 = st.columns(3)
         with col1: st.metric("📅 Días registrados", total_dias)
-        with col2: st.metric("📝 Ejercicios resueltos", total_ejercicios)
+        with col2: st.metric(" Ejercicios resueltos", total_ejercicios)
         with col3: st.metric("⏰ Horas de estudio", f"{int(total_horas)}h")
         st.divider()
 
@@ -194,7 +194,7 @@ if st.session_state.vista_actual == 'general':
         else:
             st.info("⚠️ Aún no hay datos de exámenes registrados.")
     else:
-        st.warning("⚠️ Aún no hay datos registrados.")
+        st.warning("️ Aún no hay datos registrados.")
 
 # ============================================
 # VISTA: RENDIMIENTO POR CURSO
@@ -227,8 +227,8 @@ elif st.session_state.vista_actual == 'curso':
                 c1, c2 = st.columns(2)
                 with c1:
                     st.write(f"📅 Días estudiados: {s['dias']}")
-                    st.write(f"📝 Ejercicios totales: {s['ejercicios']}")
-                    st.write(f"⏰ Horas totales: {int(s['horas'])}h")
+                    st.write(f" Ejercicios totales: {s['ejercicios']}")
+                    st.write(f" Horas totales: {int(s['horas'])}h")
                 with c2:
                     st.write(f"🔥 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
                     st.write(f"⚡ Velocidad: {int(sum(s['vel'])/len(s['vel']))} ejercicios/h")
@@ -285,7 +285,7 @@ elif st.session_state.vista_actual == 'curso':
         fig_barras.update_layout(barmode='group', yaxis_title='Cantidad', yaxis=dict(range=[0, max(max(ej_tot.values()), max(hr_tot.values()))*1.2]), xaxis_title='Materia', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_barras, use_container_width=True)
     else:
-        st.warning("⚠️ No hay datos de materias registrados.")
+        st.warning("️ No hay datos de materias registrados.")
 
 # ============================================
 # VISTA: REGISTRO
@@ -324,7 +324,7 @@ elif st.session_state.vista_actual == 'registro':
         tot_ej, tot_hr = 0, 0
         
         for m in mats:
-            simbolo = SIMBOLOS_CURSOS.get(m, "📚")
+            simbolo = SIMBOLOS_CURSOS.get(m, "")
             hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
             st.markdown(f"### {simbolo} {m}")
             c1, c2 = st.columns(2)
@@ -356,13 +356,13 @@ elif st.session_state.vista_actual == 'registro':
             c1, c2 = st.columns(2)
             with c1: pj = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
             with c2: co = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
-            if st.button("💾 Guardar Semanal", type="primary"):
+            if st.button(" Guardar Semanal", type="primary"):
                 datos["semanal"].append({"fecha": datetime.now().strftime("%Y-%m-%d"), "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round((co/60)*100, 2)})
                 guardar_datos(datos)
                 st.success("✅ Simulacro Semanal guardado.")
                 st.rerun()
         else:
-            st.subheader("🏆 Simulacro Tipo UNI (3 días)")
+            st.subheader(" Simulacro Tipo UNI (3 días)")
             st.info("📝 Día 1: 100 preguntas | Día 2: 40 preguntas | Día 3: 40 preguntas")
             
             dias_uni = [
@@ -374,7 +374,7 @@ elif st.session_state.vista_actual == 'registro':
             dias_datos = []
             for i, dia_info in enumerate(dias_uni):
                 with st.expander(f"📅 Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
-                    st.markdown(f"### {dia_info['nombre']}")
+                    # st.markdown(f"### {dia_info['nombre']}")  <-- ELIMINADO
                     col1, col2 = st.columns(2)
                     with col1:
                         puntaje_dia = st.number_input("Puntaje", min_value=0.0, max_value=20.0, step=0.1, key=f"punti_dia_{i}")
