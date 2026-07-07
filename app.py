@@ -34,7 +34,7 @@ st.markdown("""
 CONTRASEÑA_REGISTRO = "anthuan2027"
 
 SIMBOLOS_CURSOS = {
-    "Aritmética": "🔢", "Álgebra": "", "Geometría": "🌐", 
+    "Aritmética": "", "Álgebra": "🔡", "Geometría": "🌐", 
     "Trigonometría": "📐", "Física": "⚙️", "Química": "🧪"
 }
 
@@ -73,25 +73,25 @@ if 'autenticado' not in st.session_state:
 # ============================================
 # ENCABEZADO Y NAVEGACIÓN
 # ============================================
-st.title("🎓 Estadísticas de Anthuan: Ciclo Semestral básico 2027-1")
+st.title(" Estadísticas de Anthuan: Ciclo Semestral básico 2027-1")
 st.markdown("### 👋 Hola, aquí verás mis estadísticas de rendimiento académico.")
 st.divider()
 
 if st.session_state.vista_actual == 'inicio':
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📈 RENDIMIENTO GENERAL", use_container_width=True, key="btn_general"):
+        if st.button(" RENDIMIENTO GENERAL", use_container_width=True, key="btn_general"):
             st.session_state.vista_actual = 'general'
             st.rerun()
     with col2:
-        if st.button("📚 RENDIMIENTO POR CURSO", use_container_width=True, key="btn_curso"):
+        if st.button(" RENDIMIENTO POR CURSO", use_container_width=True, key="btn_curso"):
             st.session_state.vista_actual = 'curso'
             st.rerun()
     
     st.divider()
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button(" REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
+        if st.button("📥 REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
             st.session_state.vista_actual = 'registro'
             st.rerun()
     st.divider()
@@ -114,8 +114,8 @@ if st.session_state.vista_actual == 'general':
         total_horas = sum(d["Total_Horas_Estudiadas"] for d in datos["diario"])
         
         col1, col2, col3 = st.columns(3)
-        with col1: st.metric("📅 Días registrados", total_dias)
-        with col2: st.metric(" Ejercicios resueltos", total_ejercicios)
+        with col1: st.metric(" Días registrados", total_dias)
+        with col2: st.metric("📝 Ejercicios resueltos", total_ejercicios)
         with col3: st.metric("⏰ Horas de estudio", f"{int(total_horas)}h")
         st.divider()
 
@@ -194,13 +194,13 @@ if st.session_state.vista_actual == 'general':
         else:
             st.info("⚠️ Aún no hay datos de exámenes registrados.")
     else:
-        st.warning("️ Aún no hay datos registrados.")
+        st.warning("⚠️ Aún no hay datos registrados.")
 
 # ============================================
 # VISTA: RENDIMIENTO POR CURSO
 # ============================================
 elif st.session_state.vista_actual == 'curso':
-    st.header("📚 SECCIÓN: RENDIMIENTO POR CURSO")
+    st.header(" SECCIÓN: RENDIMIENTO POR CURSO")
     if st.button("⬅️ Volver al inicio", key="back_curso"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
@@ -226,11 +226,11 @@ elif st.session_state.vista_actual == 'curso':
             with st.expander(f"▼ {simbolo} {mat}", expanded=False):
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.write(f"📅 Días estudiados: {s['dias']}")
-                    st.write(f" Ejercicios totales: {s['ejercicios']}")
-                    st.write(f" Horas totales: {int(s['horas'])}h")
+                    st.write(f" Días estudiados: {s['dias']}")
+                    st.write(f"📝 Ejercicios totales: {s['ejercicios']}")
+                    st.write(f"⏰ Horas totales: {int(s['horas'])}h")
                 with c2:
-                    st.write(f"🔥 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
+                    st.write(f" Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
                     st.write(f"⚡ Velocidad: {int(sum(s['vel'])/len(s['vel']))} ejercicios/h")
         st.divider()
 
@@ -247,7 +247,7 @@ elif st.session_state.vista_actual == 'curso':
                         d_mat[m].append(None)
                         v_mat[m].append(None)
 
-        st.subheader("🔥 DISCIPLINA")
+        st.subheader(" DISCIPLINA")
         fig_disc_mat = go.Figure()
         for i, m in enumerate(mats):
             val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
@@ -269,7 +269,7 @@ elif st.session_state.vista_actual == 'curso':
         st.plotly_chart(fig_vel_mat, use_container_width=True)
         st.divider()
 
-        st.subheader("📊 EJERCICIOS VS HORAS")
+        st.subheader(" EJERCICIOS VS HORAS")
         ej_tot = {m:0 for m in mats}
         hr_tot = {m:0 for m in mats}
         for dia in datos["diario"]:
@@ -285,7 +285,7 @@ elif st.session_state.vista_actual == 'curso':
         fig_barras.update_layout(barmode='group', yaxis_title='Cantidad', yaxis=dict(range=[0, max(max(ej_tot.values()), max(hr_tot.values()))*1.2]), xaxis_title='Materia', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_barras, use_container_width=True)
     else:
-        st.warning("️ No hay datos de materias registrados.")
+        st.warning("⚠️ No hay datos de materias registrados.")
 
 # ============================================
 # VISTA: REGISTRO
@@ -299,7 +299,7 @@ elif st.session_state.vista_actual == 'registro':
     
     if not st.session_state.autenticado:
         pwd = st.text_input("Ingresa la contraseña para registrar datos:", type="password")
-        if st.button("🔓 Desbloquear Registro", type="primary"):
+        if st.button(" Desbloquear Registro", type="primary"):
             if pwd == CONTRASEÑA_REGISTRO:
                 st.session_state.autenticado = True
                 st.rerun()
@@ -307,7 +307,7 @@ elif st.session_state.vista_actual == 'registro':
                 st.error("❌ Contraseña incorrecta")
     else:
         st.success("🔓 Sesión iniciada. Puedes registrar tus datos.")
-        if st.button("🚪 Cerrar Sesión"):
+        if st.button(" Cerrar Sesión"):
             st.session_state.autenticado = False
             st.rerun()
         st.divider()
@@ -324,7 +324,7 @@ elif st.session_state.vista_actual == 'registro':
         tot_ej, tot_hr = 0, 0
         
         for m in mats:
-            simbolo = SIMBOLOS_CURSOS.get(m, "")
+            simbolo = SIMBOLOS_CURSOS.get(m, "📚")
             hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
             st.markdown(f"### {simbolo} {m}")
             c1, c2 = st.columns(2)
@@ -348,22 +348,26 @@ elif st.session_state.vista_actual == 'registro':
             st.balloons()
             st.rerun()
 
+        # --- REGISTRO DE EXÁMENES ---
         st.divider()
-        st.subheader("🏆 Registro de Simulacro")
-        tipo = st.radio("Tipo de simulacro:", ["🥇 Semanal", "🏆 Tipo UNI"], horizontal=True)
+        st.subheader("📄 Registro de exámenes")
+        tipo = st.radio("Tipo de examen:", ["🥇 Semanal", "🏆 Tipo UNI"], horizontal=True)
         
         if tipo == "🥇 Semanal":
             c1, c2 = st.columns(2)
             with c1: pj = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
             with c2: co = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
-            if st.button(" Guardar Semanal", type="primary"):
-                datos["semanal"].append({"fecha": datetime.now().strftime("%Y-%m-%d"), "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round((co/60)*100, 2)})
+            
+            precision_calc = (co / 60) * 100
+            st.metric("🎯Precisión", f"{precision_calc:.1f}%")
+            
+            if st.button("💾 Guardar Examen Semanal", type="primary"):
+                datos["semanal"].append({"fecha": datetime.now().strftime("%Y-%m-%d"), "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round(precision_calc, 2)})
                 guardar_datos(datos)
-                st.success("✅ Simulacro Semanal guardado.")
+                st.success("✅ Examen Semanal guardado.")
                 st.rerun()
         else:
-            st.subheader(" Simulacro Tipo UNI (3 días)")
-            st.info("📝 Día 1: 100 preguntas | Día 2: 40 preguntas | Día 3: 40 preguntas")
+            st.subheader("🏆 Examen Tipo UNI (3 días)")
             
             dias_uni = [
                 {"nombre": "🌐 Aptitud Académica y Humanidades", "preguntas": 100},
@@ -374,7 +378,6 @@ elif st.session_state.vista_actual == 'registro':
             dias_datos = []
             for i, dia_info in enumerate(dias_uni):
                 with st.expander(f"📅 Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
-                    # st.markdown(f"### {dia_info['nombre']}")  <-- ELIMINADO
                     col1, col2 = st.columns(2)
                     with col1:
                         puntaje_dia = st.number_input("Puntaje", min_value=0.0, max_value=20.0, step=0.1, key=f"punti_dia_{i}")
@@ -390,12 +393,12 @@ elif st.session_state.vista_actual == 'registro':
                 prom_precision = sum(d["precision"] for d in dias_datos) / 3
                 
                 st.divider()
-                st.subheader("📊 Resumen del Simulacro UNI")
+                st.subheader("📊 Resumen del Examen UNI")
                 col1, col2 = st.columns(2)
-                with col1: st.metric("🎯 Promedio de Notas", f"{prom_notas:.2f}")
-                with col2: st.metric("📊 Promedio de Precisión", f"{prom_precision:.1f}%")
+                with col1: st.metric("🏆 Nota final", f"{prom_notas:.2f}")
+                with col2: st.metric("🎯 Precisión", f"{prom_precision:.1f}%")
                 
-                if st.button("💾 Guardar Simulacro UNI", type="primary", use_container_width=True):
+                if st.button("💾 Guardar Examen UNI", type="primary", use_container_width=True):
                     ejercicios_semana = sum(d["Total_Ejercicios_Resueltos_Dia"] for d in datos["diario"][-7:])
                     registro = {
                         "fecha": datetime.now().strftime("%Y-%m-%d"), "tipo": "UNI", "dias": dias_datos,
@@ -404,6 +407,6 @@ elif st.session_state.vista_actual == 'registro':
                     }
                     datos["semanal"].append(registro)
                     guardar_datos(datos)
-                    st.success(f"✅ ¡Simulacro UNI registrado! Promedio: {prom_notas:.2f}")
+                    st.success(f"✅ ¡Examen UNI registrado! Nota final: {prom_notas:.2f}")
                     st.balloons()
                     st.rerun()
