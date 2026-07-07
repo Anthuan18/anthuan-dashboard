@@ -145,7 +145,7 @@ if st.session_state.vista_actual == 'general':
         col1, col2, col3 = st.columns(3)
         with col1: st.metric("📅 Días registrados", total_dias)
         with col2: st.metric("📚 Ejercicios resueltos", total_ejercicios)
-        with col3: st.metric("⏰ Horas de estudio", f"{total_horas:.1f}h")
+        with col3: st.metric("⏰ Horas de estudio", f"{int(total_horas)}h"
         
         st.divider()
 
