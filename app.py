@@ -15,51 +15,20 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS Personalizado
+# CSS Personalizado para ocultar la flecha (>>)
 st.markdown("""
 <style>
     [data-testid="stSidebarCollapseButton"] {
         display: none !important;
     }
-    
-    .nav-button {
-        display: block;
-        width: 100%;
-        padding: 30px;
-        font-size: 24px;
-        font-weight: bold;
-        text-align: center;
-        color: white !important;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        margin: 10px 0;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        transition: transform 0.2s;
-        border: none;
-        cursor: pointer;
-    }
-    .nav-button:hover {
-        transform: scale(1.02);
-    }
-    .nav-button-general {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-    .nav-button-curso {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-    .nav-button-registro {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    }
-    
-    /* Espaciador para el scroll */
-    .section-spacer {
-        height: 100px;
+    .stButton > button {
+        border-radius: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================
-# CONFIGURACIÓN
+# CONFIGURACIÓN Y DATOS
 # ============================================
 CONTRASEÑA_REGISTRO = "anthuan2027"
 
@@ -88,7 +57,7 @@ def guardar_datos(datos):
         json.dump(datos, f, indent=4, ensure_ascii=False)
 
 # ============================================
-# INICIALIZAR ESTADO
+# ESTADO DE LA APLICACIÓN
 # ============================================
 if 'vista_actual' not in st.session_state:
     st.session_state.vista_actual = 'inicio'
@@ -96,169 +65,117 @@ if 'autenticado' not in st.session_state:
     st.session_state.autenticado = False
 
 # ============================================
-# ENCABEZADO
+# ENCABEZADO (SIEMPRE VISIBLE)
 # ============================================
 st.title("📚 Estadísticas de Anthuan: Ciclo Semianual 2027-1")
 st.markdown("### 👋 Hola, aquí verás mis estadísticas de rendimiento académico.")
 st.divider()
 
 # ============================================
-# BOTONES DE NAVEGACIÓN
-# ============================================
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("📈 RENDIMIENTO GENERAL", key="btn_general", use_container_width=True):
-        st.session_state.vista_actual = 'general'
-        st.rerun()
-with col2:
-    if st.button("📚 RENDIMIENTO POR CURSO", key="btn_curso", use_container_width=True):
-        st.session_state.vista_actual = 'curso'
-        st.rerun()
-
-st.divider()
-
-# Botón de registro centrado
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    if st.button("🔐 ACCEDER AL REGISTRO", key="btn_registro", use_container_width=True):
-        st.session_state.vista_actual = 'registro'
-        st.rerun()
-
-st.divider()
-
-# ============================================
-# VISTA: INICIO
+# BOTONES DE NAVEGACIÓN (SOLO EN INICIO)
 # ============================================
 if st.session_state.vista_actual == 'inicio':
-    st.info("👆 **Haz clic en uno de los botones de arriba para ver tus estadísticas**")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📈 RENDIMIENTO GENERAL", use_container_width=True, key="btn_general"):
+            st.session_state.vista_actual = 'general'
+            st.rerun()
+    with col2:
+        if st.button("📚 RENDIMIENTO POR CURSO", use_container_width=True, key="btn_curso"):
+            st.session_state.vista_actual = 'curso'
+            st.rerun()
+    
+    st.divider()
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔐 ACCEDER AL REGISTRO", use_container_width=True, key="btn_registro"):
+            st.session_state.vista_actual = 'registro'
+            st.rerun()
+    st.divider()
 
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
-elif st.session_state.vista_actual == 'general':
-    # Espaciador y ancla para scroll
-    st.markdown('<div id="seccion-general"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
-    
+if st.session_state.vista_actual == 'general':
     st.header("📈 SECCIÓN: RENDIMIENTO GENERAL")
-    
-    # Botón para volver
     if st.button("⬅️ Volver al inicio", key="back_general"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
-    
     st.divider()
     
     datos = cargar_datos()
     
     if datos["diario"]:
-        # --- MÉTRICAS BÁSICAS ---
         total_dias = len(datos["diario"])
         total_ejercicios = sum(d["Total_Ejercicios_Resueltos_Dia"] for d in datos["diario"])
         total_horas = sum(d["Total_Horas_Estudiadas"] for d in datos["diario"])
         
         col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("📅 Días registrados", total_dias)
-        with col2:
-            st.metric("📚 Ejercicios resueltos", total_ejercicios)
-        with col3:
-            st.metric("⏰ Horas de estudio", f"{total_horas:.1f}h")
+        with col1: st.metric("📅 Días registrados", total_dias)
+        with col2: st.metric("📚 Ejercicios resueltos", total_ejercicios)
+        with col3: st.metric("⏰ Horas de estudio", f"{total_horas:.1f}h")
         
         st.divider()
 
-        # Preparar datos para gráficos
-        fechas = []
-        disciplinas_promedio = []
-        velocidades_promedio = []
-        
+        fechas, disc_prom, vel_prom = [], [], []
         for dia in datos["diario"][-30:]:
             fechas.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
-            disc_vals = [m["Disciplina"] for m in dia["materias"].values()]
-            vel_vals = [m["Velocidad"] for m in dia["materias"].values()]
-            disciplinas_promedio.append(sum(disc_vals) / len(disc_vals) if disc_vals else 0)
-            velocidades_promedio.append(sum(vel_vals) / len(vel_vals) if vel_vals else 0)
+            disc_prom.append(sum(m["Disciplina"] for m in dia["materias"].values()) / len(dia["materias"]))
+            vel_prom.append(sum(m["Velocidad"] for m in dia["materias"].values()) / len(dia["materias"]))
 
-        # --- DISCIPLINA ---
-        disc_final = disciplinas_promedio[-1] if disciplinas_promedio else 0
-        st.subheader(f"🔥 DISCIPLINA: {disc_final:.1f}%")
-        
-        fig, ax = plt.subplots(figsize=(12, 5))
-        ax.plot(fechas, disciplinas_promedio, color='red', linewidth=3, marker='o', markersize=8)
+        st.subheader(f"🔥 DISCIPLINA: {disc_prom[-1]:.1f}%")
+        fig, ax = plt.subplots(figsize=(12, 4))
+        ax.plot(fechas, disc_prom, color='red', linewidth=3, marker='o', markersize=6)
         ax.set_ylabel('Disciplina (%)', color='red', fontweight='bold')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
         ax.tick_params(axis='x', rotation=45)
         ax.grid(True, alpha=0.3)
-        ax.set_ylim(bottom=0)
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
         st.divider()
 
-        # --- VELOCIDAD ---
-        vel_final = velocidades_promedio[-1] if velocidades_promedio else 0
-        st.subheader(f"⚡ VELOCIDAD: {vel_final:.1f} ejercicios/hora")
-        
-        fig, ax = plt.subplots(figsize=(12, 5))
-        ax.plot(fechas, velocidades_promedio, color='gold', linewidth=3, marker='s', markersize=8)
+        st.subheader(f"⚡ VELOCIDAD: {vel_prom[-1]:.1f} ejercicios/hora")
+        fig, ax = plt.subplots(figsize=(12, 4))
+        ax.plot(fechas, vel_prom, color='gold', linewidth=3, marker='s', markersize=6)
         ax.set_ylabel('Velocidad (ejercicios/h)', color='gold', fontweight='bold')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
         ax.tick_params(axis='x', rotation=45)
         ax.grid(True, alpha=0.3)
-        ax.set_ylim(bottom=0)
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
         st.divider()
 
-        # --- EXÁMENES ---
-        st.subheader("🎯 EXÁMENES")
-        
-        prom_semanal = 0
-        prom_uni = 0
-        count_sem = 0
-        count_uni = 0
-        
-        fechas_sim = []
-        notas_sim = []
-        tipos_sim = []
+        st.subheader(" EXÁMENES")
+        prom_sem, prom_uni, cnt_sem, cnt_uni = 0, 0, 0, 0
+        fechas_sim, notas_sim, tipos_sim = [], [], []
         
         if datos["semanal"]:
-            simulacros_ordenados = sorted(datos["semanal"], key=lambda x: x["fecha"])
-            for sim in simulacros_ordenados:
-                fecha_sim = datetime.strptime(sim["fecha"], "%Y-%m-%d")
-                fechas_sim.append(fecha_sim)
-                
+            for sim in sorted(datos["semanal"], key=lambda x: x["fecha"]):
+                f = datetime.strptime(sim["fecha"], "%Y-%m-%d")
+                fechas_sim.append(f)
                 if sim["tipo"] == "Semanal":
-                    nota = sim["Puntaje_Simulacro"]
-                    prom_semanal += nota
-                    count_sem += 1
+                    notas_sim.append(sim["Puntaje_Simulacro"])
+                    prom_sem += sim["Puntaje_Simulacro"]; cnt_sem += 1
+                    tipos_sim.append("Semanal")
                 else:
-                    nota = sim["Promedio_Notas"]
-                    prom_uni += nota
-                    count_uni += 1
-                notas_sim.append(nota)
-                tipos_sim.append(sim["tipo"])
-                
-        if count_sem > 0: prom_semanal /= count_sem
-        if count_uni > 0: prom_uni /= count_uni
+                    notas_sim.append(sim["Promedio_Notas"])
+                    prom_uni += sim["Promedio_Notas"]; cnt_uni += 1
+                    tipos_sim.append("UNI")
+        if cnt_sem: prom_sem /= cnt_sem
+        if cnt_uni: prom_uni /= cnt_uni
 
         col1, col2 = st.columns(2)
-        with col1:
-            st.metric("📝 Promedio Semanales", f"{prom_semanal:.1f}")
-        with col2:
-            st.metric("🎓 Promedio Tipo UNI", f"{prom_uni:.1f}")
+        with col1: st.metric("📝 Promedio Semanales", f"{prom_sem:.1f}")
+        with col2: st.metric("🎓 Promedio Tipo UNI", f"{prom_uni:.1f}")
             
         if fechas_sim:
-            fig, ax = plt.subplots(figsize=(12, 5))
+            fig, ax = plt.subplots(figsize=(12, 4))
             ax.plot(fechas_sim, notas_sim, color='green', linewidth=2, linestyle='-')
-            
-            for i, (fecha, nota, tipo) in enumerate(zip(fechas_sim, notas_sim, tipos_sim)):
-                if tipo == "Semanal":
-                    ax.scatter(fecha, nota, color='blue', marker='o', s=100, zorder=5, label='Semanal' if i==0 else "")
-                else:
-                    ax.scatter(fecha, nota, color='red', marker='s', s=100, zorder=5, label='Tipo UNI' if i==0 else "")
-                    
+            for i, (f, n, t) in enumerate(zip(fechas_sim, notas_sim, tipos_sim)):
+                ax.scatter(f, n, color='blue' if t=='Semanal' else 'red', marker='o' if t=='Semanal' else 's', s=80, zorder=5, label=t if i==0 else "")
             ax.set_ylabel('Nota (0-20)', fontweight='bold')
             ax.set_ylim(0, 20)
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
@@ -271,80 +188,65 @@ elif st.session_state.vista_actual == 'general':
         else:
             st.info("⚠️ Aún no hay datos de exámenes registrados.")
     else:
-        st.warning("⚠️ Aún no hay datos registrados. Ve a la sección de Registro.")
+        st.warning("⚠️ Aún no hay datos registrados.")
 
 # ============================================
 # VISTA: RENDIMIENTO POR CURSO
 # ============================================
 elif st.session_state.vista_actual == 'curso':
-    # Espaciador y ancla para scroll
-    st.markdown('<div id="seccion-curso"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
-    
     st.header("📚 SECCIÓN: RENDIMIENTO POR CURSO")
-    
-    # Botón para volver
     if st.button("⬅️ Volver al inicio", key="back_curso"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
-    
     st.divider()
     
     datos = cargar_datos()
     
     if datos["diario"]:
-        # --- ESTADÍSTICAS POR MATERIA ---
         st.subheader("📖 ESTADÍSTICAS")
-        
         materias_stats = {}
         for dia in datos["diario"]:
-            for materia, stats in dia["materias"].items():
-                if materia not in materias_stats:
-                    materias_stats[materia] = {"dias": 0, "ejercicios": 0, "horas": 0, "disciplinas": [], "velocidades": []}
-                materias_stats[materia]["dias"] += 1
-                materias_stats[materia]["ejercicios"] += stats["Ejercicios_Resueltos"]
-                materias_stats[materia]["horas"] += stats["horas_estudiadas"]
-                materias_stats[materia]["disciplinas"].append(stats["Disciplina"])
-                materias_stats[materia]["velocidades"].append(stats["Velocidad"])
+            for mat, stats in dia["materias"].items():
+                if mat not in materias_stats:
+                    materias_stats[mat] = {"dias": 0, "ejercicios": 0, "horas": 0, "disc": [], "vel": []}
+                materias_stats[mat]["dias"] += 1
+                materias_stats[mat]["ejercicios"] += stats["Ejercicios_Resueltos"]
+                materias_stats[mat]["horas"] += stats["horas_estudiadas"]
+                materias_stats[mat]["disc"].append(stats["Disciplina"])
+                materias_stats[mat]["vel"].append(stats["Velocidad"])
 
-        for materia, stats in materias_stats.items():
-            with st.expander(f"▼ {materia}", expanded=False):
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.write(f"📅 Días estudiados: {stats['dias']}")
-                    st.write(f"📚 Ejercicios totales: {stats['ejercicios']}")
-                    st.write(f"⏰ Horas totales: {stats['horas']:.1f}h")
-                with col2:
-                    st.write(f"🔥 Disciplina: {sum(stats['disciplinas'])/len(stats['disciplinas']):.1f}%")
-                    st.write(f"⚡ Velocidad: {sum(stats['velocidades'])/len(stats['velocidades']):.1f} ejercicios/h")
-        
+        for mat, s in materias_stats.items():
+            with st.expander(f"▼ {mat}", expanded=False):
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.write(f"📅 Días estudiados: {s['dias']}")
+                    st.write(f"📚 Ejercicios totales: {s['ejercicios']}")
+                    st.write(f"⏰ Horas totales: {s['horas']:.1f}h")
+                with c2:
+                    st.write(f"🔥 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
+                    st.write(f"⚡ Velocidad: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
         st.divider()
 
-        # Preparar datos para gráficos
-        materias_grafico = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
-        disciplinas_por_materia = {m: [] for m in materias_grafico}
-        velocidades_por_materia = {m: [] for m in materias_grafico}
-        fechas_det = []
-        
+        mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
+        f_det, d_mat, v_mat = [], {m:[] for m in mats}, {m:[] for m in mats}
         for dia in datos["diario"][-30:]:
             if dia["dia"] != "Domingo":
-                fechas_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
-                for materia in materias_grafico:
-                    if materia in dia["materias"]:
-                        disciplinas_por_materia[materia].append(dia["materias"][materia]["Disciplina"])
-                        velocidades_por_materia[materia].append(dia["materias"][materia]["Velocidad"])
+                f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
+                for m in mats:
+                    if m in dia["materias"]:
+                        d_mat[m].append(dia["materias"][m]["Disciplina"])
+                        v_mat[m].append(dia["materias"][m]["Velocidad"])
                     else:
-                        disciplinas_por_materia[materia].append(None)
-                        velocidades_por_materia[materia].append(None)
+                        d_mat[m].append(None)
+                        v_mat[m].append(None)
 
-        # --- DISCIPLINA POR MATERIA ---
-        st.subheader("🔥 DISCIPLINA")
-        fig, ax = plt.subplots(figsize=(12, 6))
-        for i, materia in enumerate(materias_grafico):
-            validos = [(f, d) for f, d in zip(fechas_det, disciplinas_por_materia[materia]) if d is not None]
-            if validos:
-                f_vals, d_vals = zip(*validos)
-                ax.plot(f_vals, d_vals, color=COLORES_MATERIAS[i], linewidth=2, marker='o', label=materia)
+        st.subheader(" DISCIPLINA")
+        fig, ax = plt.subplots(figsize=(12, 5))
+        for i, m in enumerate(mats):
+            val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
+            if val:
+                ff, dd = zip(*val)
+                ax.plot(ff, dd, color=COLORES_MATERIAS[i], linewidth=2, marker='o', label=m)
         ax.set_ylabel('Disciplina (%)')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
         ax.tick_params(axis='x', rotation=45)
@@ -355,14 +257,13 @@ elif st.session_state.vista_actual == 'curso':
         plt.close()
         st.divider()
 
-        # --- VELOCIDAD POR MATERIA ---
         st.subheader("⚡ VELOCIDAD")
-        fig, ax = plt.subplots(figsize=(12, 6))
-        for i, materia in enumerate(materias_grafico):
-            validos = [(f, v) for f, v in zip(fechas_det, velocidades_por_materia[materia]) if v is not None]
-            if validos:
-                f_vals, v_vals = zip(*validos)
-                ax.plot(f_vals, v_vals, color=COLORES_MATERIAS[i], linewidth=2, marker='s', label=materia)
+        fig, ax = plt.subplots(figsize=(12, 5))
+        for i, m in enumerate(mats):
+            val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
+            if val:
+                ff, vv = zip(*val)
+                ax.plot(ff, vv, color=COLORES_MATERIAS[i], linewidth=2, marker='s', label=m)
         ax.set_ylabel('Velocidad (ejercicios/h)')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
         ax.tick_params(axis='x', rotation=45)
@@ -373,24 +274,21 @@ elif st.session_state.vista_actual == 'curso':
         plt.close()
         st.divider()
 
-        # --- EJERCICIOS VS HORAS ---
         st.subheader("📊 EJERCICIOS VS HORAS")
-        ejercicios_totales = {m: 0 for m in materias_grafico}
-        tiempo_total = {m: 0 for m in materias_grafico}
-        
+        ej_tot = {m:0 for m in mats}
+        hr_tot = {m:0 for m in mats}
         for dia in datos["diario"]:
-            for materia, stats in dia["materias"].items():
-                if materia in ejercicios_totales:
-                    ejercicios_totales[materia] += stats["Ejercicios_Resueltos"]
-                    tiempo_total[materia] += stats["horas_estudiadas"]
-                    
-        x = range(len(materias_grafico))
-        width = 0.35
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.bar([i - width/2 for i in x], [ejercicios_totales[m] for m in materias_grafico], width, label='Ejercicios', color='#3498DB')
-        ax.bar([i + width/2 for i in x], [tiempo_total[m] for m in materias_grafico], width, label='Horas', color='#E74C3C')
+            for m, s in dia["materias"].items():
+                if m in ej_tot:
+                    ej_tot[m] += s["Ejercicios_Resueltos"]
+                    hr_tot[m] += s["horas_estudiadas"]
+        x = range(len(mats))
+        w = 0.35
+        fig, ax = plt.subplots(figsize=(12, 5))
+        ax.bar([i-w/2 for i in x], [ej_tot[m] for m in mats], w, label='Ejercicios', color='#3498DB')
+        ax.bar([i+w/2 for i in x], [hr_tot[m] for m in mats], w, label='Horas', color='#E74C3C')
         ax.set_xticks(x)
-        ax.set_xticklabels(materias_grafico)
+        ax.set_xticklabels(mats)
         ax.legend()
         ax.grid(True, alpha=0.3, axis='y')
         plt.tight_layout()
@@ -403,98 +301,73 @@ elif st.session_state.vista_actual == 'curso':
 # VISTA: REGISTRO
 # ============================================
 elif st.session_state.vista_actual == 'registro':
-    # Espaciador y ancla para scroll
-    st.markdown('<div id="seccion-registro"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
-    
     st.header("🔐 ACCEDER AL REGISTRO")
-    
-    # Botón para volver
     if st.button("⬅️ Volver al inicio", key="back_registro"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
-    
     st.divider()
     
     if not st.session_state.autenticado:
-        password_input = st.text_input("Ingresa la contraseña para registrar datos:", type="password")
+        pwd = st.text_input("Ingresa la contraseña para registrar datos:", type="password")
         if st.button("🔓 Desbloquear Registro", type="primary"):
-            if password_input == CONTRASEÑA_REGISTRO:
+            if pwd == CONTRASEÑA_REGISTRO:
                 st.session_state.autenticado = True
                 st.rerun()
             else:
                 st.error("❌ Contraseña incorrecta")
     else:
-        st.success("🔓 Sesión iniciada. Puedes registrar tus datos.")
+        st.success(" Sesión iniciada. Puedes registrar tus datos.")
         if st.button("🚪 Cerrar Sesión"):
             st.session_state.autenticado = False
             st.rerun()
-        
         st.divider()
         
-        # --- FORMULARIO DIARIO ---
-        st.subheader("📝 Registro Diario")
-        dia_semana = datetime.today().weekday()
-        nombre_dia = NOMBRES_DIAS[dia_semana]
-        horas_disponibles_total = HORAS_DISPONIBLES[dia_semana]
-        materias = HORARIO_MATERIAS[dia_semana]
-        
-        st.info(f"📅 Hoy es **{nombre_dia}**. Tienes **{horas_disponibles_total} horas** disponibles.")
+        st.subheader(" Registro Diario")
+        ds = datetime.today().weekday()
+        nd = NOMBRES_DIAS[ds]
+        hd = HORAS_DISPONIBLES[ds]
+        mats = HORARIO_MATERIAS[ds]
+        st.info(f"📅 Hoy es **{nd}**. Tienes **{hd} horas** disponibles.")
         
         datos = cargar_datos()
-        registro_materias = {}
-        total_ejercicios = 0
-        total_horas = 0
+        reg_mat = {}
+        tot_ej, tot_hr = 0, 0
         
-        for materia in materias:
-            horas_disp = HORAS_DOMINGO_POR_MATERIA[materia] if dia_semana == 6 else horas_disponibles_total
+        for m in mats:
+            hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
+            st.markdown(f"### 📖 {m}")
+            c1, c2 = st.columns(2)
+            with c1: h_in = st.number_input(f"Horas ({m})", min_value=0, value=0, step=1, key=f"h_{m}")
+            with c2: e_in = st.number_input(f"Ejercicios ({m})", min_value=0, value=0, step=1, key=f"e_{m}")
             
-            st.markdown(f"### 📖 {materia}")
-            col1, col2 = st.columns(2)
-            with col1:
-                horas_input = st.number_input(f"Horas ({materia})", min_value=0, value=0, step=1, key=f"horas_{materia}")
-            with col2:
-                ejercicios_input = st.number_input(f"Ejercicios ({materia})", min_value=0, value=0, step=1, key=f"ejer_{materia}")
-                
-            disciplina = (horas_input / horas_disp) * 100 if horas_disp > 0 else 0
-            velocidad = ejercicios_input / horas_input if horas_input > 0 else 0
-            
-            registro_materias[materia] = {
-                "horas_disponibles": horas_disp, "horas_estudiadas": float(horas_input),
-                "Ejercicios_Resueltos": ejercicios_input, "Disciplina": round(disciplina, 2), "Velocidad": round(velocidad, 2)
-            }
-            total_ejercicios += ejercicios_input
-            total_horas += horas_input
+            disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
+            vel = e_in / h_in if h_in > 0 else 0
+            reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
+            tot_ej += e_in; tot_hr += h_in
             st.divider()
 
         if st.button("💾 Guardar Día", type="primary", use_container_width=True):
-            registro_dia = {
-                "fecha": datetime.now().strftime("%Y-%m-%d"), "dia": nombre_dia,
-                "horas_disponibles_total": horas_disponibles_total, "materias": registro_materias,
-                "Total_Ejercicios_Resueltos_Dia": total_ejercicios, "Total_Horas_Estudiadas": total_horas
-            }
-            datos["diario"].append(registro_dia)
+            datos["diario"].append({
+                "fecha": datetime.now().strftime("%Y-%m-%d"), "dia": nd,
+                "horas_disponibles_total": hd, "materias": reg_mat,
+                "Total_Ejercicios_Resueltos_Dia": tot_ej, "Total_Horas_Estudiadas": tot_hr
+            })
             guardar_datos(datos)
-            st.success(f"✅ ¡Día registrado! {total_ejercicios} ejercicios.")
+            st.success(f"✅ ¡Día registrado! {tot_ej} ejercicios.")
             st.balloons()
+            st.rerun()
 
         st.divider()
-
-        # --- FORMULARIO SIMULACROS ---
         st.subheader("🏆 Registro de Simulacro")
-        tipo_simulacro = st.radio("Tipo de simulacro:", ["📝 Semanal", "🎓 Tipo UNI"], horizontal=True)
-        
-        if tipo_simulacro == "📝 Semanal":
-            col1, col2 = st.columns(2)
-            with col1: puntaje = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
-            with col2: correctas = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
-            
+        tipo = st.radio("Tipo de simulacro:", ["📝 Semanal", "🎓 Tipo UNI"], horizontal=True)
+        if tipo == " Semanal":
+            c1, c2 = st.columns(2)
+            with c1: pj = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
+            with c2: co = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
             if st.button("💾 Guardar Semanal", type="primary"):
-                datos["semanal"].append({
-                    "fecha": datetime.now().strftime("%Y-%m-%d"), "tipo": "Semanal",
-                    "Puntaje_Simulacro": puntaje, "Precisión": round((correctas/60)*100, 2)
-                })
+                datos["semanal"].append({"fecha": datetime.now().strftime("%Y-%m-%d"), "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round((co/60)*100, 2)})
                 guardar_datos(datos)
                 st.success("✅ Simulacro Semanal guardado.")
+                st.rerun()
         else:
-            st.write("🎓 Registro Tipo UNI (3 días) - *Funcionalidad disponible próximamente*")
+            st.write(" Registro Tipo UNI (3 días) - *Funcionalidad disponible próximamente*")
