@@ -105,8 +105,8 @@ if st.session_state.vista_actual == 'inicio':
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
 if st.session_state.vista_actual == 'general':
-    st.header("\U0001F4C8 SECCIÓN: RENDIMIENTO GENERAL")
-    if st.button("\u2B05\uFE0F Volver al inicio", key="back_general"):
+    st.header("📈 SECCIÓN: RENDIMIENTO GENERAL")
+    if st.button("⬅️ Volver al inicio", key="back_general"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
     st.divider()
@@ -114,31 +114,92 @@ if st.session_state.vista_actual == 'general':
     datos = cargar_datos()
     
     if datos["diario"]:
-        total_dias = len(datos["diario"])
-        total_ejercicios = sum(d["Total_Ejercicios_Resueltos_Dia"] for d in datos["diario"])
-        total_horas = sum(d["Total_Horas_Estudiadas"] for d in datos["diario"])
+        # ============================================
+        # DETECTAR DÍAS FALTANTES Y AGREGARLOS COMO 0%
+        # ============================================
+        fechas_registradas = set()
+        for dia in datos["diario"]:
+            fechas_registradas.add(dia["fecha"])
+        
+        # Obtener la fecha del primer registro
+        primer_registro = min(datos["diario"], key=lambda x: x["fecha"])
+        fecha_inicio = datetime.strptime(primer_registro["fecha"], "%Y-%m-%d")
+        fecha_hoy = datetime.now()
+        
+        # Generar lista completa de días desde el primer registro hasta hoy
+        dias_completos = []
+        dia_actual = fecha_inicio
+        while dia_actual <= fecha_hoy:
+            fecha_str = dia_actual.strftime("%Y-%m-%d")
+            
+            if fecha_str in fechas_registradas:
+                # Día registrado, usar datos reales
+                dia_data = next(d for d in datos["diario"] if d["fecha"] == fecha_str)
+                dias_completos.append(dia_data)
+            else:
+                # Día NO registrado, crear registro ficticio con 0%
+                dia_semana = dia_actual.weekday()
+                nombre_dia = NOMBRES_DIAS[dia_semana]
+                horas_disponibles = HORAS_DISPONIBLES[dia_semana]
+                
+                # Crear registro ficticio con 0 horas y 0 ejercicios
+                registro_ficticio = {
+                    "fecha": fecha_str,
+                    "dia": nombre_dia,
+                    "horas_disponibles_total": horas_disponibles,
+                    "materias": {},
+                    "Total_Ejercicios_Resueltos_Dia": 0,
+                    "Total_Horas_Estudiadas": 0,
+                    "es_ficticio": True  # Marcador para saber que es un día no registrado
+                }
+                dias_completos.append(registro_ficticio)
+            
+            dia_actual += timedelta(days=1)
+        
+        # ============================================
+        # MÉTRICAS BÁSICAS (SOLO CON DÍAS REALES)
+        # ============================================
+        dias_reales = [d for d in dias_completos if not d.get("es_ficticio", False)]
+        total_dias = len(dias_reales)
+        total_ejercicios = sum(d["Total_Ejercicios_Resueltos_Dia"] for d in dias_reales)
+        total_horas = sum(d["Total_Horas_Estudiadas"] for d in dias_reales)
         
         col1, col2, col3 = st.columns(3)
-        with col1: st.metric("\U0001F4C5 Días registrados", total_dias)
-        with col2: st.metric("\U0001F4DD Ejercicios resueltos", total_ejercicios)
-        with col3: st.metric("\u23F0 Horas de estudio", f"{int(total_horas)}h")
+        with col1: st.metric("📅 Días registrados", total_dias)
+        with col2: st.metric("📝 Ejercicios resueltos", total_ejercicios)
+        with col3: st.metric("⏰ Horas de estudio", f"{int(total_horas)}h")
         st.divider()
 
+        # ============================================
+        # GRÁFICOS CON TODOS LOS DÍAS (INCLUYENDO 0%)
+        # ============================================
         fechas, disc_prom, vel_prom = [], [], []
-        for dia in datos["diario"][-30:]:
+        
+        for dia in dias_completos[-30:]:  # Últimos 30 días
             f = datetime.strptime(dia["fecha"], "%Y-%m-%d")
             fechas.append(f)
-            disc_prom.append(sum(m["Disciplina"] for m in dia["materias"].values()) / len(dia["materias"]))
-            vel_prom.append(sum(m["Velocidad"] for m in dia["materias"].values()) / len(dia["materias"]))
+            
+            if dia.get("es_ficticio", False):
+                # Día no registrado = 0% disciplina, 0 velocidad
+                disc_prom.append(0)
+                vel_prom.append(0)
+            else:
+                # Día registrado, calcular valores reales
+                if dia["materias"]:
+                    disc_prom.append(sum(m["Disciplina"] for m in dia["materias"].values()) / len(dia["materias"]))
+                    vel_prom.append(sum(m["Velocidad"] for m in dia["materias"].values()) / len(dia["materias"]))
+                else:
+                    disc_prom.append(0)
+                    vel_prom.append(0)
 
-        st.subheader(f"\U0001F525 DISCIPLINA: {disc_prom[-1]:.1f}%")
+        st.subheader(f"🔥 DISCIPLINA: {disc_prom[-1]:.1f}%")
         fig_disc = go.Figure()
         fig_disc.add_trace(go.Scatter(x=fechas, y=disc_prom, mode='lines+markers', name='Disciplina', line=dict(color='red', width=3), marker=dict(size=8, color='red'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<extra></extra>'))
-        fig_disc.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, max(100, max(disc_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
+        fig_disc.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 100]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc, use_container_width=True)
         st.divider()
 
-        st.subheader(f"\u26A1 VELOCIDAD: {int(vel_prom[-1])} ejercicios/hora")
+        st.subheader(f"⚡ VELOCIDAD: {int(vel_prom[-1])} ejercicios/hora")
         fig_vel = go.Figure()
         fig_vel.add_trace(go.Scatter(x=fechas, y=vel_prom, mode='lines+markers', name='Velocidad', line=dict(color='gold', width=3), marker=dict(size=8, color='gold'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejercicios/h<extra></extra>'))
         fig_vel.update_layout(yaxis_title='Velocidad (ejercicios/h)', yaxis=dict(range=[0, max(20, max(vel_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
