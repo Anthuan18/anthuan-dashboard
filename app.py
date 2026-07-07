@@ -2,8 +2,8 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # ============================================
 # CONFIGURACIÓN INICIAL
@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS Personalizado para ocultar la flecha (>>)
+# CSS Personalizado
 st.markdown("""
 <style>
     [data-testid="stSidebarCollapseButton"] {
@@ -23,6 +23,10 @@ st.markdown("""
     }
     .stButton > button {
         border-radius: 10px;
+    }
+    /* Hacer los gráficos responsivos */
+    .js-plotly-plot .plotly {
+        width: 100% !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -98,7 +102,7 @@ if st.session_state.vista_actual == 'inicio':
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
 if st.session_state.vista_actual == 'general':
-    st.header("📈 SECCIÓN: RENDIMIENTO GENERAL")
+    st.header(" SECCIÓN: RENDIMIENTO GENERAL")
     if st.button("⬅️ Volver al inicio", key="back_general"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
@@ -112,43 +116,66 @@ if st.session_state.vista_actual == 'general':
         total_horas = sum(d["Total_Horas_Estudiadas"] for d in datos["diario"])
         
         col1, col2, col3 = st.columns(3)
-        with col1: st.metric("📅 Días registrados", total_dias)
+        with col1: st.metric(" Días registrados", total_dias)
         with col2: st.metric("📚 Ejercicios resueltos", total_ejercicios)
         with col3: st.metric("⏰ Horas de estudio", f"{total_horas:.1f}h")
         
         st.divider()
 
+        # Preparar datos para gráficos
         fechas, disc_prom, vel_prom = [], [], []
         for dia in datos["diario"][-30:]:
-            fechas.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
+            f = datetime.strptime(dia["fecha"], "%Y-%m-%d")
+            fechas.append(f)
             disc_prom.append(sum(m["Disciplina"] for m in dia["materias"].values()) / len(dia["materias"]))
             vel_prom.append(sum(m["Velocidad"] for m in dia["materias"].values()) / len(dia["materias"]))
 
+        # --- GRÁFICO DE DISCIPLINA (INTERACTIVO) ---
         st.subheader(f"🔥 DISCIPLINA: {disc_prom[-1]:.1f}%")
-        fig, ax = plt.subplots(figsize=(12, 4))
-        ax.plot(fechas, disc_prom, color='red', linewidth=3, marker='o', markersize=6)
-        ax.set_ylabel('Disciplina (%)', color='red', fontweight='bold')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        ax.tick_params(axis='x', rotation=45)
-        ax.grid(True, alpha=0.3)
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
+        fig_disc = go.Figure()
+        fig_disc.add_trace(go.Scatter(
+            x=fechas, y=disc_prom,
+            mode='lines+markers',
+            name='Disciplina',
+            line=dict(color='red', width=3),
+            marker=dict(size=8, color='red'),
+            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<extra></extra>'
+        ))
+        fig_disc.update_layout(
+            yaxis_title='Disciplina (%)',
+            yaxis=dict(range=[0, max(100, max(disc_prom)*1.2)]),
+            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
+            hovermode='x unified',
+            height=400,
+            margin=dict(l=50, r=20, t=20, b=50)
+        )
+        st.plotly_chart(fig_disc, use_container_width=True)
         st.divider()
 
+        # --- GRÁFICO DE VELOCIDAD (INTERACTIVO) ---
         st.subheader(f"⚡ VELOCIDAD: {vel_prom[-1]:.1f} ejercicios/hora")
-        fig, ax = plt.subplots(figsize=(12, 4))
-        ax.plot(fechas, vel_prom, color='gold', linewidth=3, marker='s', markersize=6)
-        ax.set_ylabel('Velocidad (ejercicios/h)', color='gold', fontweight='bold')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        ax.tick_params(axis='x', rotation=45)
-        ax.grid(True, alpha=0.3)
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
+        fig_vel = go.Figure()
+        fig_vel.add_trace(go.Scatter(
+            x=fechas, y=vel_prom,
+            mode='lines+markers',
+            name='Velocidad',
+            line=dict(color='gold', width=3),
+            marker=dict(size=8, color='gold'),
+            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejercicios/h<extra></extra>'
+        ))
+        fig_vel.update_layout(
+            yaxis_title='Velocidad (ejercicios/h)',
+            yaxis=dict(range=[0, max(20, max(vel_prom)*1.2)]),
+            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
+            hovermode='x unified',
+            height=400,
+            margin=dict(l=50, r=20, t=20, b=50)
+        )
+        st.plotly_chart(fig_vel, use_container_width=True)
         st.divider()
 
-        st.subheader("🎯 EXÁMENES")
+        # --- GRÁFICO DE EXÁMENES (INTERACTIVO) ---
+        st.subheader(" EXÁMENES")
         prom_sem, prom_uni, cnt_sem, cnt_uni = 0, 0, 0, 0
         fechas_sim, notas_sim, tipos_sim = [], [], []
         
@@ -172,23 +199,56 @@ if st.session_state.vista_actual == 'general':
         with col2: st.metric("🎓 Promedio Tipo UNI", f"{prom_uni:.1f}")
             
         if fechas_sim:
-            fig, ax = plt.subplots(figsize=(12, 4))
-            ax.plot(fechas_sim, notas_sim, color='green', linewidth=2, linestyle='-')
-            for i, (f, n, t) in enumerate(zip(fechas_sim, notas_sim, tipos_sim)):
-                ax.scatter(f, n, color='blue' if t=='Semanal' else 'red', marker='o' if t=='Semanal' else 's', s=80, zorder=5, label=t if i==0 else "")
-            ax.set_ylabel('Nota (0-20)', fontweight='bold')
-            ax.set_ylim(0, 20)
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-            ax.tick_params(axis='x', rotation=45)
-            ax.grid(True, alpha=0.3)
-            ax.legend()
-            plt.tight_layout()
-            st.pyplot(fig)
-            plt.close()
+            # Separar datos por tipo
+            fechas_sem = [f for f, t in zip(fechas_sim, tipos_sim) if t == "Semanal"]
+            notas_sem = [n for n, t in zip(notas_sim, tipos_sim) if t == "Semanal"]
+            fechas_uni = [f for f, t in zip(fechas_sim, tipos_sim) if t == "UNI"]
+            notas_uni = [n for n, t in zip(notas_sim, tipos_sim) if t == "UNI"]
+            
+            fig_exam = go.Figure()
+            
+            # Línea conectando todos los puntos
+            fig_exam.add_trace(go.Scatter(
+                x=fechas_sim, y=notas_sim,
+                mode='lines',
+                name='Tendencia',
+                line=dict(color='green', width=2),
+                showlegend=False
+            ))
+            
+            # Puntos de Semanales
+            if fechas_sem:
+                fig_exam.add_trace(go.Scatter(
+                    x=fechas_sem, y=notas_sem,
+                    mode='markers',
+                    name='Semanal',
+                    marker=dict(size=10, color='blue', symbol='circle'),
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Semanal: %{y:.1f}<extra></extra>'
+                ))
+            
+            # Puntos de UNI
+            if fechas_uni:
+                fig_exam.add_trace(go.Scatter(
+                    x=fechas_uni, y=notas_uni,
+                    mode='markers',
+                    name='Tipo UNI',
+                    marker=dict(size=10, color='red', symbol='square'),
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>UNI: %{y:.1f}<extra></extra>'
+                ))
+            
+            fig_exam.update_layout(
+                yaxis_title='Nota (0-20)',
+                yaxis=dict(range=[0, 20]),
+                xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
+                hovermode='x unified',
+                height=400,
+                margin=dict(l=50, r=20, t=20, b=50)
+            )
+            st.plotly_chart(fig_exam, use_container_width=True)
         else:
             st.info("⚠️ Aún no hay datos de exámenes registrados.")
     else:
-        st.warning("⚠️ Aún no hay datos registrados.")
+        st.warning("️ Aún no hay datos registrados.")
 
 # ============================================
 # VISTA: RENDIMIENTO POR CURSO
@@ -219,7 +279,7 @@ elif st.session_state.vista_actual == 'curso':
             with st.expander(f"▼ {mat}", expanded=False):
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.write(f"📅 Días estudiados: {s['dias']}")
+                    st.write(f" Días estudiados: {s['dias']}")
                     st.write(f"📚 Ejercicios totales: {s['ejercicios']}")
                     st.write(f"⏰ Horas totales: {s['horas']:.1f}h")
                 with c2:
@@ -227,6 +287,7 @@ elif st.session_state.vista_actual == 'curso':
                     st.write(f"⚡ Velocidad: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
         st.divider()
 
+        # Preparar datos para gráficos por materia
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
         f_det, d_mat, v_mat = [], {m:[] for m in mats}, {m:[] for m in mats}
         for dia in datos["diario"][-30:]:
@@ -240,40 +301,57 @@ elif st.session_state.vista_actual == 'curso':
                         d_mat[m].append(None)
                         v_mat[m].append(None)
 
-        st.subheader("🔥 DISCIPLINA")
-        fig, ax = plt.subplots(figsize=(12, 5))
+        # --- GRÁFICO DE DISCIPLINA POR MATERIA (INTERACTIVO) ---
+        st.subheader(" DISCIPLINA")
+        fig_disc_mat = go.Figure()
         for i, m in enumerate(mats):
             val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
             if val:
                 ff, dd = zip(*val)
-                ax.plot(ff, dd, color=COLORES_MATERIAS[i], linewidth=2, marker='o', label=m)
-        ax.set_ylabel('Disciplina (%)')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        ax.tick_params(axis='x', rotation=45)
-        ax.legend(loc='best', fontsize='small')
-        ax.grid(True, alpha=0.3)
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
+                fig_disc_mat.add_trace(go.Scatter(
+                    x=ff, y=dd,
+                    mode='lines+markers',
+                    name=m,
+                    line=dict(color=COLORES_MATERIAS[i], width=2),
+                    marker=dict(size=6),
+                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}}%<extra></extra>'
+                ))
+        fig_disc_mat.update_layout(
+            yaxis_title='Disciplina (%)',
+            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
+            hovermode='x unified',
+            height=500,
+            margin=dict(l=50, r=20, t=20, b=50)
+        )
+        st.plotly_chart(fig_disc_mat, use_container_width=True)
         st.divider()
 
+        # --- GRÁFICO DE VELOCIDAD POR MATERIA (INTERACTIVO) ---
         st.subheader("⚡ VELOCIDAD")
-        fig, ax = plt.subplots(figsize=(12, 5))
+        fig_vel_mat = go.Figure()
         for i, m in enumerate(mats):
             val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
             if val:
                 ff, vv = zip(*val)
-                ax.plot(ff, vv, color=COLORES_MATERIAS[i], linewidth=2, marker='s', label=m)
-        ax.set_ylabel('Velocidad (ejercicios/h)')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        ax.tick_params(axis='x', rotation=45)
-        ax.legend(loc='best', fontsize='small')
-        ax.grid(True, alpha=0.3)
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
+                fig_vel_mat.add_trace(go.Scatter(
+                    x=ff, y=vv,
+                    mode='lines+markers',
+                    name=m,
+                    line=dict(color=COLORES_MATERIAS[i], width=2),
+                    marker=dict(size=6),
+                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}} ejer/h<extra></extra>'
+                ))
+        fig_vel_mat.update_layout(
+            yaxis_title='Velocidad (ejercicios/h)',
+            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
+            hovermode='x unified',
+            height=500,
+            margin=dict(l=50, r=20, t=20, b=50)
+        )
+        st.plotly_chart(fig_vel_mat, use_container_width=True)
         st.divider()
 
+        # --- GRÁFICO DE BARRAS (INTERACTIVO) ---
         st.subheader("📊 EJERCICIOS VS HORAS")
         ej_tot = {m:0 for m in mats}
         hr_tot = {m:0 for m in mats}
@@ -282,18 +360,30 @@ elif st.session_state.vista_actual == 'curso':
                 if m in ej_tot:
                     ej_tot[m] += s["Ejercicios_Resueltos"]
                     hr_tot[m] += s["horas_estudiadas"]
-        x = range(len(mats))
-        w = 0.35
-        fig, ax = plt.subplots(figsize=(12, 5))
-        ax.bar([i-w/2 for i in x], [ej_tot[m] for m in mats], w, label='Ejercicios', color='#3498DB')
-        ax.bar([i+w/2 for i in x], [hr_tot[m] for m in mats], w, label='Horas', color='#E74C3C')
-        ax.set_xticks(x)
-        ax.set_xticklabels(mats)
-        ax.legend()
-        ax.grid(True, alpha=0.3, axis='y')
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
+        
+        fig_barras = go.Figure()
+        fig_barras.add_trace(go.Bar(
+            name='Ejercicios',
+            x=mats,
+            y=[ej_tot[m] for m in mats],
+            marker_color='#3498DB',
+            hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'
+        ))
+        fig_barras.add_trace(go.Bar(
+            name='Horas',
+            x=mats,
+            y=[hr_tot[m] for m in mats],
+            marker_color='#E74C3C',
+            hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>'
+        ))
+        fig_barras.update_layout(
+            barmode='group',
+            yaxis_title='Cantidad',
+            xaxis_title='Materia',
+            height=500,
+            margin=dict(l=50, r=20, t=20, b=50)
+        )
+        st.plotly_chart(fig_barras, use_container_width=True)
     else:
         st.warning("⚠️ No hay datos de materias registrados.")
 
@@ -359,7 +449,7 @@ elif st.session_state.vista_actual == 'registro':
 
         st.divider()
         st.subheader("🏆 Registro de Simulacro")
-        tipo = st.radio("Tipo de simulacro:", ["📝 Semanal", "🎓 Tipo UNI"], horizontal=True)
+        tipo = st.radio("Tipo de simulacro:", [" Semanal", "🎓 Tipo UNI"], horizontal=True)
         if tipo == "📝 Semanal":
             c1, c2 = st.columns(2)
             with c1: pj = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
