@@ -50,6 +50,11 @@ st.markdown("""
     .nav-button-registro {
         background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
     }
+    
+    /* Espaciador para el scroll */
+    .section-spacer {
+        height: 100px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -131,6 +136,10 @@ if st.session_state.vista_actual == 'inicio':
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
 elif st.session_state.vista_actual == 'general':
+    # Espaciador y ancla para scroll
+    st.markdown('<div id="seccion-general"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
+    
     st.header("📈 SECCIÓN: RENDIMIENTO GENERAL")
     
     # Botón para volver
@@ -260,7 +269,7 @@ elif st.session_state.vista_actual == 'general':
             st.pyplot(fig)
             plt.close()
         else:
-            st.info("️ Aún no hay datos de exámenes registrados.")
+            st.info("⚠️ Aún no hay datos de exámenes registrados.")
     else:
         st.warning("⚠️ Aún no hay datos registrados. Ve a la sección de Registro.")
 
@@ -268,6 +277,10 @@ elif st.session_state.vista_actual == 'general':
 # VISTA: RENDIMIENTO POR CURSO
 # ============================================
 elif st.session_state.vista_actual == 'curso':
+    # Espaciador y ancla para scroll
+    st.markdown('<div id="seccion-curso"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
+    
     st.header("📚 SECCIÓN: RENDIMIENTO POR CURSO")
     
     # Botón para volver
@@ -390,6 +403,10 @@ elif st.session_state.vista_actual == 'curso':
 # VISTA: REGISTRO
 # ============================================
 elif st.session_state.vista_actual == 'registro':
+    # Espaciador y ancla para scroll
+    st.markdown('<div id="seccion-registro"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
+    
     st.header("🔐 ACCEDER AL REGISTRO")
     
     # Botón para volver
