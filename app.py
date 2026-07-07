@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime
 import plotly.graph_objects as go
+from datetime import datetime, timedelta
 
 # ============================================
 # CONFIGURACIÓN INICIAL
