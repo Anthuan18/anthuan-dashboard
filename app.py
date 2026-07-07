@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 # ============================================
 st.set_page_config(
     page_title="Dashboard de Anthuan", 
-    page_icon="", 
+    page_icon="🎓", 
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -17,39 +17,15 @@ st.set_page_config(
 # CSS Personalizado
 st.markdown("""
 <style>
-    [data-testid="stSidebarCollapseButton"] {
-        display: none !important;
-    }
-    .stButton > button {
-        border-radius: 10px;
-    }
-    .js-plotly-plot .plotly {
-        width: 100% !important;
-    }
+    [data-testid="stSidebarCollapseButton"] { display: none !important; }
+    .stButton > button { border-radius: 10px; }
+    .js-plotly-plot .plotly { width: 100% !important; }
     
-    .modebar-btn[data-title="Reset axes"] {
-        background-color: #00d4aa !important;
-        border-radius: 5px !important;
-        padding: 5px !important;
-    }
-    .modebar-btn[data-title="Reset axes"] svg {
-        fill: white !important;
-    }
-    .modebar-btn[data-title="Reset axes"]:hover {
-        background-color: #00ff88 !important;
-    }
-    
-    .modebar-btn[data-title="Pan"] {
-        background-color: #0099ff !important;
-        border-radius: 5px !important;
-        padding: 5px !important;
-    }
-    .modebar-btn[data-title="Pan"] svg {
-        fill: white !important;
-    }
-    .modebar-btn[data-title="Pan"]:hover {
-        background-color: #00bbff !important;
-    }
+    /* Botones de Plotly resaltados */
+    .modebar-btn[data-title="Reset axes"] { background-color: #00d4aa !important; border-radius: 5px !important; padding: 5px !important; }
+    .modebar-btn[data-title="Reset axes"] svg { fill: white !important; }
+    .modebar-btn[data-title="Pan"] { background-color: #0099ff !important; border-radius: 5px !important; padding: 5px !important; }
+    .modebar-btn[data-title="Pan"] svg { fill: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -59,12 +35,8 @@ st.markdown("""
 CONTRASEÑA_REGISTRO = "anthuan2027"
 
 SIMBOLOS_CURSOS = {
-    "Aritmética": "🔢",
-    "Álgebra": "🔡",
-    "Geometría": "🌐",
-    "Trigonometría": "📐",
-    "Física": "⚙️",
-    "Química": "🧪"
+    "Aritmética": "🔢", "Álgebra": "🔡", "Geometría": "🌐", 
+    "Trigonometría": "📐", "Física": "⚙️", "Química": "🧪"
 }
 
 HORAS_DISPONIBLES = {0: 6, 1: 6, 2: 6, 3: 6, 4: 6, 5: 7, 6: 13}
@@ -100,15 +72,12 @@ if 'autenticado' not in st.session_state:
     st.session_state.autenticado = False
 
 # ============================================
-# ENCABEZADO
+# ENCABEZADO Y NAVEGACIÓN
 # ============================================
 st.title("🎓 Estadísticas de Anthuan: Ciclo Semestral básico 2027-1")
 st.markdown("### 👋 Hola, aquí verás mis estadísticas de rendimiento académico.")
 st.divider()
 
-# ============================================
-# BOTONES DE NAVEGACIÓN
-# ============================================
 if st.session_state.vista_actual == 'inicio':
     col1, col2 = st.columns(2)
     with col1:
@@ -121,7 +90,6 @@ if st.session_state.vista_actual == 'inicio':
             st.rerun()
     
     st.divider()
-    
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("📥 REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
@@ -149,8 +117,7 @@ if st.session_state.vista_actual == 'general':
         col1, col2, col3 = st.columns(3)
         with col1: st.metric("📅 Días registrados", total_dias)
         with col2: st.metric("📝 Ejercicios resueltos", total_ejercicios)
-        with col3: st.metric("⏰ Horas de estudio", f"{int(total_horas)}h")
-        
+        with col3: st.metric(" Horas de estudio", f"{int(total_horas)}h")
         st.divider()
 
         fechas, disc_prom, vel_prom = [], [], []
@@ -162,51 +129,23 @@ if st.session_state.vista_actual == 'general':
 
         st.subheader(f"🔥 DISCIPLINA: {disc_prom[-1]:.1f}%")
         fig_disc = go.Figure()
-        fig_disc.add_trace(go.Scatter(
-            x=fechas, y=disc_prom,
-            mode='lines+markers',
-            name='Disciplina',
-            line=dict(color='red', width=3),
-            marker=dict(size=8, color='red'),
-            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<extra></extra>'
-        ))
-        fig_disc.update_layout(
-            yaxis_title='Disciplina (%)',
-            yaxis=dict(range=[0, max(100, max(disc_prom)*1.2)]),
-            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
-            hovermode='x unified',
-            height=400,
-            margin=dict(l=50, r=20, t=20, b=50)
-        )
+        fig_disc.add_trace(go.Scatter(x=fechas, y=disc_prom, mode='lines+markers', name='Disciplina', line=dict(color='red', width=3), marker=dict(size=8, color='red'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<extra></extra>'))
+        fig_disc.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, max(100, max(disc_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc, use_container_width=True)
         st.divider()
 
         st.subheader(f"⚡ VELOCIDAD: {vel_prom[-1]:.1f} ejercicios/hora")
         fig_vel = go.Figure()
-        fig_vel.add_trace(go.Scatter(
-            x=fechas, y=vel_prom,
-            mode='lines+markers',
-            name='Velocidad',
-            line=dict(color='gold', width=3),
-            marker=dict(size=8, color='gold'),
-            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejercicios/h<extra></extra>'
-        ))
-        fig_vel.update_layout(
-            yaxis_title='Velocidad (ejercicios/h)',
-            yaxis=dict(range=[0, max(20, max(vel_prom)*1.2)]),
-            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
-            hovermode='x unified',
-            height=400,
-            margin=dict(l=50, r=20, t=20, b=50)
-        )
+        fig_vel.add_trace(go.Scatter(x=fechas, y=vel_prom, mode='lines+markers', name='Velocidad', line=dict(color='gold', width=3), marker=dict(size=8, color='gold'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejercicios/h<extra></extra>'))
+        fig_vel.update_layout(yaxis_title='Velocidad (ejercicios/h)', yaxis=dict(range=[0, max(20, max(vel_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_vel, use_container_width=True)
         st.divider()
 
         # --- EXÁMENES ---
-        st.subheader(" EXÁMENES")
+        st.subheader("📄 EXÁMENES")
         prom_sem, prom_uni, cnt_sem, cnt_uni = 0, 0, 0, 0
         prec_sem_total, prec_uni_total = 0, 0
-        fechas_sim, notas_sim, tipos_sim, precisiones_sim = [], [], [], []
+        fechas_sim, notas_sim, tipos_sim = [], [], []
         
         if datos["semanal"]:
             for sim in sorted(datos["semanal"], key=lambda x: x["fecha"]):
@@ -217,39 +156,26 @@ if st.session_state.vista_actual == 'general':
                     prom_sem += sim["Puntaje_Simulacro"]
                     cnt_sem += 1
                     tipos_sim.append("Semanal")
-                    if "Precisión" in sim:
-                        prec_sem_total += sim["Precisión"]
+                    if "Precisión" in sim: prec_sem_total += sim["Precisión"]
                 else:
                     notas_sim.append(sim["Promedio_Notas"])
                     prom_uni += sim["Promedio_Notas"]
                     cnt_uni += 1
                     tipos_sim.append("UNI")
-                    if "Promedio_Precision" in sim:
-                        prec_uni_total += sim["Promedio_Precision"]
-        if cnt_sem: 
-            prom_sem /= cnt_sem
-            prec_sem_prom = prec_sem_total / cnt_sem if prec_sem_total > 0 else 0
-        if cnt_uni: 
-            prom_uni /= cnt_uni
-            prec_uni_prom = prec_uni_total / cnt_uni if prec_uni_total > 0 else 0
+                    if "Promedio_Precision" in sim: prec_uni_total += sim["Promedio_Precision"]
+        
+        if cnt_sem: prom_sem /= cnt_sem
+        if cnt_uni: prom_uni /= cnt_uni
+        prec_sem_prom = prec_sem_total / cnt_sem if cnt_sem > 0 else 0
+        prec_uni_prom = prec_uni_total / cnt_uni if cnt_uni > 0 else 0
 
         col1, col2 = st.columns(2)
-        with col1: st.metric(" Promedio Semanales", f"{prom_sem:.1f}")
-        with col2: st.metric(" Promedio Tipo UNI", f"{prom_uni:.1f}")
-        
-        # Métrica de precisión promedio
-        precision_total = 0
-        count_precision = 0
-        for sim in datos["semanal"]:
-            if sim["tipo"] == "Semanal" and "Precisión" in sim:
-                precision_total += sim["Precisión"]
-                count_precision += 1
-            elif sim["tipo"] == "UNI" and "Promedio_Precision" in sim:
-                precision_total += sim["Promedio_Precision"]
-                count_precision += 1
-        prom_precision = precision_total / count_precision if count_precision > 0 else 0
-        
-        st.metric("Precisión", f"{prom_precision:.1f}%")
+        with col1: 
+            st.metric("🥇 Promedio Semanales", f"{prom_sem:.1f}")
+            st.metric("🎯Precisión", f"{prec_sem_prom:.1f}%")
+        with col2: 
+            st.metric(" Promedio Tipo UNI", f"{prom_uni:.1f}")
+            st.metric("🎯Precisión", f"{prec_uni_prom:.1f}%")
             
         if fechas_sim:
             fechas_sem = [f for f, t in zip(fechas_sim, tipos_sim) if t == "Semanal"]
@@ -258,41 +184,13 @@ if st.session_state.vista_actual == 'general':
             notas_uni = [n for n, t in zip(notas_sim, tipos_sim) if t == "UNI"]
             
             fig_exam = go.Figure()
-            
-            fig_exam.add_trace(go.Scatter(
-                x=fechas_sim, y=notas_sim,
-                mode='lines',
-                name='Tendencia',
-                line=dict(color='green', width=2),
-                showlegend=False
-            ))
-            
+            fig_exam.add_trace(go.Scatter(x=fechas_sim, y=notas_sim, mode='lines', name='Tendencia', line=dict(color='green', width=2), showlegend=False))
             if fechas_sem:
-                fig_exam.add_trace(go.Scatter(
-                    x=fechas_sem, y=notas_sem,
-                    mode='markers',
-                    name='Semanal',
-                    marker=dict(size=10, color='blue', symbol='circle'),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Semanal: %{y:.1f}<extra></extra>'
-                ))
-            
+                fig_exam.add_trace(go.Scatter(x=fechas_sem, y=notas_sem, mode='markers', name='Semanal', marker=dict(size=10, color='blue', symbol='circle'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Semanal: %{y:.1f}<extra></extra>'))
             if fechas_uni:
-                fig_exam.add_trace(go.Scatter(
-                    x=fechas_uni, y=notas_uni,
-                    mode='markers',
-                    name='Tipo UNI',
-                    marker=dict(size=10, color='red', symbol='square'),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>UNI: %{y:.1f}<extra></extra>'
-                ))
+                fig_exam.add_trace(go.Scatter(x=fechas_uni, y=notas_uni, mode='markers', name='Tipo UNI', marker=dict(size=10, color='red', symbol='square'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>UNI: %{y:.1f}<extra></extra>'))
             
-            fig_exam.update_layout(
-                yaxis_title='Nota (0-20)',
-                yaxis=dict(range=[0, 20]),
-                xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
-                hovermode='x unified',
-                height=400,
-                margin=dict(l=50, r=20, t=20, b=50)
-            )
+            fig_exam.update_layout(yaxis_title='Nota (0-20)', yaxis=dict(range=[0, 20]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
             st.plotly_chart(fig_exam, use_container_width=True)
         else:
             st.info("⚠️ Aún no hay datos de exámenes registrados.")
@@ -356,23 +254,8 @@ elif st.session_state.vista_actual == 'curso':
             val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
             if val:
                 ff, dd = zip(*val)
-                simbolo = SIMBOLOS_CURSOS.get(m, "📚")
-                fig_disc_mat.add_trace(go.Scatter(
-                    x=ff, y=dd,
-                    mode='lines+markers',
-                    name=f"{simbolo} {m}",
-                    line=dict(color=COLORES_MATERIAS[i], width=2),
-                    marker=dict(size=6),
-                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}}%<extra></extra>'
-                ))
-        fig_disc_mat.update_layout(
-            yaxis_title='Disciplina (%)',
-            yaxis=dict(range=[0, 100]),
-            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
-            hovermode='x unified',
-            height=500,
-            margin=dict(l=50, r=20, t=20, b=50)
-        )
+                fig_disc_mat.add_trace(go.Scatter(x=ff, y=dd, mode='lines+markers', name=f"{SIMBOLOS_CURSOS[m]} {m}", line=dict(color=COLORES_MATERIAS[i], width=2), marker=dict(size=6), hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}}%<extra></extra>'))
+        fig_disc_mat.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 100]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc_mat, use_container_width=True)
         st.divider()
 
@@ -382,27 +265,11 @@ elif st.session_state.vista_actual == 'curso':
             val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
             if val:
                 ff, vv = zip(*val)
-                simbolo = SIMBOLOS_CURSOS.get(m, "")
-                fig_vel_mat.add_trace(go.Scatter(
-                    x=ff, y=vv,
-                    mode='lines+markers',
-                    name=f"{simbolo} {m}",
-                    line=dict(color=COLORES_MATERIAS[i], width=2),
-                    marker=dict(size=6),
-                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}} ejer/h<extra></extra>'
-                ))
-        fig_vel_mat.update_layout(
-            yaxis_title='Velocidad (ejercicios/h)',
-            yaxis=dict(range=[0, max(20, max([v for v in sum(v_mat.values(), []) if v is not None])*1.2)]),
-            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
-            hovermode='x unified',
-            height=500,
-            margin=dict(l=50, r=20, t=20, b=50)
-        )
+                fig_vel_mat.add_trace(go.Scatter(x=ff, y=vv, mode='lines+markers', name=f"{SIMBOLOS_CURSOS[m]} {m}", line=dict(color=COLORES_MATERIAS[i], width=2), marker=dict(size=6), hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}} ejer/h<extra></extra>'))
+        fig_vel_mat.update_layout(yaxis_title='Velocidad (ejercicios/h)', yaxis=dict(range=[0, max(20, max([v for v in sum(v_mat.values(), []) if v is not None])*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_vel_mat, use_container_width=True)
         st.divider()
 
-        # --- GRÁFICO DE BARRAS CON HORAS Y EJERCICIOS ---
         st.subheader("📊 EJERCICIOS VS HORAS")
         ej_tot = {m:0 for m in mats}
         hr_tot = {m:0 for m in mats}
@@ -412,43 +279,14 @@ elif st.session_state.vista_actual == 'curso':
                     ej_tot[m] += s["Ejercicios_Resueltos"]
                     hr_tot[m] += s["horas_estudiadas"]
         
+        etiquetas = [f"{SIMBOLOS_CURSOS[m]} {m}" for m in mats]
         fig_barras = go.Figure()
-        
-        # Barras de ejercicios
-        for m in mats:
-            simbolo = SIMBOLOS_CURSOS.get(m, "📚")
-            fig_barras.add_trace(go.Bar(
-                name='Ejercicios',
-                x=[f'{simbolo} {m}'],
-                y=[ej_tot[m]],
-                marker_color='#3498DB',
-                hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>',
-                showlegend=(m == mats[0])
-            ))
-        
-        # Barras de horas
-        for m in mats:
-            simbolo = SIMBOLOS_CURSOS.get(m, "📚")
-            fig_barras.add_trace(go.Bar(
-                name='Horas',
-                x=[f'{simbolo} {m}'],
-                y=[hr_tot[m]],
-                marker_color='#E74C3C',
-                hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>',
-                showlegend=(m == mats[0])
-            ))
-        
-        fig_barras.update_layout(
-            barmode='group',
-            yaxis_title='Cantidad',
-            yaxis=dict(range=[0, max(max(ej_tot.values()), max(hr_tot.values()))*1.2]),
-            xaxis_title='Materia',
-            height=500,
-            margin=dict(l=50, r=20, t=20, b=50)
-        )
+        fig_barras.add_trace(go.Bar(name='Ejercicios', x=etiquetas, y=[ej_tot[m] for m in mats], marker_color='#3498DB', hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'))
+        fig_barras.add_trace(go.Bar(name='Horas', x=etiquetas, y=[hr_tot[m] for m in mats], marker_color='#E74C3C', hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>'))
+        fig_barras.update_layout(barmode='group', yaxis_title='Cantidad', yaxis=dict(range=[0, max(max(ej_tot.values()), max(hr_tot.values()))*1.2]), xaxis_title='Materia', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_barras, use_container_width=True)
     else:
-        st.warning("⚠️ No hay datos de materias registrados.")
+        st.warning("️ No hay datos de materias registrados.")
 
 # ============================================
 # VISTA: REGISTRO
@@ -462,7 +300,7 @@ elif st.session_state.vista_actual == 'registro':
     
     if not st.session_state.autenticado:
         pwd = st.text_input("Ingresa la contraseña para registrar datos:", type="password")
-        if st.button(" Desbloquear Registro", type="primary"):
+        if st.button("🔓 Desbloquear Registro", type="primary"):
             if pwd == CONTRASEÑA_REGISTRO:
                 st.session_state.autenticado = True
                 st.rerun()
@@ -513,7 +351,7 @@ elif st.session_state.vista_actual == 'registro':
 
         st.divider()
         st.subheader("🏆 Registro de Simulacro")
-        tipo = st.radio("Tipo de simulacro:", ["🥇 Semanal", " Tipo UNI"], horizontal=True)
+        tipo = st.radio("Tipo de simulacro:", ["🥇 Semanal", "🏆 Tipo UNI"], horizontal=True)
         
         if tipo == "🥇 Semanal":
             c1, c2 = st.columns(2)
@@ -525,8 +363,7 @@ elif st.session_state.vista_actual == 'registro':
                 st.success("✅ Simulacro Semanal guardado.")
                 st.rerun()
         else:
-            # REGISTRO DE SIMULACRO TIPO UNI (3 DÍAS)
-            st.subheader(" Simulacro Tipo UNI (3 días)")
+            st.subheader("🏆 Simulacro Tipo UNI (3 días)")
             st.info("📝 Día 1: 100 preguntas | Día 2: 40 preguntas | Día 3: 40 preguntas")
             
             dias_uni = [
@@ -536,40 +373,18 @@ elif st.session_state.vista_actual == 'registro':
             ]
             
             dias_datos = []
-            
             for i, dia_info in enumerate(dias_uni):
                 with st.expander(f" Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
                     st.markdown(f"### {dia_info['nombre']}")
-                    
                     col1, col2 = st.columns(2)
                     with col1:
-                        puntaje_dia = st.number_input(
-                            "Puntaje", 
-                            min_value=0.0, 
-                            max_value=20.0, 
-                            step=0.1, 
-                            key=f"punti_dia_{i}"
-                        )
+                        puntaje_dia = st.number_input("Puntaje", min_value=0.0, max_value=20.0, step=0.1, key=f"punti_dia_{i}")
                     with col2:
-                        correctas_dia = st.number_input(
-                            "Preguntas acertadas", 
-                            min_value=0, 
-                            max_value=dia_info['preguntas'], 
-                            step=1, 
-                            key=f"corr_dia_{i}"
-                        )
+                        correctas_dia = st.number_input("Preguntas acertadas", min_value=0, max_value=dia_info['preguntas'], step=1, key=f"corr_dia_{i}")
                     
                     precision_dia = (correctas_dia / dia_info['preguntas']) * 100 if dia_info['preguntas'] > 0 else 0
-                    
-                    dias_datos.append({
-                        "dia": i+1,
-                        "nombre": dia_info['nombre'],
-                        "puntaje": puntaje_dia,
-                        "correctas": correctas_dia,
-                        "precision": round(precision_dia, 2)
-                    })
-                    
-                    st.write(f"**🎯Precisión:** {precision_dia:.1f}%")
+                    dias_datos.append({"dia": i+1, "nombre": dia_info['nombre'], "puntaje": puntaje_dia, "correctas": correctas_dia, "precision": round(precision_dia, 2)})
+                    st.write(f"**Precisión:** {precision_dia:.1f}%")
             
             if dias_datos:
                 prom_notas = sum(d["puntaje"] for d in dias_datos) / 3
@@ -578,26 +393,18 @@ elif st.session_state.vista_actual == 'registro':
                 st.divider()
                 st.subheader("📊 Resumen del Simulacro UNI")
                 col1, col2 = st.columns(2)
-                with col1:
-                    st.metric(" Promedio de Notas", f"{prom_notas:.2f}")
-                with col2:
-                    st.metric("📊 Promedio de Precisión", f"{prom_precision:.1f}%")
+                with col1: st.metric(" Promedio de Notas", f"{prom_notas:.2f}")
+                with col2: st.metric("📊 Promedio de Precisión", f"{prom_precision:.1f}%")
                 
                 if st.button("💾 Guardar Simulacro UNI", type="primary", use_container_width=True):
                     ejercicios_semana = sum(d["Total_Ejercicios_Resueltos_Dia"] for d in datos["diario"][-7:])
-                    
                     registro = {
-                        "fecha": datetime.now().strftime("%Y-%m-%d"),
-                        "tipo": "UNI",
-                        "dias": dias_datos,
-                        "Promedio_Notas": round(prom_notas, 2),
-                        "Promedio_Precision": round(prom_precision, 2),
+                        "fecha": datetime.now().strftime("%Y-%m-%d"), "tipo": "UNI", "dias": dias_datos,
+                        "Promedio_Notas": round(prom_notas, 2), "Promedio_Precision": round(prom_precision, 2),
                         "Ejercicios_Resueltos_Semana": ejercicios_semana
                     }
-                    
                     datos["semanal"].append(registro)
                     guardar_datos(datos)
-                    
                     st.success(f"✅ ¡Simulacro UNI registrado! Promedio: {prom_notas:.2f}")
                     st.balloons()
                     st.rerun()
