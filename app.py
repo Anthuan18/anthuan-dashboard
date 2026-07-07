@@ -3,7 +3,6 @@ import json
 import os
 from datetime import datetime
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 # ============================================
 # CONFIGURACIÓN INICIAL
@@ -27,6 +26,46 @@ st.markdown("""
     /* Hacer los gráficos responsivos */
     .js-plotly-plot .plotly {
         width: 100% !important;
+    }
+    
+    /* RESALTAR BOTONES DE PLOTLY */
+    /* Botón Home (Casa) - Color verde brillante */
+    .modebar-btn[data-title="Reset axes"] {
+        background-color: #00d4aa !important;
+        border-radius: 5px !important;
+        padding: 5px !important;
+    }
+    .modebar-btn[data-title="Reset axes"] svg {
+        fill: white !important;
+    }
+    .modebar-btn[data-title="Reset axes"]:hover {
+        background-color: #00ff88 !important;
+    }
+    
+    /* Botón Pan (Mover) - Color azul brillante */
+    .modebar-btn[data-title="Pan"] {
+        background-color: #0099ff !important;
+        border-radius: 5px !important;
+        padding: 5px !important;
+    }
+    .modebar-btn[data-title="Pan"] svg {
+        fill: white !important;
+    }
+    .modebar-btn[data-title="Pan"]:hover {
+        background-color: #00bbff !important;
+    }
+    
+    /* Botón Zoom Box - Color naranja brillante */
+    .modebar-btn[data-title="Zoom"] {
+        background-color: #ff6600 !important;
+        border-radius: 5px !important;
+        padding: 5px !important;
+    }
+    .modebar-btn[data-title="Zoom"] svg {
+        fill: white !important;
+    }
+    .modebar-btn[data-title="Zoom"]:hover {
+        background-color: #ff8833 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -102,7 +141,7 @@ if st.session_state.vista_actual == 'inicio':
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
 if st.session_state.vista_actual == 'general':
-    st.header(" SECCIÓN: RENDIMIENTO GENERAL")
+    st.header("📈 SECCIÓN: RENDIMIENTO GENERAL")
     if st.button("⬅️ Volver al inicio", key="back_general"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
@@ -116,7 +155,7 @@ if st.session_state.vista_actual == 'general':
         total_horas = sum(d["Total_Horas_Estudiadas"] for d in datos["diario"])
         
         col1, col2, col3 = st.columns(3)
-        with col1: st.metric(" Días registrados", total_dias)
+        with col1: st.metric("📅 Días registrados", total_dias)
         with col2: st.metric("📚 Ejercicios resueltos", total_ejercicios)
         with col3: st.metric("⏰ Horas de estudio", f"{total_horas:.1f}h")
         
@@ -130,7 +169,7 @@ if st.session_state.vista_actual == 'general':
             disc_prom.append(sum(m["Disciplina"] for m in dia["materias"].values()) / len(dia["materias"]))
             vel_prom.append(sum(m["Velocidad"] for m in dia["materias"].values()) / len(dia["materias"]))
 
-        # --- GRÁFICO DE DISCIPLINA (INTERACTIVO) ---
+        # --- GRÁFICO DE DISCIPLINA (EJE Y DESDE 0) ---
         st.subheader(f"🔥 DISCIPLINA: {disc_prom[-1]:.1f}%")
         fig_disc = go.Figure()
         fig_disc.add_trace(go.Scatter(
@@ -143,7 +182,7 @@ if st.session_state.vista_actual == 'general':
         ))
         fig_disc.update_layout(
             yaxis_title='Disciplina (%)',
-            yaxis=dict(range=[0, max(100, max(disc_prom)*1.2)]),
+            yaxis=dict(range=[0, max(100, max(disc_prom)*1.2)]),  # EJE Y DESDE 0
             xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
             hovermode='x unified',
             height=400,
@@ -152,7 +191,7 @@ if st.session_state.vista_actual == 'general':
         st.plotly_chart(fig_disc, use_container_width=True)
         st.divider()
 
-        # --- GRÁFICO DE VELOCIDAD (INTERACTIVO) ---
+        # --- GRÁFICO DE VELOCIDAD (EJE Y DESDE 0) ---
         st.subheader(f"⚡ VELOCIDAD: {vel_prom[-1]:.1f} ejercicios/hora")
         fig_vel = go.Figure()
         fig_vel.add_trace(go.Scatter(
@@ -165,7 +204,7 @@ if st.session_state.vista_actual == 'general':
         ))
         fig_vel.update_layout(
             yaxis_title='Velocidad (ejercicios/h)',
-            yaxis=dict(range=[0, max(20, max(vel_prom)*1.2)]),
+            yaxis=dict(range=[0, max(20, max(vel_prom)*1.2)]),  # EJE Y DESDE 0
             xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
             hovermode='x unified',
             height=400,
@@ -174,8 +213,8 @@ if st.session_state.vista_actual == 'general':
         st.plotly_chart(fig_vel, use_container_width=True)
         st.divider()
 
-        # --- GRÁFICO DE EXÁMENES (INTERACTIVO) ---
-        st.subheader(" EXÁMENES")
+        # --- GRÁFICO DE EXÁMENES (EJE Y DESDE 0) ---
+        st.subheader("🎯 EXÁMENES")
         prom_sem, prom_uni, cnt_sem, cnt_uni = 0, 0, 0, 0
         fechas_sim, notas_sim, tipos_sim = [], [], []
         
@@ -199,7 +238,6 @@ if st.session_state.vista_actual == 'general':
         with col2: st.metric("🎓 Promedio Tipo UNI", f"{prom_uni:.1f}")
             
         if fechas_sim:
-            # Separar datos por tipo
             fechas_sem = [f for f, t in zip(fechas_sim, tipos_sim) if t == "Semanal"]
             notas_sem = [n for n, t in zip(notas_sim, tipos_sim) if t == "Semanal"]
             fechas_uni = [f for f, t in zip(fechas_sim, tipos_sim) if t == "UNI"]
@@ -207,7 +245,6 @@ if st.session_state.vista_actual == 'general':
             
             fig_exam = go.Figure()
             
-            # Línea conectando todos los puntos
             fig_exam.add_trace(go.Scatter(
                 x=fechas_sim, y=notas_sim,
                 mode='lines',
@@ -216,7 +253,6 @@ if st.session_state.vista_actual == 'general':
                 showlegend=False
             ))
             
-            # Puntos de Semanales
             if fechas_sem:
                 fig_exam.add_trace(go.Scatter(
                     x=fechas_sem, y=notas_sem,
@@ -226,7 +262,6 @@ if st.session_state.vista_actual == 'general':
                     hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Semanal: %{y:.1f}<extra></extra>'
                 ))
             
-            # Puntos de UNI
             if fechas_uni:
                 fig_exam.add_trace(go.Scatter(
                     x=fechas_uni, y=notas_uni,
@@ -238,7 +273,7 @@ if st.session_state.vista_actual == 'general':
             
             fig_exam.update_layout(
                 yaxis_title='Nota (0-20)',
-                yaxis=dict(range=[0, 20]),
+                yaxis=dict(range=[0, 20]),  # EJE Y DESDE 0
                 xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
                 hovermode='x unified',
                 height=400,
@@ -248,7 +283,7 @@ if st.session_state.vista_actual == 'general':
         else:
             st.info("⚠️ Aún no hay datos de exámenes registrados.")
     else:
-        st.warning("️ Aún no hay datos registrados.")
+        st.warning("⚠️ Aún no hay datos registrados.")
 
 # ============================================
 # VISTA: RENDIMIENTO POR CURSO
@@ -279,7 +314,7 @@ elif st.session_state.vista_actual == 'curso':
             with st.expander(f"▼ {mat}", expanded=False):
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.write(f" Días estudiados: {s['dias']}")
+                    st.write(f"📅 Días estudiados: {s['dias']}")
                     st.write(f"📚 Ejercicios totales: {s['ejercicios']}")
                     st.write(f"⏰ Horas totales: {s['horas']:.1f}h")
                 with c2:
@@ -301,8 +336,8 @@ elif st.session_state.vista_actual == 'curso':
                         d_mat[m].append(None)
                         v_mat[m].append(None)
 
-        # --- GRÁFICO DE DISCIPLINA POR MATERIA (INTERACTIVO) ---
-        st.subheader(" DISCIPLINA")
+        # --- GRÁFICO DE DISCIPLINA POR MATERIA (EJE Y DESDE 0) ---
+        st.subheader("🔥 DISCIPLINA")
         fig_disc_mat = go.Figure()
         for i, m in enumerate(mats):
             val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
@@ -318,146 +353,8 @@ elif st.session_state.vista_actual == 'curso':
                 ))
         fig_disc_mat.update_layout(
             yaxis_title='Disciplina (%)',
+            yaxis=dict(range=[0, 100]),  # EJE Y DESDE 0
             xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
             hovermode='x unified',
             height=500,
-            margin=dict(l=50, r=20, t=20, b=50)
-        )
-        st.plotly_chart(fig_disc_mat, use_container_width=True)
-        st.divider()
-
-        # --- GRÁFICO DE VELOCIDAD POR MATERIA (INTERACTIVO) ---
-        st.subheader("⚡ VELOCIDAD")
-        fig_vel_mat = go.Figure()
-        for i, m in enumerate(mats):
-            val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
-            if val:
-                ff, vv = zip(*val)
-                fig_vel_mat.add_trace(go.Scatter(
-                    x=ff, y=vv,
-                    mode='lines+markers',
-                    name=m,
-                    line=dict(color=COLORES_MATERIAS[i], width=2),
-                    marker=dict(size=6),
-                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}} ejer/h<extra></extra>'
-                ))
-        fig_vel_mat.update_layout(
-            yaxis_title='Velocidad (ejercicios/h)',
-            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
-            hovermode='x unified',
-            height=500,
-            margin=dict(l=50, r=20, t=20, b=50)
-        )
-        st.plotly_chart(fig_vel_mat, use_container_width=True)
-        st.divider()
-
-        # --- GRÁFICO DE BARRAS (INTERACTIVO) ---
-        st.subheader("📊 EJERCICIOS VS HORAS")
-        ej_tot = {m:0 for m in mats}
-        hr_tot = {m:0 for m in mats}
-        for dia in datos["diario"]:
-            for m, s in dia["materias"].items():
-                if m in ej_tot:
-                    ej_tot[m] += s["Ejercicios_Resueltos"]
-                    hr_tot[m] += s["horas_estudiadas"]
-        
-        fig_barras = go.Figure()
-        fig_barras.add_trace(go.Bar(
-            name='Ejercicios',
-            x=mats,
-            y=[ej_tot[m] for m in mats],
-            marker_color='#3498DB',
-            hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'
-        ))
-        fig_barras.add_trace(go.Bar(
-            name='Horas',
-            x=mats,
-            y=[hr_tot[m] for m in mats],
-            marker_color='#E74C3C',
-            hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>'
-        ))
-        fig_barras.update_layout(
-            barmode='group',
-            yaxis_title='Cantidad',
-            xaxis_title='Materia',
-            height=500,
-            margin=dict(l=50, r=20, t=20, b=50)
-        )
-        st.plotly_chart(fig_barras, use_container_width=True)
-    else:
-        st.warning("⚠️ No hay datos de materias registrados.")
-
-# ============================================
-# VISTA: REGISTRO
-# ============================================
-elif st.session_state.vista_actual == 'registro':
-    st.header("🔐 ACCEDER AL REGISTRO")
-    if st.button("⬅️ Volver al inicio", key="back_registro"):
-        st.session_state.vista_actual = 'inicio'
-        st.rerun()
-    st.divider()
-    
-    if not st.session_state.autenticado:
-        pwd = st.text_input("Ingresa la contraseña para registrar datos:", type="password")
-        if st.button("🔓 Desbloquear Registro", type="primary"):
-            if pwd == CONTRASEÑA_REGISTRO:
-                st.session_state.autenticado = True
-                st.rerun()
-            else:
-                st.error("❌ Contraseña incorrecta")
-    else:
-        st.success("🔓 Sesión iniciada. Puedes registrar tus datos.")
-        if st.button("🚪 Cerrar Sesión"):
-            st.session_state.autenticado = False
-            st.rerun()
-        st.divider()
-        
-        st.subheader("📝 Registro Diario")
-        ds = datetime.today().weekday()
-        nd = NOMBRES_DIAS[ds]
-        hd = HORAS_DISPONIBLES[ds]
-        mats = HORARIO_MATERIAS[ds]
-        st.info(f"📅 Hoy es **{nd}**. Tienes **{hd} horas** disponibles.")
-        
-        datos = cargar_datos()
-        reg_mat = {}
-        tot_ej, tot_hr = 0, 0
-        
-        for m in mats:
-            hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
-            st.markdown(f"### 📖 {m}")
-            c1, c2 = st.columns(2)
-            with c1: h_in = st.number_input(f"Horas ({m})", min_value=0, value=0, step=1, key=f"h_{m}")
-            with c2: e_in = st.number_input(f"Ejercicios ({m})", min_value=0, value=0, step=1, key=f"e_{m}")
-            
-            disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
-            vel = e_in / h_in if h_in > 0 else 0
-            reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
-            tot_ej += e_in; tot_hr += h_in
-            st.divider()
-
-        if st.button("💾 Guardar Día", type="primary", use_container_width=True):
-            datos["diario"].append({
-                "fecha": datetime.now().strftime("%Y-%m-%d"), "dia": nd,
-                "horas_disponibles_total": hd, "materias": reg_mat,
-                "Total_Ejercicios_Resueltos_Dia": tot_ej, "Total_Horas_Estudiadas": tot_hr
-            })
-            guardar_datos(datos)
-            st.success(f"✅ ¡Día registrado! {tot_ej} ejercicios.")
-            st.balloons()
-            st.rerun()
-
-        st.divider()
-        st.subheader("🏆 Registro de Simulacro")
-        tipo = st.radio("Tipo de simulacro:", [" Semanal", "🎓 Tipo UNI"], horizontal=True)
-        if tipo == "📝 Semanal":
-            c1, c2 = st.columns(2)
-            with c1: pj = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
-            with c2: co = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
-            if st.button("💾 Guardar Semanal", type="primary"):
-                datos["semanal"].append({"fecha": datetime.now().strftime("%Y-%m-%d"), "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round((co/60)*100, 2)})
-                guardar_datos(datos)
-                st.success("✅ Simulacro Semanal guardado.")
-                st.rerun()
-        else:
-            st.write("🎓 Registro Tipo UNI (3 días) - *Funcionalidad disponible próximamente*")
+           
