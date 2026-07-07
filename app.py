@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 # ============================================
 st.set_page_config(
     page_title="Dashboard de Anthuan", 
-    page_icon="🎓", 
+    page_icon="", 
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -27,7 +27,6 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* RESALTAR BOTONES DE PLOTLY */
     .modebar-btn[data-title="Reset axes"] {
         background-color: #00d4aa !important;
         border-radius: 5px !important;
@@ -59,7 +58,6 @@ st.markdown("""
 # ============================================
 CONTRASEÑA_REGISTRO = "anthuan2027"
 
-# Símbolos para cada curso
 SIMBOLOS_CURSOS = {
     "Aritmética": "🔢",
     "Álgebra": "🔡",
@@ -102,14 +100,14 @@ if 'autenticado' not in st.session_state:
     st.session_state.autenticado = False
 
 # ============================================
-# ENCABEZADO (SIEMPRE VISIBLE)
+# ENCABEZADO
 # ============================================
 st.title("🎓 Estadísticas de Anthuan: Ciclo Semestral básico 2027-1")
 st.markdown("### 👋 Hola, aquí verás mis estadísticas de rendimiento académico.")
 st.divider()
 
 # ============================================
-# BOTONES DE NAVEGACIÓN (SOLO EN INICIO)
+# BOTONES DE NAVEGACIÓN
 # ============================================
 if st.session_state.vista_actual == 'inicio':
     col1, col2 = st.columns(2)
@@ -155,7 +153,6 @@ if st.session_state.vista_actual == 'general':
         
         st.divider()
 
-        # Preparar datos para gráficos
         fechas, disc_prom, vel_prom = [], [], []
         for dia in datos["diario"][-30:]:
             f = datetime.strptime(dia["fecha"], "%Y-%m-%d")
@@ -163,7 +160,6 @@ if st.session_state.vista_actual == 'general':
             disc_prom.append(sum(m["Disciplina"] for m in dia["materias"].values()) / len(dia["materias"]))
             vel_prom.append(sum(m["Velocidad"] for m in dia["materias"].values()) / len(dia["materias"]))
 
-        # --- GRÁFICO DE DISCIPLINA ---
         st.subheader(f"🔥 DISCIPLINA: {disc_prom[-1]:.1f}%")
         fig_disc = go.Figure()
         fig_disc.add_trace(go.Scatter(
@@ -185,7 +181,6 @@ if st.session_state.vista_actual == 'general':
         st.plotly_chart(fig_disc, use_container_width=True)
         st.divider()
 
-        # --- GRÁFICO DE VELOCIDAD ---
         st.subheader(f"⚡ VELOCIDAD: {vel_prom[-1]:.1f} ejercicios/hora")
         fig_vel = go.Figure()
         fig_vel.add_trace(go.Scatter(
@@ -207,10 +202,11 @@ if st.session_state.vista_actual == 'general':
         st.plotly_chart(fig_vel, use_container_width=True)
         st.divider()
 
-        # --- GRÁFICO DE EXÁMENES ---
-        st.subheader("🎯 EXÁMENES")
+        # --- EXÁMENES ---
+        st.subheader(" EXÁMENES")
         prom_sem, prom_uni, cnt_sem, cnt_uni = 0, 0, 0, 0
-        fechas_sim, notas_sim, tipos_sim = [], [], []
+        prec_sem_total, prec_uni_total = 0, 0
+        fechas_sim, notas_sim, tipos_sim, precisiones_sim = [], [], [], []
         
         if datos["semanal"]:
             for sim in sorted(datos["semanal"], key=lambda x: x["fecha"]):
@@ -218,18 +214,42 @@ if st.session_state.vista_actual == 'general':
                 fechas_sim.append(f)
                 if sim["tipo"] == "Semanal":
                     notas_sim.append(sim["Puntaje_Simulacro"])
-                    prom_sem += sim["Puntaje_Simulacro"]; cnt_sem += 1
+                    prom_sem += sim["Puntaje_Simulacro"]
+                    cnt_sem += 1
                     tipos_sim.append("Semanal")
+                    if "Precisión" in sim:
+                        prec_sem_total += sim["Precisión"]
                 else:
                     notas_sim.append(sim["Promedio_Notas"])
-                    prom_uni += sim["Promedio_Notas"]; cnt_uni += 1
+                    prom_uni += sim["Promedio_Notas"]
+                    cnt_uni += 1
                     tipos_sim.append("UNI")
-        if cnt_sem: prom_sem /= cnt_sem
-        if cnt_uni: prom_uni /= cnt_uni
+                    if "Promedio_Precision" in sim:
+                        prec_uni_total += sim["Promedio_Precision"]
+        if cnt_sem: 
+            prom_sem /= cnt_sem
+            prec_sem_prom = prec_sem_total / cnt_sem if prec_sem_total > 0 else 0
+        if cnt_uni: 
+            prom_uni /= cnt_uni
+            prec_uni_prom = prec_uni_total / cnt_uni if prec_uni_total > 0 else 0
 
         col1, col2 = st.columns(2)
-        with col1: st.metric("🥇 Promedio Semanales", f"{prom_sem:.1f}")
-        with col2: st.metric("🏆 Promedio Tipo UNI", f"{prom_uni:.1f}")
+        with col1: st.metric(" Promedio Semanales", f"{prom_sem:.1f}")
+        with col2: st.metric(" Promedio Tipo UNI", f"{prom_uni:.1f}")
+        
+        # Métrica de precisión promedio
+        precision_total = 0
+        count_precision = 0
+        for sim in datos["semanal"]:
+            if sim["tipo"] == "Semanal" and "Precisión" in sim:
+                precision_total += sim["Precisión"]
+                count_precision += 1
+            elif sim["tipo"] == "UNI" and "Promedio_Precision" in sim:
+                precision_total += sim["Promedio_Precision"]
+                count_precision += 1
+        prom_precision = precision_total / count_precision if count_precision > 0 else 0
+        
+        st.metric("Precisión", f"{prom_precision:.1f}%")
             
         if fechas_sim:
             fechas_sem = [f for f, t in zip(fechas_sim, tipos_sim) if t == "Semanal"]
@@ -283,7 +303,7 @@ if st.session_state.vista_actual == 'general':
 # VISTA: RENDIMIENTO POR CURSO
 # ============================================
 elif st.session_state.vista_actual == 'curso':
-    st.header("📚 SECCIÓN: RENDIMIENTO POR CURSO")
+    st.header(" SECCIÓN: RENDIMIENTO POR CURSO")
     if st.button("⬅️ Volver al inicio", key="back_curso"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
@@ -305,11 +325,11 @@ elif st.session_state.vista_actual == 'curso':
                 materias_stats[mat]["vel"].append(stats["Velocidad"])
 
         for mat, s in materias_stats.items():
-            simbolo = SIMBOLOS_CURSOS.get(mat, "📚")
+            simbolo = SIMBOLOS_CURSOS.get(mat, "")
             with st.expander(f"▼ {simbolo} {mat}", expanded=False):
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.write(f"📅 Días estudiados: {s['dias']}")
+                    st.write(f" Días estudiados: {s['dias']}")
                     st.write(f"📝 Ejercicios totales: {s['ejercicios']}")
                     st.write(f"⏰ Horas totales: {s['horas']:.1f}h")
                 with c2:
@@ -317,7 +337,6 @@ elif st.session_state.vista_actual == 'curso':
                     st.write(f"⚡ Velocidad: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
         st.divider()
 
-        # Preparar datos para gráficos por materia
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
         f_det, d_mat, v_mat = [], {m:[] for m in mats}, {m:[] for m in mats}
         for dia in datos["diario"][-30:]:
@@ -331,7 +350,6 @@ elif st.session_state.vista_actual == 'curso':
                         d_mat[m].append(None)
                         v_mat[m].append(None)
 
-        # --- GRÁFICO DE DISCIPLINA POR MATERIA ---
         st.subheader("🔥 DISCIPLINA")
         fig_disc_mat = go.Figure()
         for i, m in enumerate(mats):
@@ -358,14 +376,13 @@ elif st.session_state.vista_actual == 'curso':
         st.plotly_chart(fig_disc_mat, use_container_width=True)
         st.divider()
 
-        # --- GRÁFICO DE VELOCIDAD POR MATERIA ---
         st.subheader("⚡ VELOCIDAD")
         fig_vel_mat = go.Figure()
         for i, m in enumerate(mats):
             val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
             if val:
                 ff, vv = zip(*val)
-                simbolo = SIMBOLOS_CURSOS.get(m, "📚")
+                simbolo = SIMBOLOS_CURSOS.get(m, "")
                 fig_vel_mat.add_trace(go.Scatter(
                     x=ff, y=vv,
                     mode='lines+markers',
@@ -385,7 +402,7 @@ elif st.session_state.vista_actual == 'curso':
         st.plotly_chart(fig_vel_mat, use_container_width=True)
         st.divider()
 
-        # --- GRÁFICO DE BARRAS ---
+        # --- GRÁFICO DE BARRAS CON HORAS Y EJERCICIOS ---
         st.subheader("📊 EJERCICIOS VS HORAS")
         ej_tot = {m:0 for m in mats}
         hr_tot = {m:0 for m in mats}
@@ -396,17 +413,33 @@ elif st.session_state.vista_actual == 'curso':
                     hr_tot[m] += s["horas_estudiadas"]
         
         fig_barras = go.Figure()
+        
+        # Barras de ejercicios
         for m in mats:
             simbolo = SIMBOLOS_CURSOS.get(m, "📚")
             fig_barras.add_trace(go.Bar(
-                name=f'{simbolo} {m}',
+                name='Ejercicios',
                 x=[f'{simbolo} {m}'],
                 y=[ej_tot[m]],
                 marker_color='#3498DB',
                 hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>',
-                showlegend=False
+                showlegend=(m == mats[0])
             ))
+        
+        # Barras de horas
+        for m in mats:
+            simbolo = SIMBOLOS_CURSOS.get(m, "📚")
+            fig_barras.add_trace(go.Bar(
+                name='Horas',
+                x=[f'{simbolo} {m}'],
+                y=[hr_tot[m]],
+                marker_color='#E74C3C',
+                hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>',
+                showlegend=(m == mats[0])
+            ))
+        
         fig_barras.update_layout(
+            barmode='group',
             yaxis_title='Cantidad',
             yaxis=dict(range=[0, max(max(ej_tot.values()), max(hr_tot.values()))*1.2]),
             xaxis_title='Materia',
@@ -429,7 +462,7 @@ elif st.session_state.vista_actual == 'registro':
     
     if not st.session_state.autenticado:
         pwd = st.text_input("Ingresa la contraseña para registrar datos:", type="password")
-        if st.button("🔓 Desbloquear Registro", type="primary"):
+        if st.button(" Desbloquear Registro", type="primary"):
             if pwd == CONTRASEÑA_REGISTRO:
                 st.session_state.autenticado = True
                 st.rerun()
@@ -480,7 +513,7 @@ elif st.session_state.vista_actual == 'registro':
 
         st.divider()
         st.subheader("🏆 Registro de Simulacro")
-        tipo = st.radio("Tipo de simulacro:", ["🥇 Semanal", "🏆 Tipo UNI"], horizontal=True)
+        tipo = st.radio("Tipo de simulacro:", ["🥇 Semanal", " Tipo UNI"], horizontal=True)
         
         if tipo == "🥇 Semanal":
             c1, c2 = st.columns(2)
@@ -493,10 +526,9 @@ elif st.session_state.vista_actual == 'registro':
                 st.rerun()
         else:
             # REGISTRO DE SIMULACRO TIPO UNI (3 DÍAS)
-            st.subheader("🏆 Simulacro Tipo UNI (3 días)")
+            st.subheader(" Simulacro Tipo UNI (3 días)")
             st.info("📝 Día 1: 100 preguntas | Día 2: 40 preguntas | Día 3: 40 preguntas")
             
-            # Definir nombres y preguntas por día
             dias_uni = [
                 {"nombre": "🌐 Aptitud Académica y Humanidades", "preguntas": 100},
                 {"nombre": "🔢 Matemáticas", "preguntas": 40},
@@ -506,11 +538,13 @@ elif st.session_state.vista_actual == 'registro':
             dias_datos = []
             
             for i, dia_info in enumerate(dias_uni):
-                with st.expander(f"📅 {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
+                with st.expander(f" Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
+                    st.markdown(f"### {dia_info['nombre']}")
+                    
                     col1, col2 = st.columns(2)
                     with col1:
                         puntaje_dia = st.number_input(
-                            f"Puntaje Día {i+1}", 
+                            "Puntaje", 
                             min_value=0.0, 
                             max_value=20.0, 
                             step=0.1, 
@@ -518,7 +552,7 @@ elif st.session_state.vista_actual == 'registro':
                         )
                     with col2:
                         correctas_dia = st.number_input(
-                            f"Correctas Día {i+1}", 
+                            "Preguntas acertadas", 
                             min_value=0, 
                             max_value=dia_info['preguntas'], 
                             step=1, 
@@ -535,9 +569,8 @@ elif st.session_state.vista_actual == 'registro':
                         "precision": round(precision_dia, 2)
                     })
                     
-                    st.write(f"**Precisión {dia_info['nombre']}:** {precision_dia:.1f}%")
+                    st.write(f"**🎯Precisión:** {precision_dia:.1f}%")
             
-            # Calcular promedios
             if dias_datos:
                 prom_notas = sum(d["puntaje"] for d in dias_datos) / 3
                 prom_precision = sum(d["precision"] for d in dias_datos) / 3
@@ -546,7 +579,7 @@ elif st.session_state.vista_actual == 'registro':
                 st.subheader("📊 Resumen del Simulacro UNI")
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.metric("🎯 Promedio de Notas", f"{prom_notas:.2f}")
+                    st.metric(" Promedio de Notas", f"{prom_notas:.2f}")
                 with col2:
                     st.metric("📊 Promedio de Precisión", f"{prom_precision:.1f}%")
                 
