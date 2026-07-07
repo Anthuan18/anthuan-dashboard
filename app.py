@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 # ============================================
 st.set_page_config(
     page_title="Dashboard de Anthuan", 
-    page_icon="🎓", 
+    page_icon="", 
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -21,7 +21,6 @@ st.markdown("""
     .stButton > button { border-radius: 10px; }
     .js-plotly-plot .plotly { width: 100% !important; }
     
-    /* Botones de Plotly resaltados */
     .modebar-btn[data-title="Reset axes"] { background-color: #00d4aa !important; border-radius: 5px !important; padding: 5px !important; }
     .modebar-btn[data-title="Reset axes"] svg { fill: white !important; }
     .modebar-btn[data-title="Pan"] { background-color: #0099ff !important; border-radius: 5px !important; padding: 5px !important; }
@@ -117,7 +116,7 @@ if st.session_state.vista_actual == 'general':
         col1, col2, col3 = st.columns(3)
         with col1: st.metric("📅 Días registrados", total_dias)
         with col2: st.metric("📝 Ejercicios resueltos", total_ejercicios)
-        with col3: st.metric(" Horas de estudio", f"{int(total_horas)}h")
+        with col3: st.metric("⏰ Horas de estudio", f"{int(total_horas)}h")
         st.divider()
 
         fechas, disc_prom, vel_prom = [], [], []
@@ -134,7 +133,7 @@ if st.session_state.vista_actual == 'general':
         st.plotly_chart(fig_disc, use_container_width=True)
         st.divider()
 
-        st.subheader(f"⚡ VELOCIDAD: {vel_prom[-1]:.1f} ejercicios/hora")
+        st.subheader(f"⚡ VELOCIDAD: {int(vel_prom[-1])} ejercicios/hora")
         fig_vel = go.Figure()
         fig_vel.add_trace(go.Scatter(x=fechas, y=vel_prom, mode='lines+markers', name='Velocidad', line=dict(color='gold', width=3), marker=dict(size=8, color='gold'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejercicios/h<extra></extra>'))
         fig_vel.update_layout(yaxis_title='Velocidad (ejercicios/h)', yaxis=dict(range=[0, max(20, max(vel_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
@@ -174,7 +173,7 @@ if st.session_state.vista_actual == 'general':
             st.metric("🥇 Promedio Semanales", f"{prom_sem:.1f}")
             st.metric("🎯Precisión", f"{prec_sem_prom:.1f}%")
         with col2: 
-            st.metric(" Promedio Tipo UNI", f"{prom_uni:.1f}")
+            st.metric("🏆 Promedio Tipo UNI", f"{prom_uni:.1f}")
             st.metric("🎯Precisión", f"{prec_uni_prom:.1f}%")
             
         if fechas_sim:
@@ -201,7 +200,7 @@ if st.session_state.vista_actual == 'general':
 # VISTA: RENDIMIENTO POR CURSO
 # ============================================
 elif st.session_state.vista_actual == 'curso':
-    st.header(" SECCIÓN: RENDIMIENTO POR CURSO")
+    st.header("📚 SECCIÓN: RENDIMIENTO POR CURSO")
     if st.button("⬅️ Volver al inicio", key="back_curso"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
@@ -227,12 +226,12 @@ elif st.session_state.vista_actual == 'curso':
             with st.expander(f"▼ {simbolo} {mat}", expanded=False):
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.write(f" Días estudiados: {s['dias']}")
+                    st.write(f"📅 Días estudiados: {s['dias']}")
                     st.write(f"📝 Ejercicios totales: {s['ejercicios']}")
-                    st.write(f"⏰ Horas totales: {s['horas']:.1f}h")
+                    st.write(f"⏰ Horas totales: {int(s['horas'])}h")
                 with c2:
                     st.write(f"🔥 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
-                    st.write(f"⚡ Velocidad: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
+                    st.write(f"⚡ Velocidad: {int(sum(s['vel'])/len(s['vel']))} ejercicios/h")
         st.divider()
 
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
@@ -286,7 +285,7 @@ elif st.session_state.vista_actual == 'curso':
         fig_barras.update_layout(barmode='group', yaxis_title='Cantidad', yaxis=dict(range=[0, max(max(ej_tot.values()), max(hr_tot.values()))*1.2]), xaxis_title='Materia', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_barras, use_container_width=True)
     else:
-        st.warning("️ No hay datos de materias registrados.")
+        st.warning("⚠️ No hay datos de materias registrados.")
 
 # ============================================
 # VISTA: REGISTRO
@@ -374,7 +373,7 @@ elif st.session_state.vista_actual == 'registro':
             
             dias_datos = []
             for i, dia_info in enumerate(dias_uni):
-                with st.expander(f" Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
+                with st.expander(f"📅 Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
                     st.markdown(f"### {dia_info['nombre']}")
                     col1, col2 = st.columns(2)
                     with col1:
@@ -384,7 +383,7 @@ elif st.session_state.vista_actual == 'registro':
                     
                     precision_dia = (correctas_dia / dia_info['preguntas']) * 100 if dia_info['preguntas'] > 0 else 0
                     dias_datos.append({"dia": i+1, "nombre": dia_info['nombre'], "puntaje": puntaje_dia, "correctas": correctas_dia, "precision": round(precision_dia, 2)})
-                    st.write(f"**Precisión:** {precision_dia:.1f}%")
+                    st.write(f"**🎯Precisión:** {precision_dia:.1f}%")
             
             if dias_datos:
                 prom_notas = sum(d["puntaje"] for d in dias_datos) / 3
@@ -393,7 +392,7 @@ elif st.session_state.vista_actual == 'registro':
                 st.divider()
                 st.subheader("📊 Resumen del Simulacro UNI")
                 col1, col2 = st.columns(2)
-                with col1: st.metric(" Promedio de Notas", f"{prom_notas:.2f}")
+                with col1: st.metric("🎯 Promedio de Notas", f"{prom_notas:.2f}")
                 with col2: st.metric("📊 Promedio de Precisión", f"{prom_precision:.1f}%")
                 
                 if st.button("💾 Guardar Simulacro UNI", type="primary", use_container_width=True):
