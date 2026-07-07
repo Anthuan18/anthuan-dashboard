@@ -34,7 +34,7 @@ st.markdown("""
 CONTRASEÑA_REGISTRO = "anthuan2027"
 
 SIMBOLOS_CURSOS = {
-    "Aritmética": "", "Álgebra": "🔡", "Geometría": "🌐", 
+    "Aritmética": "", "Álgebra": "", "Geometría": "🌐", 
     "Trigonometría": "📐", "Física": "⚙️", "Química": "🧪"
 }
 
@@ -73,18 +73,18 @@ if 'autenticado' not in st.session_state:
 # ============================================
 # ENCABEZADO Y NAVEGACIÓN
 # ============================================
-st.title(" Estadísticas de Anthuan: Ciclo Semestral básico 2027-1")
+st.title("🎓 Estadísticas de Anthuan: Ciclo Semestral básico 2027-1")
 st.markdown("### 👋 Hola, aquí verás mis estadísticas de rendimiento académico.")
 st.divider()
 
 if st.session_state.vista_actual == 'inicio':
     col1, col2 = st.columns(2)
     with col1:
-        if st.button(" RENDIMIENTO GENERAL", use_container_width=True, key="btn_general"):
+        if st.button("📈 RENDIMIENTO GENERAL", use_container_width=True, key="btn_general"):
             st.session_state.vista_actual = 'general'
             st.rerun()
     with col2:
-        if st.button(" RENDIMIENTO POR CURSO", use_container_width=True, key="btn_curso"):
+        if st.button("📚 RENDIMIENTO POR CURSO", use_container_width=True, key="btn_curso"):
             st.session_state.vista_actual = 'curso'
             st.rerun()
     
@@ -114,7 +114,7 @@ if st.session_state.vista_actual == 'general':
         total_horas = sum(d["Total_Horas_Estudiadas"] for d in datos["diario"])
         
         col1, col2, col3 = st.columns(3)
-        with col1: st.metric(" Días registrados", total_dias)
+        with col1: st.metric("📅 Días registrados", total_dias)
         with col2: st.metric("📝 Ejercicios resueltos", total_ejercicios)
         with col3: st.metric("⏰ Horas de estudio", f"{int(total_horas)}h")
         st.divider()
@@ -200,7 +200,7 @@ if st.session_state.vista_actual == 'general':
 # VISTA: RENDIMIENTO POR CURSO
 # ============================================
 elif st.session_state.vista_actual == 'curso':
-    st.header(" SECCIÓN: RENDIMIENTO POR CURSO")
+    st.header("📚 SECCIÓN: RENDIMIENTO POR CURSO")
     if st.button("⬅️ Volver al inicio", key="back_curso"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
@@ -226,11 +226,11 @@ elif st.session_state.vista_actual == 'curso':
             with st.expander(f"▼ {simbolo} {mat}", expanded=False):
                 c1, c2 = st.columns(2)
                 with c1:
-                    st.write(f" Días estudiados: {s['dias']}")
+                    st.write(f"📅 Días estudiados: {s['dias']}")
                     st.write(f"📝 Ejercicios totales: {s['ejercicios']}")
                     st.write(f"⏰ Horas totales: {int(s['horas'])}h")
                 with c2:
-                    st.write(f" Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
+                    st.write(f"🔥 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
                     st.write(f"⚡ Velocidad: {int(sum(s['vel'])/len(s['vel']))} ejercicios/h")
         st.divider()
 
@@ -247,7 +247,7 @@ elif st.session_state.vista_actual == 'curso':
                         d_mat[m].append(None)
                         v_mat[m].append(None)
 
-        st.subheader(" DISCIPLINA")
+        st.subheader("🔥 DISCIPLINA")
         fig_disc_mat = go.Figure()
         for i, m in enumerate(mats):
             val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
@@ -269,7 +269,7 @@ elif st.session_state.vista_actual == 'curso':
         st.plotly_chart(fig_vel_mat, use_container_width=True)
         st.divider()
 
-        st.subheader(" EJERCICIOS VS HORAS")
+        st.subheader("📊 EJERCICIOS VS HORAS")
         ej_tot = {m:0 for m in mats}
         hr_tot = {m:0 for m in mats}
         for dia in datos["diario"]:
@@ -299,7 +299,7 @@ elif st.session_state.vista_actual == 'registro':
     
     if not st.session_state.autenticado:
         pwd = st.text_input("Ingresa la contraseña para registrar datos:", type="password")
-        if st.button(" Desbloquear Registro", type="primary"):
+        if st.button("🔓 Desbloquear Registro", type="primary"):
             if pwd == CONTRASEÑA_REGISTRO:
                 st.session_state.autenticado = True
                 st.rerun()
@@ -307,48 +307,83 @@ elif st.session_state.vista_actual == 'registro':
                 st.error("❌ Contraseña incorrecta")
     else:
         st.success("🔓 Sesión iniciada. Puedes registrar tus datos.")
-        if st.button(" Cerrar Sesión"):
+        if st.button("🚪 Cerrar Sesión"):
             st.session_state.autenticado = False
             st.rerun()
         st.divider()
         
-        st.subheader("📝 Registro Diario")
-        ds = datetime.today().weekday()
-        nd = NOMBRES_DIAS[ds]
-        hd = HORAS_DISPONIBLES[ds]
-        mats = HORARIO_MATERIAS[ds]
-        st.info(f"📅 Hoy es **{nd}**. Tienes **{hd} horas** disponibles.")
-        
+        # ============================================
+        # VERIFICAR SI YA REGISTRÓ HOY
+        # ============================================
         datos = cargar_datos()
-        reg_mat = {}
-        tot_ej, tot_hr = 0, 0
+        fecha_hoy = datetime.now().strftime("%Y-%m-%d")
+        ya_registro_hoy = any(d["fecha"] == fecha_hoy for d in datos["diario"])
         
-        for m in mats:
-            simbolo = SIMBOLOS_CURSOS.get(m, "📚")
-            hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
-            st.markdown(f"### {simbolo} {m}")
-            c1, c2 = st.columns(2)
-            with c1: h_in = st.number_input(f"Horas ({m})", min_value=0, value=0, step=1, key=f"h_{m}")
-            with c2: e_in = st.number_input(f"Ejercicios ({m})", min_value=0, value=0, step=1, key=f"e_{m}")
+        if ya_registro_hoy:
+            # BUSCAR EL REGISTRO DE HOY PARA MOSTRAR RESUMEN
+            registro_hoy = next(d for d in datos["diario"] if d["fecha"] == fecha_hoy)
+            dia_nombre = registro_hoy["dia"]
             
-            disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
-            vel = e_in / h_in if h_in > 0 else 0
-            reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
-            tot_ej += e_in; tot_hr += h_in
+            st.success("✅ ¡Misión Diaria Completada!")
+            st.info(f"Ya registraste tus datos de hoy ({dia_nombre}). ¡Descansa y vuelve mañana! 🌙")
+            
             st.divider()
+            st.subheader("📊 Resumen de hoy:")
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("📝 Ejercicios", registro_hoy["Total_Ejercicios_Resueltos_Dia"])
+            with col2:
+                st.metric("⏰ Horas", f"{int(registro_hoy['Total_Horas_Estudiadas'])}h")
+            with col3:
+                st.metric("📚 Materias", len(registro_hoy["materias"]))
+            
+            st.divider()
+            st.write("### 📖 Detalle por materia:")
+            for materia, stats in registro_hoy["materias"].items():
+                simbolo = SIMBOLOS_CURSOS.get(materia, "📚")
+                st.write(f"**{simbolo} {materia}:** {stats['Ejercicios_Resueltos']} ejercicios en {int(stats['horas_estudiadas'])}h")
+            
+        else:
+            # MOSTRAR FORMULARIO DE REGISTRO DIARIO
+            st.subheader("📝 Registro Diario")
+            ds = datetime.today().weekday()
+            nd = NOMBRES_DIAS[ds]
+            hd = HORAS_DISPONIBLES[ds]
+            mats = HORARIO_MATERIAS[ds]
+            st.info(f"📅 Hoy es **{nd}**. Tienes **{hd} horas** disponibles.")
+            
+            reg_mat = {}
+            tot_ej, tot_hr = 0, 0
+            
+            for m in mats:
+                simbolo = SIMBOLOS_CURSOS.get(m, "")
+                hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
+                st.markdown(f"### {simbolo} {m}")
+                c1, c2 = st.columns(2)
+                with c1: h_in = st.number_input(f"Horas ({m})", min_value=0, value=0, step=1, key=f"h_{m}")
+                with c2: e_in = st.number_input(f"Ejercicios ({m})", min_value=0, value=0, step=1, key=f"e_{m}")
+                
+                disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
+                vel = e_in / h_in if h_in > 0 else 0
+                reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
+                tot_ej += e_in; tot_hr += h_in
+                st.divider()
 
-        if st.button("💾 Guardar Día", type="primary", use_container_width=True):
-            datos["diario"].append({
-                "fecha": datetime.now().strftime("%Y-%m-%d"), "dia": nd,
-                "horas_disponibles_total": hd, "materias": reg_mat,
-                "Total_Ejercicios_Resueltos_Dia": tot_ej, "Total_Horas_Estudiadas": tot_hr
-            })
-            guardar_datos(datos)
-            st.success(f"✅ ¡Día registrado! {tot_ej} ejercicios.")
-            st.balloons()
-            st.rerun()
+            if st.button("💾 Guardar Día", type="primary", use_container_width=True):
+                datos["diario"].append({
+                    "fecha": fecha_hoy, "dia": nd,
+                    "horas_disponibles_total": hd, "materias": reg_mat,
+                    "Total_Ejercicios_Resueltos_Dia": tot_ej, "Total_Horas_Estudiadas": tot_hr
+                })
+                guardar_datos(datos)
+                st.success(f"✅ ¡Día registrado! {tot_ej} ejercicios.")
+                st.balloons()
+                st.rerun()
 
-        # --- REGISTRO DE EXÁMENES ---
+        # ============================================
+        # REGISTRO DE EXÁMENES (SIEMPRE DISPONIBLE)
+        # ============================================
         st.divider()
         st.subheader("📄 Registro de exámenes")
         tipo = st.radio("Tipo de examen:", ["🥇 Semanal", "🏆 Tipo UNI"], horizontal=True)
