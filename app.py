@@ -407,7 +407,7 @@ elif st.session_state.vista_actual == 'registro':
             st.write(f"**\U0001F4DD Ejercicios:** {registro_hoy['Total_Ejercicios_Resueltos_Dia']}")
             st.write(f"**\u23F0 Horas:** {int(registro_hoy['Total_Horas_Estudiadas'])}h")
         else:
-            ds = datetime.today().weekday()
+            ds = hora_peru().weekday()
             nd = NOMBRES_DIAS[ds]
             hd = HORAS_DISPONIBLES[ds]
             mats = HORARIO_MATERIAS[ds]
