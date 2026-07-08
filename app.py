@@ -136,12 +136,12 @@ if st.session_state.vista_actual == 'general':
         # Obtener la fecha del primer registro
         primer_registro = min(datos["diario"], key=lambda x: x["fecha"])
         fecha_inicio = datetime.strptime(primer_registro["fecha"], "%Y-%m-%d")
-        fecha_hoy = datetime.now()
+        fecha_hoy = hora_peru()
         
         # Generar lista completa de días desde el primer registro hasta hoy
         dias_completos = []
         dia_actual = fecha_inicio
-        while dia_actual <= fecha_hoy:
+        while dia_actual.date() <= fecha_hoy.date():
             fecha_str = dia_actual.strftime("%Y-%m-%d")
             
             if fecha_str in fechas_registradas:
