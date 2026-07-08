@@ -474,7 +474,7 @@ elif st.session_state.vista_actual == 'registro':
             if tipo_examen == "Semanal":
                 c1, c2 = st.columns(2)
                 with c1: pj = st.number_input("Nota (0-20)", min_value=0.0, max_value=20.0, step=0.1)
-                with c2: co = st.number_input("Preguntas correctas", min_value=0, max_value=60, step=1)
+                with c2: co = st.number_input("Preguntas correctas (0-60)", min_value=0, max_value=60, step=1)
                 
                 precision_calc = (co / 60) * 100
                 st.metric("\U0001F3AF Precisión", f"{precision_calc:.1f}%")
