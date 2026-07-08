@@ -167,6 +167,13 @@ if st.session_state.vista_actual == 'general':
                 dias_completos.append(registro_ficticio)
             
             dia_actual += timedelta(days=1)
+                # Eliminar duplicados manteniendo el orden
+        dias_vistos = {}
+        for dia in dias_completos:
+            fecha = dia["fecha"]
+            if fecha not in dias_vistos:
+                dias_vistos[fecha] = dia
+        dias_completos = list(dias_vistos.values())
         
         # ============================================
         # MÉTRICAS BÁSICAS (SOLO CON DÍAS REALES)
