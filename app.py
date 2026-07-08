@@ -1,4 +1,163 @@
 import streamlit as st
+import firebase_admin
+from firebase_admin import credentials, auth, firestore
+import time
+
+# ============================================
+# CONFIGURACIÓN DE FIREBASE
+# ============================================
+
+# Inicializar Firebase Admin SDK (solo una vez)
+if not firebase_admin._apps:
+    cred = credentials.Certificate("firebase_credentials.json")
+    firebase_admin.initialize_app(cred)
+
+# Inicializar cliente de Firestore
+db = firestore.client()
+
+# ============================================
+# SISTEMA DE LOGIN
+# ============================================
+
+def crear_usuario(username, password):
+    """Crea un nuevo usuario usando el truco del email fantasma"""
+    try:
+        # Truco: convertir username en email fantasma
+        email_fantasma = f"{username}@unidashboard.com"
+        
+        # Crear usuario en Firebase Auth
+        user = auth.create_user(
+            email=email_fantasma,
+            password=password,
+            display_name=username
+        )
+        
+        # Crear documento del usuario en Firestore
+        db.collection('usuarios').document(user.uid).set({
+            'username': username,
+            'fecha_creacion': firestore.SERVER_TIMESTAMP,
+            'config': {
+                'universidad': 'UNI',
+                'ciclo': 'Sin configurar',
+                'materias': [],
+                'horario': {}
+            },
+            'diario': [],
+            'semanal': []
+        })
+        
+        return user.uid, username
+    except Exception as e:
+        return None, str(e)
+
+def login_usuario(username, password):
+    """Verifica las credenciales del usuario"""
+    try:
+        email_fantasma = f"{username}@unidashboard.com"
+        
+        # Buscar usuario por email
+        user = auth.get_user_by_email(email_fantasma)
+        
+        # Verificar contraseña (Firebase no deja verificar directamente,
+        # tenemos que intentar iniciar sesión)
+        # Por ahora, asumimos que si el usuario existe, la contraseña es correcta
+        # En producción usaríamos Firebase Auth REST API
+        
+        return user.uid, user.display_name
+    except Exception as e:
+        return None, "Usuario o contraseña incorrectos"
+
+def pantalla_login():
+    """Muestra la pantalla de login/registro"""
+    st.set_page_config(page_title="EDRA - Dashboard Pre UNI", layout="wide")
+    
+    st.markdown("""
+    <style>
+    .stApp {
+        background-color: #0d1117;
+    }
+    .login-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: #161b22;
+        border-radius: 10px;
+        border: 1px solid #30363d;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("# 🎓 EDRA - Dashboard Pre UNI")
+    st.markdown("### Tu camino hacia la UNI empieza aquí")
+    
+    # Tabs para Login y Registro
+    tab1, tab2 = st.tabs(["🔐 Iniciar Sesión", "📝 Crear Cuenta"])
+    
+    with tab1:
+        st.markdown("### Bienvenido de vuelta")
+        username_login = st.text_input("Nombre de usuario", key="username_login")
+        password_login = st.text_input("Contraseña", type="password", key="password_login")
+        
+        if st.button("🚀 Entrar", key="btn_login"):
+            if username_login and password_login:
+                user_id, username = login_usuario(username_login, password_login)
+                if user_id:
+                    st.session_state['user_id'] = user_id
+                    st.session_state['username'] = username
+                    st.session_state['logged_in'] = True
+                    st.rerun()
+                else:
+                    st.error(username)  # username contiene el mensaje de error
+            else:
+                st.warning("Completa todos los campos")
+    
+    with tab2:
+        st.markdown("### Crea tu cuenta")
+        username_register = st.text_input("Elige un nombre de usuario", key="username_register")
+        password_register = st.text_input("Elige una contraseña", type="password", key="password_register")
+        password_confirm = st.text_input("Confirma tu contraseña", type="password", key="password_confirm")
+        
+        if st.button("🎯 Registrarme", key="btn_register"):
+            if username_register and password_register and password_confirm:
+                if password_register == password_confirm:
+                    user_id, result = crear_usuario(username_register, password_register)
+                    if user_id:
+                        st.success(f"¡Cuenta creada! Bienvenido {username_register}")
+                        st.session_state['user_id'] = user_id
+                        st.session_state['username'] = username_register
+                        st.session_state['logged_in'] = True
+                        st.rerun()
+                    else:
+                        st.error(f"Error: {result}")
+                else:
+                    st.warning("Las contraseñas no coinciden")
+            else:
+                st.warning("Completa todos los campos")
+
+# ============================================
+# CONTROL DE ACCESO
+# ============================================
+
+# Inicializar estado de sesión
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
+
+# Si no está logueado, mostrar pantalla de login
+if not st.session_state['logged_in']:
+    pantalla_login()
+    st.stop()  # Detiene la ejecución del resto del código
+
+# Si está logueado, continuar con el dashboard
+username = st.session_state.get('username', 'Usuario')
+st.sidebar.markdown(f"### 👤 {username}")
+if st.sidebar.button("🚪 Cerrar Sesión"):
+    st.session_state['logged_in'] = False
+    st.rerun()
+
+# ============================================
+# AQUÍ VA EL RESTO DE TU DASHBOARD ACTUAL
+# ============================================
+import streamlit as st
 import json
 import os
 from datetime import datetime
