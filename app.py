@@ -187,7 +187,16 @@ if st.session_state.vista_actual == 'general':
         # ============================================
         fechas, disc_prom, vel_prom = [], [], []
         
-        for dia in dias_completos[-30:]:  # Últimos 30 días
+        # Eliminar duplicados por fecha
+        fechas_vistas = set()
+        dias_unicos = []
+        for dia in dias_completos:
+            if dia["fecha"] not in fechas_vistas:
+                 fechas_vistas.add(dia["fecha"])
+                 dias_unicos.append(dia)
+
+        for dia in dias_unicos[-30:]:
+        
             f = datetime.strptime(dia["fecha"], "%Y-%m-%d")
             fechas.append(f)
             
