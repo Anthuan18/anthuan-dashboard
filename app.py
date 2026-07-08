@@ -69,9 +69,9 @@ def cargar_datos():
             datos = json.load(f)
         
         # Filtrar fechas futuras o incorrectas (mayores a hoy en Perú)
-        hoy_peru = fecha_hoy_peru()
-        datos["diario"] = [d for d in datos["diario"] if d.get("fecha", "") <= hoy_peru]
-        datos["semanal"] = [e for e in datos["semanal"] if e.get("fecha", "") <= hoy_peru]
+        # Filtrar fecha incorrecta 2026-07-08 específicamente
+        datos["diario"] = [d for d in datos["diario"] if d.get("fecha", "") != "2026-07-08"]
+        datos["semanal"] = [e for e in datos["semanal"] if e.get("fecha", "") != "2026-07-08"]
         
         return datos
     return {"diario": [], "semanal": []}
