@@ -1,7 +1,8 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
-import time
+import json
+import os
 
 # ============================================
 # CONFIGURACIÓN DE FIREBASE
@@ -9,7 +10,14 @@ import time
 
 # Inicializar Firebase Admin SDK (solo una vez)
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_credentials.json")
+    # Intentar cargar desde Secrets de Streamlit (producción)
+    if 'firebase_credentials' in st.secrets:
+        cred_dict = dict(st.secrets['firebase_credentials'])
+        cred = credentials.Certificate(cred_dict)
+    else:
+        # Cargar desde archivo local (desarrollo)
+        cred = credentials.Certificate("firebase_credentials.json")
+    
     firebase_admin.initialize_app(cred)
 
 # Inicializar cliente de Firestore
