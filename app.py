@@ -66,9 +66,15 @@ ARCHIVO_GUARDADO = "anthuan_stats.json"
 def cargar_datos():
     if os.path.exists(ARCHIVO_GUARDADO):
         with open(ARCHIVO_GUARDADO, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            datos = json.load(f)
+        
+        # Filtrar fechas futuras o incorrectas (mayores a hoy en Perú)
+        hoy_peru = fecha_hoy_peru()
+        datos["diario"] = [d for d in datos["diario"] if d.get("fecha", "") <= hoy_peru]
+        datos["semanal"] = [e for e in datos["semanal"] if e.get("fecha", "") <= hoy_peru]
+        
+        return datos
     return {"diario": [], "semanal": []}
-
 def guardar_datos(datos):
     with open(ARCHIVO_GUARDADO, 'w', encoding='utf-8') as f:
         json.dump(datos, f, indent=4, ensure_ascii=False)
