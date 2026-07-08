@@ -421,8 +421,8 @@ elif st.session_state.vista_actual == 'registro':
                 hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
                 st.markdown(f"### {simbolo} {m}")
                 c1, c2 = st.columns(2)
-                with c1: h_in = st.number_input(f"Horas ({m})", min_value=0, value=0, step=1, key=f"h_{m}")
-                with c2: e_in = st.number_input(f"Ejercicios ({m})", min_value=0, value=0, step=1, key=f"e_{m}")
+                with c1: h_in = st.number_input(f"Horas", min_value=0, value=0, step=1, key=f"h_{m}")
+                with c2: e_in = st.number_input(f"Ejercicios", min_value=0, value=0, step=1, key=f"e_{m}")
                 
                 disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
                 vel = e_in / h_in if h_in > 0 else 0
@@ -473,8 +473,8 @@ elif st.session_state.vista_actual == 'registro':
             
             if tipo_examen == "Semanal":
                 c1, c2 = st.columns(2)
-                with c1: pj = st.number_input("Puntaje (0-20)", min_value=0.0, max_value=20.0, step=0.1)
-                with c2: co = st.number_input("Correctas (0-60)", min_value=0, max_value=60, step=1)
+                with c1: pj = st.number_input("Nota (0-20)", min_value=0.0, max_value=20.0, step=0.1)
+                with c2: co = st.number_input("Preguntas correctas", min_value=0, max_value=60, step=1)
                 
                 precision_calc = (co / 60) * 100
                 st.metric("\U0001F3AF Precisión", f"{precision_calc:.1f}%")
@@ -498,9 +498,9 @@ elif st.session_state.vista_actual == 'registro':
                     with st.expander(f"\U0001F4C5 Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
                         col1, col2 = st.columns(2)
                         with col1:
-                            puntaje_dia = st.number_input("Puntaje", min_value=0.0, max_value=20.0, step=0.1, key=f"punti_dia_{i}")
+                            puntaje_dia = st.number_input("Nota", min_value=0.0, max_value=20.0, step=0.1, key=f"punti_dia_{i}")
                         with col2:
-                            correctas_dia = st.number_input("Preguntas acertadas", min_value=0, max_value=dia_info['preguntas'], step=1, key=f"corr_dia_{i}")
+                            correctas_dia = st.number_input("Preguntas correctas", min_value=0, max_value=dia_info['preguntas'], step=1, key=f"corr_dia_{i}")
                         
                         precision_dia = (correctas_dia / dia_info['preguntas']) * 100 if dia_info['preguntas'] > 0 else 0
                         dias_datos.append({"dia": i+1, "nombre": dia_info['nombre'], "puntaje": puntaje_dia, "correctas": correctas_dia, "precision": round(precision_dia, 2)})
