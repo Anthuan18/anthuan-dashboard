@@ -143,6 +143,11 @@ if st.session_state.vista_actual == 'general':
         dia_actual = fecha_inicio
         while dia_actual.date() <= fecha_hoy.date():
             fecha_str = dia_actual.strftime("%Y-%m-%d")
+    
+            # Verificar si esta fecha ya existe (evitar duplicados)
+            if any(d["fecha"] == fecha_str for d in dias_completos):
+                 dia_actual += timedelta(days=1)
+                 continue
             
             if fecha_str in fechas_registradas:
                 # Día registrado, usar datos reales
