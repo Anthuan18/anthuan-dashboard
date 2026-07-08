@@ -3,8 +3,13 @@ import json
 import os
 from datetime import datetime
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+# Hora actual en Perú (GMT-5)
+def hora_peru():
+    return datetime.now(timezone(timedelta(hours=-5)))
 
+def fecha_hoy_peru():
+    return hora_peru().strftime("%Y-%m-%d")
 # ============================================
 # CONFIGURACIÓN INICIAL
 # ============================================
@@ -383,8 +388,8 @@ elif st.session_state.vista_actual == 'registro':
         # VERIFICAR REGISTROS DE HOY
         # ============================================
         datos = cargar_datos()
-        fecha_hoy = datetime.now().strftime("%Y-%m-%d")
-        
+        fecha_hoy = fecha_hoy_peru()
+
         ya_registro_hoy = any(d["fecha"] == fecha_hoy for d in datos["diario"])
         examen_hoy = [e for e in datos["semanal"] if e["fecha"] == fecha_hoy]
         ya_registro_examen_hoy = len(examen_hoy) > 0
@@ -427,7 +432,7 @@ elif st.session_state.vista_actual == 'registro':
 
             if st.button("\U0001F4BE Guardar Día", type="primary", use_container_width=True):
                 datos["diario"].append({
-                    "fecha": fecha_hoy, "dia": nd,
+                    "fecha": fecha_hoy, "dia": nd, "hora_registro": hora_peru().strftime("%H:%M:%S"),                    
                     "horas_disponibles_total": hd, "materias": reg_mat,
                     "Total_Ejercicios_Resueltos_Dia": tot_ej, "Total_Horas_Estudiadas": tot_hr
                 })
@@ -475,7 +480,7 @@ elif st.session_state.vista_actual == 'registro':
                 st.metric("\U0001F3AF Precisión", f"{precision_calc:.1f}%")
                 
                 if st.button("\U0001F4BE Guardar Examen Semanal", type="primary"):
-                    datos["semanal"].append({"fecha": fecha_hoy, "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round(precision_calc, 2)})
+                    datos["semanal"].append({"fecha": fecha_hoy_peru(), "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round(precision_calc, 2)})                    
                     guardar_datos(datos)
                     st.success("\u2705 Examen Semanal guardado.")
                     st.balloons()
