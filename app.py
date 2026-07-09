@@ -566,158 +566,158 @@ elif st.session_state.vista_actual == 'curso':
     # ============================================
     # VISTA: REGISTRO
     # ============================================
-    elif st.session_state.vista_actual == 'registro':
-        st.header("\U0001F4E5 REGISTRAR DATOS")
-        if st.button("\u2B05\uFE0F Volver al inicio", key="back_registro"):
-            st.session_state.vista_actual = 'inicio'
-            st.rerun()
-        st.divider()
-        
-        # Ya no necesitamos validación de contraseña porque tenemos login con Firebase
-        # El usuario ya está autenticado desde el inicio
+elif st.session_state.vista_actual == 'registro':
+    st.header("\U0001F4E5 REGISTRAR DATOS")
+    if st.button("\u2B05\uFE0F Volver al inicio", key="back_registro"):
+        st.session_state.vista_actual = 'inicio'
+        st.rerun()
+    st.divider()
     
+    # Ya no necesitamos validación de contraseña porque tenemos login con Firebase
+    # El usuario ya está autenticado desde el inicio
+
+    st.divider()
+    
+    # ============================================
+    # VERIFICAR REGISTROS DE HOY
+    # ============================================
+    datos = cargar_datos()
+    fecha_hoy = fecha_hoy_peru()
+
+    ya_registro_hoy = any(d["fecha"] == fecha_hoy for d in datos["diario"])
+    examen_hoy = [e for e in datos["semanal"] if e["fecha"] == fecha_hoy]
+    ya_registro_examen_hoy = len(examen_hoy) > 0
+    
+    # ============================================
+    # REGISTRO DIARIO
+    # ============================================
+    st.subheader("\U0001F4DD Registro Diario")
+    
+    if ya_registro_hoy:
+        registro_hoy = next(d for d in datos["diario"] if d["fecha"] == fecha_hoy)
+        st.success("\u2705 ¡Misión Diaria Completada!")
+        st.info(f"Ya registraste tus datos de hoy. ¡Descansa y vuelve mañana! \U0001F319")
         st.divider()
+        st.write(f"**\U0001F4DD Ejercicios:** {registro_hoy['Total_Ejercicios_Resueltos_Dia']}")
+        st.write(f"**\u23F0 Horas:** {int(registro_hoy['Total_Horas_Estudiadas'])}h")
+    else:
+        ds = hora_peru().weekday()
+        nd = NOMBRES_DIAS[ds]
+        hd = HORAS_DISPONIBLES[ds]
+        mats = HORARIO_MATERIAS[ds]
+        st.info(f"\U0001F4C5 Hoy es **{nd}**. Tienes **{hd} horas** disponibles.")
         
-        # ============================================
-        # VERIFICAR REGISTROS DE HOY
-        # ============================================
-        datos = cargar_datos()
-        fecha_hoy = fecha_hoy_peru()
-
-        ya_registro_hoy = any(d["fecha"] == fecha_hoy for d in datos["diario"])
-        examen_hoy = [e for e in datos["semanal"] if e["fecha"] == fecha_hoy]
-        ya_registro_examen_hoy = len(examen_hoy) > 0
+        reg_mat = {}
+        tot_ej, tot_hr = 0, 0
         
-        # ============================================
-        # REGISTRO DIARIO
-        # ============================================
-        st.subheader("\U0001F4DD Registro Diario")
-        
-        if ya_registro_hoy:
-            registro_hoy = next(d for d in datos["diario"] if d["fecha"] == fecha_hoy)
-            st.success("\u2705 ¡Misión Diaria Completada!")
-            st.info(f"Ya registraste tus datos de hoy. ¡Descansa y vuelve mañana! \U0001F319")
+        for m in mats:
+            simbolo = SIMBOLOS_CURSOS.get(m, "\U0001F4DA")
+            hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
+            st.markdown(f"### {simbolo} {m}")
+            c1, c2 = st.columns(2)
+            with c1: h_in = st.number_input(f"Horas", min_value=0, value=0, step=1, key=f"h_{m}")
+            with c2: e_in = st.number_input(f"Ejercicios", min_value=0, value=0, step=1, key=f"e_{m}")
+            
+            disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
+            vel = e_in / h_in if h_in > 0 else 0
+            reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
+            tot_ej += e_in; tot_hr += h_in
             st.divider()
-            st.write(f"**\U0001F4DD Ejercicios:** {registro_hoy['Total_Ejercicios_Resueltos_Dia']}")
-            st.write(f"**\u23F0 Horas:** {int(registro_hoy['Total_Horas_Estudiadas'])}h")
-        else:
-            ds = hora_peru().weekday()
-            nd = NOMBRES_DIAS[ds]
-            hd = HORAS_DISPONIBLES[ds]
-            mats = HORARIO_MATERIAS[ds]
-            st.info(f"\U0001F4C5 Hoy es **{nd}**. Tienes **{hd} horas** disponibles.")
-            
-            reg_mat = {}
-            tot_ej, tot_hr = 0, 0
-            
-            for m in mats:
-                simbolo = SIMBOLOS_CURSOS.get(m, "\U0001F4DA")
-                hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
-                st.markdown(f"### {simbolo} {m}")
-                c1, c2 = st.columns(2)
-                with c1: h_in = st.number_input(f"Horas", min_value=0, value=0, step=1, key=f"h_{m}")
-                with c2: e_in = st.number_input(f"Ejercicios", min_value=0, value=0, step=1, key=f"e_{m}")
-                
-                disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
-                vel = e_in / h_in if h_in > 0 else 0
-                reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
-                tot_ej += e_in; tot_hr += h_in
-                st.divider()
 
-            if st.button("\U0001F4BE Guardar Día", type="primary", use_container_width=True):
-                datos["diario"].append({
-                    "fecha": fecha_hoy, "dia": nd, "hora_registro": hora_peru().strftime("%H:%M:%S"),                    
-                    "horas_disponibles_total": hd, "materias": reg_mat,
-                    "Total_Ejercicios_Resueltos_Dia": tot_ej, "Total_Horas_Estudiadas": tot_hr
-                })
+        if st.button("\U0001F4BE Guardar Día", type="primary", use_container_width=True):
+            datos["diario"].append({
+                "fecha": fecha_hoy, "dia": nd, "hora_registro": hora_peru().strftime("%H:%M:%S"),                    
+                "horas_disponibles_total": hd, "materias": reg_mat,
+                "Total_Ejercicios_Resueltos_Dia": tot_ej, "Total_Horas_Estudiadas": tot_hr
+            })
+            guardar_datos(datos)
+            st.success(f"\u2705 ¡Día registrado! {tot_ej} ejercicios.")
+            st.balloons()
+
+    st.divider()
+    
+    # ============================================
+    # REGISTRO DE EXÁMENES (SOLO UNO POR DÍA)
+    # ============================================
+    st.subheader("\U0001F4C4 Registro de exámenes")
+    
+    if ya_registro_examen_hoy:
+        examen_registrado = examen_hoy[0]
+        st.warning("\u26A0\uFE0F Ya registraste un examen hoy. Solo se permite un examen por día.")
+        
+        st.divider()
+        st.subheader("\U0001F4CA Examen registrado hoy:")
+        
+        if examen_registrado["tipo"] == "Semanal":
+            st.write(f"**Tipo:** \U0001F947 Examen Semanal")
+            st.write(f"**Puntaje:** {examen_registrado['Puntaje_Simulacro']}")
+            st.write(f"**Precisión:** {examen_registrado.get('Precisión', 'N/A')}%")
+        else:
+            st.write(f"**Tipo:** \U0001F3C6 Examen Tipo UNI")
+            st.write(f"**Nota final:** {examen_registrado['Promedio_Notas']}")
+            st.write(f"**Precisión:** {examen_registrado.get('Promedio_Precision', 'N/A')}%")
+    else:
+        # Selector con format_func para evitar problemas con emojis
+        tipo_examen = st.radio(
+            "Tipo de examen:", 
+            ["Semanal", "UNI"], 
+            horizontal=True,
+            format_func=lambda x: f"\U0001F947 {x}" if x == "Semanal" else f"\U0001F3C6 {x}"
+        )
+        
+        if tipo_examen == "Semanal":
+            c1, c2 = st.columns(2)
+            with c1: pj = st.number_input("Nota (0-20)", min_value=0.0, max_value=20.0, step=0.1)
+            with c2: co = st.number_input("Preguntas correctas (0-60)", min_value=0, max_value=60, step=1)
+            
+            precision_calc = (co / 60) * 100
+            st.metric("\U0001F3AF Precisión", f"{precision_calc:.1f}%")
+            
+            if st.button("\U0001F4BE Guardar Examen Semanal", type="primary"):
+                datos["semanal"].append({"fecha": fecha_hoy_peru(), "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round(precision_calc, 2)})                    
                 guardar_datos(datos)
-                st.success(f"\u2705 ¡Día registrado! {tot_ej} ejercicios.")
+                st.success("\u2705 Examen Semanal guardado.")
                 st.balloons()
-
-        st.divider()
-        
-        # ============================================
-        # REGISTRO DE EXÁMENES (SOLO UNO POR DÍA)
-        # ============================================
-        st.subheader("\U0001F4C4 Registro de exámenes")
-        
-        if ya_registro_examen_hoy:
-            examen_registrado = examen_hoy[0]
-            st.warning("\u26A0\uFE0F Ya registraste un examen hoy. Solo se permite un examen por día.")
+        else:  # UNI
+            st.subheader("\U0001F3C6 Examen Tipo UNI (3 días)")
             
-            st.divider()
-            st.subheader("\U0001F4CA Examen registrado hoy:")
+            dias_uni = [
+                {"nombre": "\U0001F310 Aptitud Académica y Humanidades", "preguntas": 100},
+                {"nombre": "\U0001F522 Matemáticas", "preguntas": 40},
+                {"nombre": "\U0001F9EA Ciencias", "preguntas": 40}
+            ]
             
-            if examen_registrado["tipo"] == "Semanal":
-                st.write(f"**Tipo:** \U0001F947 Examen Semanal")
-                st.write(f"**Puntaje:** {examen_registrado['Puntaje_Simulacro']}")
-                st.write(f"**Precisión:** {examen_registrado.get('Precisión', 'N/A')}%")
-            else:
-                st.write(f"**Tipo:** \U0001F3C6 Examen Tipo UNI")
-                st.write(f"**Nota final:** {examen_registrado['Promedio_Notas']}")
-                st.write(f"**Precisión:** {examen_registrado.get('Promedio_Precision', 'N/A')}%")
-        else:
-            # Selector con format_func para evitar problemas con emojis
-            tipo_examen = st.radio(
-                "Tipo de examen:", 
-                ["Semanal", "UNI"], 
-                horizontal=True,
-                format_func=lambda x: f"\U0001F947 {x}" if x == "Semanal" else f"\U0001F3C6 {x}"
-            )
-            
-            if tipo_examen == "Semanal":
-                c1, c2 = st.columns(2)
-                with c1: pj = st.number_input("Nota (0-20)", min_value=0.0, max_value=20.0, step=0.1)
-                with c2: co = st.number_input("Preguntas correctas (0-60)", min_value=0, max_value=60, step=1)
-                
-                precision_calc = (co / 60) * 100
-                st.metric("\U0001F3AF Precisión", f"{precision_calc:.1f}%")
-                
-                if st.button("\U0001F4BE Guardar Examen Semanal", type="primary"):
-                    datos["semanal"].append({"fecha": fecha_hoy_peru(), "tipo": "Semanal", "Puntaje_Simulacro": pj, "Precisión": round(precision_calc, 2)})                    
-                    guardar_datos(datos)
-                    st.success("\u2705 Examen Semanal guardado.")
-                    st.balloons()
-            else:  # UNI
-                st.subheader("\U0001F3C6 Examen Tipo UNI (3 días)")
-                
-                dias_uni = [
-                    {"nombre": "\U0001F310 Aptitud Académica y Humanidades", "preguntas": 100},
-                    {"nombre": "\U0001F522 Matemáticas", "preguntas": 40},
-                    {"nombre": "\U0001F9EA Ciencias", "preguntas": 40}
-                ]
-                
-                dias_datos = []
-                for i, dia_info in enumerate(dias_uni):
-                    with st.expander(f"\U0001F4C5 Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            puntaje_dia = st.number_input("Nota", min_value=0.0, max_value=20.0, step=0.1, key=f"punti_dia_{i}")
-                        with col2:
-                            correctas_dia = st.number_input("Preguntas correctas", min_value=0, max_value=dia_info['preguntas'], step=1, key=f"corr_dia_{i}")
-                        
-                        precision_dia = (correctas_dia / dia_info['preguntas']) * 100 if dia_info['preguntas'] > 0 else 0
-                        dias_datos.append({"dia": i+1, "nombre": dia_info['nombre'], "puntaje": puntaje_dia, "correctas": correctas_dia, "precision": round(precision_dia, 2)})
-                        st.write(f"**\U0001F3AF Precisión:** {precision_dia:.1f}%")
-                
-                if dias_datos:
-                    prom_notas = sum(d["puntaje"] for d in dias_datos) / 3
-                    prom_precision = sum(d["precision"] for d in dias_datos) / 3
-                    
-                    st.divider()
-                    st.subheader("\U0001F4CA Resumen del Examen UNI")
+            dias_datos = []
+            for i, dia_info in enumerate(dias_uni):
+                with st.expander(f"\U0001F4C5 Día {i+1} - {dia_info['nombre']} ({dia_info['preguntas']} preguntas)", expanded=True):
                     col1, col2 = st.columns(2)
-                    with col1: st.metric("\U0001F3C6 Nota final", f"{prom_notas:.2f}")
-                    with col2: st.metric("\U0001F3AF Precisión", f"{prom_precision:.1f}%")
+                    with col1:
+                        puntaje_dia = st.number_input("Nota", min_value=0.0, max_value=20.0, step=0.1, key=f"punti_dia_{i}")
+                    with col2:
+                        correctas_dia = st.number_input("Preguntas correctas", min_value=0, max_value=dia_info['preguntas'], step=1, key=f"corr_dia_{i}")
                     
-                    if st.button("\U0001F4BE Guardar Examen UNI", type="primary", use_container_width=True):
-                        ejercicios_semana = sum(d["Total_Ejercicios_Resueltos_Dia"] for d in datos["diario"][-7:])
-                        registro = {
-                            "fecha": fecha_hoy, "tipo": "UNI", "dias": dias_datos,
-                            "Promedio_Notas": round(prom_notas, 2), "Promedio_Precision": round(prom_precision, 2),
-                            "Ejercicios_Resueltos_Semana": ejercicios_semana
-                        }
-                        datos["semanal"].append(registro)
-                        guardar_datos(datos)
-                        st.success(f"\u2705 ¡Examen UNI registrado! Nota final: {prom_notas:.2f}")
-                        st.balloons()
+                    precision_dia = (correctas_dia / dia_info['preguntas']) * 100 if dia_info['preguntas'] > 0 else 0
+                    dias_datos.append({"dia": i+1, "nombre": dia_info['nombre'], "puntaje": puntaje_dia, "correctas": correctas_dia, "precision": round(precision_dia, 2)})
+                    st.write(f"**\U0001F3AF Precisión:** {precision_dia:.1f}%")
+            
+            if dias_datos:
+                prom_notas = sum(d["puntaje"] for d in dias_datos) / 3
+                prom_precision = sum(d["precision"] for d in dias_datos) / 3
+                
+                st.divider()
+                st.subheader("\U0001F4CA Resumen del Examen UNI")
+                col1, col2 = st.columns(2)
+                with col1: st.metric("\U0001F3C6 Nota final", f"{prom_notas:.2f}")
+                with col2: st.metric("\U0001F3AF Precisión", f"{prom_precision:.1f}%")
+                
+                if st.button("\U0001F4BE Guardar Examen UNI", type="primary", use_container_width=True):
+                    ejercicios_semana = sum(d["Total_Ejercicios_Resueltos_Dia"] for d in datos["diario"][-7:])
+                    registro = {
+                        "fecha": fecha_hoy, "tipo": "UNI", "dias": dias_datos,
+                        "Promedio_Notas": round(prom_notas, 2), "Promedio_Precision": round(prom_precision, 2),
+                        "Ejercicios_Resueltos_Semana": ejercicios_semana
+                    }
+                    datos["semanal"].append(registro)
+                    guardar_datos(datos)
+                    st.success(f"\u2705 ¡Examen UNI registrado! Nota final: {prom_notas:.2f}")
+                    st.balloons()
