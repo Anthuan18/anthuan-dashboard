@@ -267,7 +267,7 @@ if 'autenticado' not in st.session_state:
 # Obtener el nombre del usuario logueado
 usuario_actual = st.session_state.get('username', 'Usuario')
 
-st.title(f"🎓 Estadísticas de {usuario_actual}: Ciclo Semestral básico 2027-1")
+st.title(f"🎓 EDRA de {usuario_actual} - Ciclo Semestral básico 2027-1")
 st.markdown(f"### 👋 Hola {usuario_actual}, aquí verás tus estadísticas de rendimiento académico.")
 st.divider()
 
