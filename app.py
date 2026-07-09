@@ -119,35 +119,35 @@ def pantalla_login():
             else:
                 st.warning("Completa todos los campos")
     
-   with tab2:
-    st.markdown("### Crea tu cuenta")
-    username_register = st.text_input("Elige un nombre de usuario", key="username_register")
-    password_register = st.text_input("Elige una contraseña", type="password", key="password_register")
-    password_confirm = st.text_input("Confirma tu contraseña", type="password", key="password_confirm")
+    with tab2:
+     st.markdown("### Crea tu cuenta")
+     username_register = st.text_input("Elige un nombre de usuario", key="username_register")
+     password_register = st.text_input("Elige una contraseña", type="password", key="password_register")
+     password_confirm = st.text_input("Confirma tu contraseña", type="password", key="password_confirm")
 
-    if st.button("🎯 Registrarme", key="btn_register"):
-        # Limpiar espacios en blanco
-        username_register = username_register.strip()
-        password_register = password_register.strip()
-        password_confirm = password_confirm.strip()
+     if st.button("🎯 Registrarme", key="btn_register"):
+         # Limpiar espacios en blanco
+         username_register = username_register.strip()
+         password_register = password_register.strip()
+         password_confirm = password_confirm.strip()
         
-        if username_register and password_register and password_confirm:
-            if len(password_register) < 6:
-                st.error("❌ La contraseña debe tener al menos 6 caracteres")
-            elif password_register == password_confirm:
-                user_id, result = crear_usuario(username_register, password_register)
-                if user_id:
-                    st.success(f"¡Cuenta creada! Bienvenido {username_register}")
-                    st.session_state['user_id'] = user_id
-                    st.session_state['username'] = username_register
-                    st.session_state['logged_in'] = True
-                    st.rerun()
-                else:
-                    st.error(f"Error: {result}")
-            else:
-                st.error("❌ Las contraseñas no coinciden. Inténtalo de nuevo.")
-        else:
-            st.warning("⚠️ Completa todos los campos")
+         if username_register and password_register and password_confirm:
+             if len(password_register) < 6:
+                 st.error("❌ La contraseña debe tener al menos 6 caracteres")
+             elif password_register == password_confirm:
+                 user_id, result = crear_usuario(username_register, password_register)
+                 if user_id:
+                     st.success(f"¡Cuenta creada! Bienvenido {username_register}")
+                     st.session_state['user_id'] = user_id
+                     st.session_state['username'] = username_register
+                     st.session_state['logged_in'] = True
+                     st.rerun()
+                 else:
+                     st.error(f"Error: {result}")
+             else:
+                 st.error("❌ Las contraseñas no coinciden. Inténtalo de nuevo.")
+         else:
+             st.warning("⚠️ Completa todos los campos")
 
 # ============================================
 # CONTROL DE ACCESO
