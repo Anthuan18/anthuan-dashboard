@@ -77,7 +77,7 @@ def login_usuario(username, password):
 
 def pantalla_login():
     """Muestra la pantalla de login/registro"""
-    st.set_page_config(page_title="EDRA - Dashboard Pre UNI", layout="wide")
+    st.set_page_config(page_title="EDRA - Pre UNI", layout="wide")
     
     st.markdown("""
     <style>
@@ -190,7 +190,7 @@ def fecha_hoy_peru():
 # CONFIGURACIÓN INICIAL
 # ============================================
 st.set_page_config(
-    page_title="Dashboard de Anthuan", 
+    page_title="EDRA - Pre UNI", 
     page_icon="🎓", 
     layout="wide",
     initial_sidebar_state="collapsed"
