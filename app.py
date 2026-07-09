@@ -563,20 +563,20 @@ elif st.session_state.vista_actual == 'curso':
     else:
         st.warning("\u26A0\uFE0F No hay datos de materias registrados.")
 
-# ============================================
-# VISTA: REGISTRO
-# ============================================
-elif st.session_state.vista_actual == 'registro':
-    st.header("\U0001F4E5 REGISTRAR DATOS")
-    if st.button("\u2B05\uFE0F Volver al inicio", key="back_registro"):
-        st.session_state.vista_actual = 'inicio'
-        st.rerun()
-    st.divider()
-    
-    # Ya no necesitamos validación de contraseña porque tenemos login con Firebase
-    # El usuario ya está autenticado desde el inicio
-
-    st.divider()
+        # ============================================
+        # VISTA: REGISTRO
+        # ============================================
+        elif st.session_state.vista_actual == 'registro':
+            st.header("\U0001F4E5 REGISTRAR DATOS")
+            if st.button("\u2B05\uFE0F Volver al inicio", key="back_registro"):
+                st.session_state.vista_actual = 'inicio'
+                st.rerun()
+            st.divider()
+            
+            # Ya no necesitamos validación de contraseña porque tenemos login con Firebase
+            # El usuario ya está autenticado desde el inicio
+        
+            st.divider()
         
         # ============================================
         # VERIFICAR REGISTROS DE HOY
