@@ -257,10 +257,8 @@ def cargar_datos():
             if 'semanal' not in datos:
                 datos['semanal'] = []
             
-            # Filtrar fechas futuras (manteniendo tu lógica original)
-            fecha_hoy = fecha_hoy_peru()
-            datos["diario"] = [d for d in datos["diario"] if d.get("fecha", "") != fecha_hoy]
-            datos["semanal"] = [e for e in datos["semanal"] if e.get("fecha", "") != fecha_hoy]
+# NO filtrar fechas - mantener todos los registros
+# El usuario decide qué datos ingresar
             
             return datos
         else:
