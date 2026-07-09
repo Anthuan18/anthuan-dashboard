@@ -95,8 +95,10 @@ def pantalla_login():
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown("# 🎓 EDRA - Dashboard Pre UNI")
+    st.title("🎓 EDRA - Pre UNI")
     st.markdown("### Tu camino hacia la UNI empieza aquí")
+    st.markdown("Estadísticas de rendimiento académico (EDRA) para postulantes a la Universidad Nacional de Ingeniería")
+    st.divider()
     
     # Tabs para Login y Registro
     tab1, tab2 = st.tabs(["🔐 Iniciar Sesión", "📝 Crear Cuenta"])
