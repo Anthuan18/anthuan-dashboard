@@ -112,7 +112,7 @@ def pantalla_login():
         # BOTÓN 1: Google Sign-In
         # ============================================
         # BOTÓN 1: Google Sign-In con 3 bolitas
-        if st.button("🔴🟡🔵 Iniciar sesión con Google", 
+        if st.button("🔴🟡🟢🔵 Iniciar sesión con Google", 
                      use_container_width=True, 
                      key="btn_google",
                      type="secondary"):
