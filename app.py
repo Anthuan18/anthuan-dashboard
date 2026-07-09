@@ -211,7 +211,6 @@ st.markdown("""
 # ============================================
 # CONFIGURACIÓN Y DATOS
 # ============================================
-CONTRASEÑA_REGISTRO = "anthuan2027"
 
 # DICCIONARIO DE SÍMBOLOS - VERIFICAR QUE ESTÉN TODOS
 SIMBOLOS_CURSOS = {
@@ -574,20 +573,10 @@ elif st.session_state.vista_actual == 'registro':
         st.rerun()
     st.divider()
     
-    if not st.session_state.autenticado:
-        pwd = st.text_input("Ingresa la contraseña para registrar datos:", type="password")
-        if st.button("\U0001F513 Desbloquear Registro", type="primary"):
-            if pwd == CONTRASEÑA_REGISTRO:
-                st.session_state.autenticado = True
-                st.rerun()
-            else:
-                st.error("\u274C Contraseña incorrecta")
-    else:
-        st.success("\U0001F513 Sesión iniciada. Puedes registrar tus datos.")
-        if st.button("\U0001F6AA Cerrar Sesión"):
-            st.session_state.autenticado = False
-            st.rerun()
-        st.divider()
+    # Ya no necesitamos validación de contraseña porque tenemos login con Firebase
+    # El usuario ya está autenticado desde el inicio
+
+    st.divider()
         
         # ============================================
         # VERIFICAR REGISTROS DE HOY
