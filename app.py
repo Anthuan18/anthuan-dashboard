@@ -451,14 +451,16 @@ if st.session_state.vista_actual == 'general':
                     disc_prom.append(0)
                     vel_prom.append(0)
 
-        st.subheader(f"🔥 DISCIPLINA: {disc_prom[-1]:.1f}%")
+        promedio_disc = sum(disc_prom) / len(disc_prom) if disc_prom else 0
+        st.subheader(f"🔥 DISCIPLINA: {promedio_disc:.1f}%")      
         fig_disc = go.Figure()
         fig_disc.add_trace(go.Scatter(x=fechas, y=disc_prom, mode='lines+markers', name='Disciplina', line=dict(color='red', width=3), marker=dict(size=8, color='red'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<extra></extra>'))
         fig_disc.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 100]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc, use_container_width=True)
         st.divider()
 
-        st.subheader(f"⚡ VELOCIDAD: {vel_prom[-1]:.1f} ejercicios/hora")
+        promedio_vel = sum(vel_prom) / len(vel_prom) if vel_prom else 0
+        st.subheader(f"⚡ VELOCIDAD: {promedio_vel:.1f} ejercicios/hora")
         fig_vel = go.Figure()
         fig_vel.add_trace(go.Scatter(x=fechas, y=vel_prom, mode='lines+markers', name='Velocidad', line=dict(color='gold', width=3), marker=dict(size=8, color='gold'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejercicios/h<extra></extra>'))
         fig_vel.update_layout(yaxis_title='Velocidad (ejercicios/h)', yaxis=dict(range=[0, max(20, max(vel_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
