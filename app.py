@@ -113,25 +113,26 @@ def pantalla_login():
     st.markdown("Estadísticas de rendimiento académico (EDRA) para postulantes a la Universidad Nacional de Ingeniería")
     st.divider()
     
-    # Botón de Google Sign-In
-    if st.button("🔐 Iniciar sesión con Google", use_container_width=True, key="btn_google"):
-        try:
-            from firebase_admin import auth as admin_auth
-            
-            # Aquí usamos streamlit-firebase-auth para el flujo de Google
-            # Por ahora, mostramos un mensaje temporal
-            st.info("Google Sign-In se está configurando...")
-            
-        except Exception as e:
-            st.error(f"Error: {e}")
-    
-    st.divider()
-    
     # Tabs para Login y Registro
     tab1, tab2 = st.tabs(["🔐 Iniciar Sesión", "📝 Crear Cuenta"])
     
     with tab1:
         st.markdown("### Bienvenido de vuelta")
+        
+        # Botón de Google Sign-In
+        st.divider()
+        if st.button("🔐 Iniciar sesión con Google", use_container_width=True, key="btn_google"):
+            try:
+                # Aquí irá la lógica de Google Sign-In
+                st.info("🔄 Redirigiendo a Google...")
+                # Implementaremos esto después
+                
+            except Exception as e:
+                st.error(f"Error: {e}")
+        
+        st.divider()
+        
+        # Login tradicional (email/password)
         username_login = st.text_input("Nombre de usuario", key="username_login")
         password_login = st.text_input("Contraseña", type="password", key="password_login")
         
@@ -154,7 +155,7 @@ def pantalla_login():
         password_register = st.text_input("Elige una contraseña", type="password", key="password_register")
         password_confirm = st.text_input("Confirma tu contraseña", type="password", key="password_confirm")
 
-        if st.button("🎯 Registrarme", key="btn_register"):
+        if st.button(" Registrarme", key="btn_register"):
             username_register = username_register.strip()
             password_register = password_register.strip()
             password_confirm = password_confirm.strip()
@@ -175,7 +176,7 @@ def pantalla_login():
                 else:
                     st.error("❌ Las contraseñas no coinciden.")
             else:
-                st.warning("️⚠️ Completa todos los campos")
+                st.warning("⚠️ Completa todos los campos")
 
 # ============================================
 # CONTROL DE ACCESO
