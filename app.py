@@ -131,7 +131,7 @@ def pantalla_login():
             st.session_state.mostrar_login_usuario = False
         
         # Botón para mostrar/ocultar el formulario
-        if st.button("🔐 Iniciar sesión con nombre de usuario",
+        if st.button("👤 Iniciar sesión con nombre de usuario",
                      use_container_width=True,
                      key="btn_toggle_usuario",
                      type="secondary"):
