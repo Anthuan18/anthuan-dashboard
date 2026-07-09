@@ -111,38 +111,16 @@ def pantalla_login():
         # ============================================
         # BOTÓN 1: Google Sign-In
         # ============================================
-        google_btn_html = """
-        <button style="
-            width: 100%;
-            padding: 10px;
-            background-color: white;
-            color: #444;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        ">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
-            Iniciar sesión con Google
-        </button>
-        """
-        
-        if st.button("Iniciar sesión con Google", 
+        # BOTÓN 1: Google Sign-In con 3 bolitas
+        if st.button("🔴🟡🔵 Iniciar sesión con Google", 
                      use_container_width=True, 
                      key="btn_google",
                      type="secondary"):
             try:
-                # Aquí implementaremos Google Sign-In
                 st.info("🔄 Configurando Google Sign-In...")
-                st.warning("⚠️ Esta función estará disponible pronto")
-                
+                st.warning("️ Esta función estará disponible pronto")
             except Exception as e:
-                st.error(f"Error al iniciar con Google: {e}")
+                st.error(f"Error: {e}")
         
         st.divider()
         
