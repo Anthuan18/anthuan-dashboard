@@ -264,8 +264,11 @@ if 'autenticado' not in st.session_state:
 # ============================================
 # ENCABEZADO Y NAVEGACIÓN
 # ============================================
-st.title("\U0001F393 Estadísticas de Anthuan: Ciclo Semestral básico 2027-1")
-st.markdown("### \U0001F44B Hola, aquí verás mis estadísticas de rendimiento académico.")
+# Obtener el nombre del usuario logueado
+usuario_actual = st.session_state.get('username', 'Usuario')
+
+st.title(f"🎓 Estadísticas de {usuario_actual}: Ciclo Semestral básico 2027-1")
+st.markdown(f"### 👋 Hola {usuario_actual}, aquí verás tus estadísticas de rendimiento académico.")
 st.divider()
 
 if st.session_state.vista_actual == 'inicio':
