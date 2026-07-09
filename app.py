@@ -237,21 +237,60 @@ COLORES_MATERIAS = ["#0BDCF4", "#E4EA38", "#5E664A", "#35C938", "#503EDA", "#E01
 ARCHIVO_GUARDADO = "anthuan_stats.json"
 
 def cargar_datos():
-    if os.path.exists(ARCHIVO_GUARDADO):
-        with open(ARCHIVO_GUARDADO, 'r', encoding='utf-8') as f:
-            datos = json.load(f)
+    """Carga los datos del usuario actual desde Firestore"""
+    if 'user_id' not in st.session_state:
+        return {"diario": [], "semanal": []}
+    
+    user_id = st.session_state['user_id']
+    
+    try:
+        # Obtener documento del usuario desde Firestore
+        doc_ref = db.collection('usuarios').document(user_id)
+        doc = doc_ref.get()
         
-        # Filtrar fechas futuras o incorrectas (mayores a hoy en Perú)
-        # Filtrar fecha incorrecta 2026-07-08 específicamente
-        datos["diario"] = [d for d in datos["diario"] if d.get("fecha", "") != "2026-07-08"]
-        datos["semanal"] = [e for e in datos["semanal"] if e.get("fecha", "") != "2026-07-08"]
-        
-        return datos
-    return {"diario": [], "semanal": []}
-def guardar_datos(datos):
-    with open(ARCHIVO_GUARDADO, 'w', encoding='utf-8') as f:
-        json.dump(datos, f, indent=4, ensure_ascii=False)
+        if doc.exists:
+            datos = doc.to_dict()
+            
+            # Asegurarnos de que existan las claves
+            if 'diario' not in datos:
+                datos['diario'] = []
+            if 'semanal' not in datos:
+                datos['semanal'] = []
+            
+            # Filtrar fechas futuras (manteniendo tu lógica original)
+            fecha_hoy = fecha_hoy_peru()
+            datos["diario"] = [d for d in datos["diario"] if d.get("fecha", "") != fecha_hoy]
+            datos["semanal"] = [e for e in datos["semanal"] if e.get("fecha", "") != fecha_hoy]
+            
+            return datos
+        else:
+            # Si no existe documento, retornar estructura vacía
+            return {"diario": [], "semanal": []}
+    except Exception as e:
+        st.error(f"Error al cargar datos: {e}")
+        return {"diario": [], "semanal": []}
 
+def guardar_datos(datos):
+    """Guarda los datos del usuario actual en Firestore"""
+    if 'user_id' not in st.session_state:
+        st.error("No hay usuario logueado")
+        return False
+    
+    user_id = st.session_state['user_id']
+    
+    try:
+        # Actualizar documento del usuario en Firestore
+        doc_ref = db.collection('usuarios').document(user_id)
+        doc_ref.update({
+            'diario': datos['diario'],
+            'semanal': datos['semanal'],
+            'ultima_actualizacion': firestore.SERVER_TIMESTAMP
+        })
+        return True
+    except Exception as e:
+        st.error(f"Error al guardar datos: {e}")
+        return False
+        
 # ============================================
 # ESTADO DE LA APLICACIÓN
 # ============================================
