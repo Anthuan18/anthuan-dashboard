@@ -279,14 +279,24 @@ def guardar_datos(datos):
     user_id = st.session_state['user_id']
     
     try:
-        # Actualizar documento del usuario en Firestore
         doc_ref = db.collection('usuarios').document(user_id)
-        doc_ref.update({
-            'diario': datos['diario'],
-            'semanal': datos['semanal'],
+        
+        # Primero, leer los datos actuales para no perder nada
+        doc = doc_ref.get()
+        datos_actuales = doc.to_dict() if doc.exists else {}
+        
+        # Actualizar solo los campos que queremos modificar
+        datos_a_guardar = {
+            'diario': datos.get('diario', datos_actuales.get('diario', [])),
+            'semanal': datos.get('semanal', datos_actuales.get('semanal', [])),
+            'materias': datos.get('materias', datos_actuales.get('materias', {})),
             'ultima_actualizacion': firestore.SERVER_TIMESTAMP
-        })
+        }
+        
+        doc_ref.update(datos_a_guardar)
+        st.success("✅ Datos guardados correctamente")
         return True
+        
     except Exception as e:
         st.error(f"Error al guardar datos: {e}")
         return False
