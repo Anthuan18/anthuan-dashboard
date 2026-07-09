@@ -76,34 +76,22 @@ def login_usuario(username, password):
         return None, "Usuario o contraseña incorrectos"
 
 def pantalla_login():
-    """Muestra la pantalla de login/registro con opción de Google"""
+    """Muestra la pantalla de login/registro con opción de Google y usuario"""
     st.set_page_config(page_title="EDRA - Pre UNI", layout="wide")
     
+    # CSS para el botón de Google
     st.markdown("""
     <style>
-    .stApp {
-        background-color: #0d1117;
+    .stButton button[kind="primary"] {
+        background-color: white;
+        color: #444444;
+        border: 1px solid #dddddd;
+        border-radius: 5px;
+        font-weight: 500;
     }
-    .login-container {
-        max-width: 400px;
-        margin: 0 auto;
-        padding: 2rem;
-        background-color: #161b22;
-        border-radius: 10px;
-        border: 1px solid #30363d;
-    }
-    .google-btn {
-        background-color: #4285F4 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 10px !important;
-        padding: 10px 20px !important;
-        font-size: 16px !important;
-        font-weight: bold !important;
-        width: 100% !important;
-    }
-    .google-btn:hover {
-        background-color: #357AE8 !important;
+    .stButton button[kind="primary"]:hover {
+        background-color: #f8f9fa;
+        border-color: #dadce0;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -114,48 +102,122 @@ def pantalla_login():
     st.divider()
     
     # Tabs para Login y Registro
-    tab1, tab2 = st.tabs(["🔐 Iniciar Sesión", "📝 Crear Cuenta"])
+    tab1, tab2 = st.tabs([" Iniciar Sesión", "📝 Crear Cuenta"])
     
     with tab1:
         st.markdown("### Bienvenido de vuelta")
-        
-        # Botón de Google Sign-In
         st.divider()
-        if st.button("🔐 Iniciar sesión con Google", use_container_width=True, key="btn_google"):
+        
+        # ============================================
+        # BOTÓN 1: Google Sign-In
+        # ============================================
+        google_btn_html = """
+        <button style="
+            width: 100%;
+            padding: 10px;
+            background-color: white;
+            color: #444;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        ">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
+            Iniciar sesión con Google
+        </button>
+        """
+        
+        if st.button("Iniciar sesión con Google", 
+                     use_container_width=True, 
+                     key="btn_google",
+                     type="secondary"):
             try:
-                # Aquí irá la lógica de Google Sign-In
-                st.info("🔄 Redirigiendo a Google...")
-                # Implementaremos esto después
+                # Aquí implementaremos Google Sign-In
+                st.info("🔄 Configurando Google Sign-In...")
+                st.warning("⚠️ Esta función estará disponible pronto")
                 
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error(f"Error al iniciar con Google: {e}")
         
         st.divider()
         
-        # Login tradicional (email/password)
-        username_login = st.text_input("Nombre de usuario", key="username_login")
-        password_login = st.text_input("Contraseña", type="password", key="password_login")
+        # ============================================
+        # BOTÓN 2: Toggle para login con usuario
+        # ============================================
+        if 'mostrar_login_usuario' not in st.session_state:
+            st.session_state.mostrar_login_usuario = False
         
-        if st.button("🚀 Entrar", key="btn_login"):
-            if username_login and password_login:
-                user_id, username = login_usuario(username_login, password_login)
-                if user_id:
-                    st.session_state['user_id'] = user_id
-                    st.session_state['username'] = username
-                    st.session_state['logged_in'] = True
-                    st.rerun()
+        # Botón para mostrar/ocultar el formulario
+        if st.button("🔐 Iniciar sesión con nombre de usuario",
+                     use_container_width=True,
+                     key="btn_toggle_usuario",
+                     type="secondary"):
+            st.session_state.mostrar_login_usuario = not st.session_state.mostrar_login_usuario
+        
+        # ============================================
+        # Formulario de login (aparece/desaparece)
+        # ============================================
+        if st.session_state.mostrar_login_usuario:
+            st.divider()
+            st.markdown("#### Ingresa tus credenciales:")
+            
+            username_login = st.text_input(
+                "Nombre de usuario", 
+                key="username_login",
+                placeholder="Ej: test123"
+            )
+            password_login = st.text_input(
+                "Contraseña", 
+                type="password", 
+                key="password_login",
+                placeholder="Tu contraseña"
+            )
+            
+            if st.button("🚀 Entrar", 
+                         key="btn_login",
+                         type="primary",
+                         use_container_width=True):
+                if username_login and password_login:
+                    user_id, username = login_usuario(username_login, password_login)
+                    if user_id:
+                        st.session_state['user_id'] = user_id
+                        st.session_state['username'] = username
+                        st.session_state['logged_in'] = True
+                        st.success(f"¡Bienvenido {username}!")
+                        st.rerun()
+                    else:
+                        st.error(username)  # username contiene el mensaje de error
                 else:
-                    st.error(username)
-            else:
-                st.warning("Completa todos los campos")
+                    st.warning("⚠️ Completa todos los campos")
     
     with tab2:
         st.markdown("### Crea tu cuenta")
-        username_register = st.text_input("Elige un nombre de usuario", key="username_register")
-        password_register = st.text_input("Elige una contraseña", type="password", key="password_register")
-        password_confirm = st.text_input("Confirma tu contraseña", type="password", key="password_confirm")
+        username_register = st.text_input(
+            "Elige un nombre de usuario", 
+            key="username_register",
+            placeholder="Ej: miusuario"
+        )
+        password_register = st.text_input(
+            "Elige una contraseña", 
+            type="password", 
+            key="password_register"
+        )
+        password_confirm = st.text_input(
+            "Confirma tu contraseña", 
+            type="password", 
+            key="password_confirm"
+        )
 
-        if st.button(" Registrarme", key="btn_register"):
+        if st.button(" Registrarme", 
+                     key="btn_register",
+                     type="primary",
+                     use_container_width=True):
+            # Limpiar espacios en blanco
             username_register = username_register.strip()
             password_register = password_register.strip()
             password_confirm = password_confirm.strip()
@@ -174,9 +236,9 @@ def pantalla_login():
                     else:
                         st.error(f"Error: {result}")
                 else:
-                    st.error("❌ Las contraseñas no coinciden.")
+                    st.error("❌ Las contraseñas no coinciden. Inténtalo de nuevo.")
             else:
-                st.warning("⚠️ Completa todos los campos")
+                st.warning("️⚠️ Completa todos los campos")
 
 # ============================================
 # CONTROL DE ACCESO
