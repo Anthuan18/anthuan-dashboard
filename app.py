@@ -76,49 +76,31 @@ def login_usuario(username, password):
         return None, "Usuario o contraseña incorrectos"
 
 def pantalla_login():
-    """Muestra la pantalla de login/registro con opción de Google y usuario"""
+    """Muestra la pantalla de login con Google, usuario y registro integrado"""
     st.set_page_config(page_title="EDRA - Pre UNI", layout="wide")
-    
-    # CSS para el botón de Google
-    st.markdown("""
-    <style>
-    .stButton button[kind="primary"] {
-        background-color: white;
-        color: #444444;
-        border: 1px solid #dddddd;
-        border-radius: 5px;
-        font-weight: 500;
-    }
-    .stButton button[kind="primary"]:hover {
-        background-color: #f8f9fa;
-        border-color: #dadce0;
-    }
-    </style>
-    """, unsafe_allow_html=True)
     
     st.title("🎓 EDRA - Pre UNI")
     st.markdown("### Tu camino hacia la UNI empieza aquí")
     st.markdown("Estadísticas de rendimiento académico (EDRA) para postulantes a la Universidad Nacional de Ingeniería")
     st.divider()
     
-    # Tabs para Login y Registro
-    tab1, tab2 = st.tabs([" Iniciar Sesión", "📝 Crear Cuenta"])
+    # Solo 1 tab: Iniciar Sesión
+    tab1 = st.tabs(["🔐 Iniciar Sesión"])
     
-    with tab1:
+    with tab1[0]:
         st.markdown("### Bienvenido de vuelta")
         st.divider()
         
         # ============================================
         # BOTÓN 1: Google Sign-In
         # ============================================
-        # BOTÓN 1: Google Sign-In con 3 bolitas
         if st.button("🔴🟡🟢🔵 Iniciar sesión con Google", 
                      use_container_width=True, 
                      key="btn_google",
                      type="secondary"):
             try:
                 st.info("🔄 Configurando Google Sign-In...")
-                st.warning("️ Esta función estará disponible pronto")
+                st.warning("⚠️ Esta función estará disponible pronto")
             except Exception as e:
                 st.error(f"Error: {e}")
         
@@ -130,7 +112,6 @@ def pantalla_login():
         if 'mostrar_login_usuario' not in st.session_state:
             st.session_state.mostrar_login_usuario = False
         
-        # Botón para mostrar/ocultar el formulario
         if st.button("👤 Iniciar sesión con nombre de usuario",
                      use_container_width=True,
                      key="btn_toggle_usuario",
@@ -169,54 +150,96 @@ def pantalla_login():
                         st.success(f"¡Bienvenido {username}!")
                         st.rerun()
                     else:
-                        st.error(username)  # username contiene el mensaje de error
+                        st.error(username)
                 else:
                     st.warning("⚠️ Completa todos los campos")
-    
-    with tab2:
-        st.markdown("### Crea tu cuenta")
-        username_register = st.text_input(
-            "Elige un nombre de usuario", 
-            key="username_register",
-            placeholder="Ej: miusuario"
-        )
-        password_register = st.text_input(
-            "Elige una contraseña", 
-            type="password", 
-            key="password_register"
-        )
-        password_confirm = st.text_input(
-            "Confirma tu contraseña", 
-            type="password", 
-            key="password_confirm"
-        )
-
-        if st.button(" Registrarme", 
-                     key="btn_register",
-                     type="primary",
-                     use_container_width=True):
-            # Limpiar espacios en blanco
-            username_register = username_register.strip()
-            password_register = password_register.strip()
-            password_confirm = password_confirm.strip()
         
-            if username_register and password_register and password_confirm:
-                if len(password_register) < 6:
-                    st.error("❌ La contraseña debe tener al menos 6 caracteres")
-                elif password_register == password_confirm:
-                    user_id, result = crear_usuario(username_register, password_register)
-                    if user_id:
-                        st.success(f"¡Cuenta creada! Bienvenido {username_register}")
-                        st.session_state['user_id'] = user_id
-                        st.session_state['username'] = username_register
-                        st.session_state['logged_in'] = True
-                        st.rerun()
+        st.divider()
+        
+        # ============================================
+        # PREGUNTA: ¿No tienes una cuenta? (ROJO NEÓN)
+        # ============================================
+        st.markdown("""
+            <style>
+            .no-account-text {
+                text-align: center;
+                color: #FF3131 !important;
+                font-weight: bold !important;
+                font-size: 16px !important;
+                cursor: pointer !important;
+                text-decoration: underline !important;
+                margin-top: 20px !important;
+                margin-bottom: 10px !important;
+            }
+            .no-account-text:hover {
+                color: #FF6666 !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # Botón/Link que muestra el formulario de registro
+        if st.button("❓ ¿No tienes una cuenta?",
+                     use_container_width=True,
+                     key="btn_no_account",
+                     type="secondary"):
+            if 'mostrar_registro' not in st.session_state:
+                st.session_state.mostrar_registro = False
+            st.session_state.mostrar_registro = not st.session_state.mostrar_registro
+        
+        # ============================================
+        # Formulario de registro (aparece/desaparece)
+        # ============================================
+        if 'mostrar_registro' not in st.session_state:
+            st.session_state.mostrar_registro = False
+        
+        if st.session_state.mostrar_registro:
+            st.divider()
+            st.markdown("### 📝 Crea tu cuenta")
+            
+            username_register = st.text_input(
+                "Elige un nombre de usuario", 
+                key="username_register",
+                placeholder="Ej: miusuario"
+            )
+            password_register = st.text_input(
+                "Elige una contraseña", 
+                type="password", 
+                key="password_register",
+                placeholder="Mínimo 6 caracteres"
+            )
+            password_confirm = st.text_input(
+                "Confirma tu contraseña", 
+                type="password", 
+                key="password_confirm",
+                placeholder="Repite tu contraseña"
+            )
+
+            if st.button("🎯 Registrarme", 
+                         key="btn_register",
+                         type="primary",
+                         use_container_width=True):
+                username_register = username_register.strip()
+                password_register = password_register.strip()
+                password_confirm = password_confirm.strip()
+            
+                if username_register and password_register and password_confirm:
+                    if len(password_register) < 6:
+                        st.error("❌ La contraseña debe tener al menos 6 caracteres")
+                    elif password_register == password_confirm:
+                        user_id, result = crear_usuario(username_register, password_register)
+                        if user_id:
+                            st.success(f"¡Cuenta creada! Bienvenido {username_register}")
+                            st.session_state['user_id'] = user_id
+                            st.session_state['username'] = username_register
+                            st.session_state['logged_in'] = True
+                            st.balloons()
+                            st.rerun()
+                        else:
+                            st.error(f"Error: {result}")
                     else:
-                        st.error(f"Error: {result}")
+                        st.error("❌ Las contraseñas no coinciden.")
                 else:
-                    st.error("❌ Las contraseñas no coinciden. Inténtalo de nuevo.")
-            else:
-                st.warning("️⚠️ Completa todos los campos")
+                    st.warning("⚠️ Completa todos los campos")
 
 # ============================================
 # CONTROL DE ACCESO
