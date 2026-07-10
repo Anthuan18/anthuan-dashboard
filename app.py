@@ -313,10 +313,13 @@ st.markdown("""
     .stButton > button { border-radius: 10px; }
     .js-plotly-plot .plotly { width: 100% !important; }
     
-    .modebar-btn[data-title="Reset axes"] { background-color: #00d4aa !important; border-radius: 5px !important; padding: 5px !important; }
-    .modebar-btn[data-title="Reset axes"] svg { fill: white !important; }
-    .modebar-btn[data-title="Pan"] { background-color: #0099ff !important; border-radius: 5px !important; padding: 5px !important; }
-    .modebar-btn[data-title="Pan"] svg { fill: white !important; }
+    /* Casita (Reset axes) SIN COLOR */
+    .modebar-btn[data-title="Reset axes"] { background-color: transparent !important; }
+    .modebar-btn[data-title="Reset axes"] svg { fill: #8b949e !important; } /* Gris claro */
+
+    /* Autoscale (Flechitas cruzadas) VERDE */
+    .modebar-btn[data-title="Autoscale"] { background-color: #00d4aa !important; border-radius: 5px !important; padding: 5px !important; }
+    .modebar-btn[data-title="Autoscale"] svg { fill: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
