@@ -730,24 +730,17 @@ elif st.session_state.vista_actual == 'curso':
         st.subheader("\U0001F525 DISCIPLINA")
         fig_disc_mat = go.Figure()
         for i, m in enumerate(mats):
-                # Incluir TODOS los días (incluso los ficticios)
-                ff = f_det
-                dd = [d if d is not None else 0 for d in d_mat[m]]
-                hh = [h if h is not None else 0 for h in h_mat[m]]
-                
-                # Crear texto para mostrar si es día no registrado
-                dias_no_registrados = []
-                for i, (d, h) in enumerate(zip(d_mat[m], h_mat[m])):
-                    if d is None and h is None:
-                        dias_no_registrados.append("ℹ️ Día no registrado")
-                    else:
-                        dias_no_registrados.append("")
+            val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
+            if val:
+                ff, dd = zip(*val)
+                # Filtrar horas para que coincidan con ff y dd
+                hh = [h for f, h in zip(f_det, h_mat[m]) if h is not None]
                 
                 fig_disc_mat.add_trace(go.Scatter(x=ff, y=dd, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}',
                     line=dict(color=COLORES_MATERIAS[i], width=2),
                     marker=dict(size=6),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata[0]}h<br>%{customdata[1]}<extra></extra>',
-                    customdata=list(zip(hh, dias_no_registrados))))         
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>',
+                    customdata=hh))         
          
         fig_disc_mat.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 150]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc_mat, use_container_width=True)
@@ -756,26 +749,18 @@ elif st.session_state.vista_actual == 'curso':
         st.subheader("\u26A1 VELOCIDAD")
         fig_vel_mat = go.Figure()
         for i, m in enumerate(mats):
-                # Incluir TODOS los días (incluso los ficticios)
-                ff = f_det
-                vv = [v if v is not None else 0 for v in v_mat[m]]
-                hh = [h if h is not None else 0 for h in h_mat[m]]
-                ee = [e if e is not None else 0 for e in e_mat[m]]
+            val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
+            if val:
+                ff, vv = zip(*val)
+                # Filtrar horas y ejercicios para que coincidan
+                hh = [h for f, h in zip(f_det, h_mat[m]) if h is not None]
+                ee = [e for f, e in zip(f_det, e_mat[m]) if e is not None]
                 
-                # Crear texto para mostrar si es día no registrado
-                dias_no_registrados = []
-                for i, (v, h) in enumerate(zip(v_mat[m], h_mat[m])):
-                    if v is None and h is None:
-                        dias_no_registrados.append("ℹ️ Día no registrado")
-                    else:
-                        dias_no_registrados.append("")
-                
-                fig_vel_mat.add_trace(go.Scatter(x=ff, y=vv, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}',
-                    line=dict(color=COLORES_MATERIAS[i], width=2),
-                    marker=dict(size=6),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + m + ': %{y:.1f} ejer/h<br>-Resolviste %{customdata[0]} ejer en %{customdata[1]}h<br>%{customdata[2]}<extra></extra>',
-                    customdata=list(zip(ee, hh, dias_no_registrados))))
-
+                fig_vel_mat.add_trace(go.Scatter(x=ff, y=vv, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}', 
+                    line=dict(color=COLORES_MATERIAS[i], width=2), 
+                    marker=dict(size=6), 
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + m + ': %{y:.1f} ejer/h<br>-Resolviste %{customdata[0]} ejer en %{customdata[1]}h<extra></extra>',
+                    customdata=list(zip(ee, hh))))
         fig_vel_mat.update_layout(yaxis_title='Velocidad (ejercicios/h)', yaxis=dict(range=[0, max(30, max([v for v in sum(v_mat.values(), []) if v is not None])*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_vel_mat, use_container_width=True)
         st.divider()
