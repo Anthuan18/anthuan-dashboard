@@ -730,7 +730,8 @@ elif st.session_state.vista_actual == 'curso':
         st.subheader("\U0001F525 DISCIPLINA")
         fig_disc_mat = go.Figure()
         for i, m in enumerate(mats):
-                # Incluir TODOS los días (incluso los ficticios)
+            val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
+            if val:
                 ff = f_det
                 dd = [d if d is not None else 0 for d in d_mat[m]]
                 hh = [h if h is not None else 0 for h in h_mat[m]]
