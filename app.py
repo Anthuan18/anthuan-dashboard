@@ -539,7 +539,7 @@ if st.session_state.vista_actual == 'general':
         # ============================================
         # GRÁFICOS CON TODOS LOS DÍAS (INCLUYENDO 0%)
         # ============================================
-        fechas, disc_prom, vel_prom, horas_prom, ejercicios_prom = [], [], [], []
+        fechas, disc_prom, vel_prom, horas_prom, ejercicios_prom = [], [], [], [], []
         
         # Eliminar duplicados por fecha
         fechas_vistas = set()
