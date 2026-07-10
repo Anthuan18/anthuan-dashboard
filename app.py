@@ -725,7 +725,15 @@ elif st.session_state.vista_actual == 'curso':
             val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
             if val:
                 ff, vv = zip(*val)
-                fig_vel_mat.add_trace(go.Scatter(x=ff, y=vv, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}', line=dict(color=COLORES_MATERIAS[i], width=2), marker=dict(size=6), hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}} ejer/h<extra></extra>'))
+                # Filtrar horas y ejercicios para que coincidan
+                hh = [h for f, h in zip(f_det, h_mat[m]) if h is not None]
+                ee = [e for f, e in zip(f_det, e_mat[m]) if e is not None]
+                
+                fig_vel_mat.add_trace(go.Scatter(x=ff, y=vv, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}', 
+                    line=dict(color=COLORES_MATERIAS[i], width=2), 
+                    marker=dict(size=6), 
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + m + ': %{y:.1f} ejer/h<br>-Resolviste %{customdata[0]} ejer en %{customdata[1]}h<extra></extra>',
+                    customdata=list(zip(ee, hh))))
         fig_vel_mat.update_layout(yaxis_title='Velocidad (ejercicios/h)', yaxis=dict(range=[0, max(30, max([v for v in sum(v_mat.values(), []) if v is not None])*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_vel_mat, use_container_width=True)
         st.divider()
