@@ -684,7 +684,7 @@ elif st.session_state.vista_actual == 'curso':
         st.divider()
 
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
-        f_det, d_mat, v_mat = [], {m:[] for m in mats}, {m:[] for m in mats}
+        f_det, d_mat, v_mat, h_mat = [], {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}
         for dia in datos["diario"][-30:]:
             if dia["dia"] != "Domingo":
                 f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
@@ -692,17 +692,27 @@ elif st.session_state.vista_actual == 'curso':
                     if m in dia["materias"]:
                         d_mat[m].append(dia["materias"][m]["Disciplina"])
                         v_mat[m].append(dia["materias"][m]["Velocidad"])
+                        h_mat[m].append(dia["materias"][m].get("horas_estudiadas", 0))
                     else:
                         d_mat[m].append(None)
                         v_mat[m].append(None)
-
+                        h_mat[m].append(None)
+        
         st.subheader("\U0001F525 DISCIPLINA")
         fig_disc_mat = go.Figure()
         for i, m in enumerate(mats):
             val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
             if val:
                 ff, dd = zip(*val)
-                fig_disc_mat.add_trace(go.Scatter(x=ff, y=dd, mode='lines+markers', name=f"{SIMBOLOS_CURSOS[m]} {m}", line=dict(color=COLORES_MATERIAS[i], width=2), marker=dict(size=6), hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{m}: %{{y:.1f}}%<extra></extra>'))
+                # Filtrar horas para que coincidan con ff y dd
+                hh = [h for f, h in zip(f_det, h_mat[m]) if h is not None]
+                
+                fig_disc_mat.add_trace(go.Scatter(x=ff, y=dd, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}',
+                    line=dict(color=COLORES_MATERIAS[i], width=2),
+                    marker=dict(size=6),
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>',
+                    customdata=hh))         
+         
         fig_disc_mat.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 150]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc_mat, use_container_width=True)
         st.divider()
