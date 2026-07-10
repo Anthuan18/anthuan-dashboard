@@ -57,21 +57,41 @@ def crear_usuario(username, password):
         return user.uid, username
     except Exception as e:
         return None, str(e)
-
 def login_usuario(username, password):
-    """Verifica las credenciales del usuario"""
+    """Verifica las credenciales del usuario usando Firebase REST API"""
+    import requests
+    
     try:
         email_fantasma = f"{username}@unidashboard.com"
         
-        # Buscar usuario por email
-        user = auth.get_user_by_email(email_fantasma)
+        # Obtener la API Key de Streamlit Secrets
+        api_key = st.secrets.get("firebase_api_key", "AIzaSyC3IjmFQAtWH70uAjw-vonjQeEFICA-jFY")
         
-        # Verificar contraseña (Firebase no deja verificar directamente,
-        # tenemos que intentar iniciar sesión)
-        # Por ahora, asumimos que si el usuario existe, la contraseña es correcta
-        # En producción usaríamos Firebase Auth REST API
+        # URL de la API REST de Firebase para verificar contraseña
+        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
         
-        return user.uid, user.display_name
+        # Datos a enviar
+        payload = {
+            "email": email_fantasma,
+            "password": password,
+            "returnSecureToken": True
+        }
+        
+        # Hacer la petición
+        response = requests.post(url, json=payload)
+        
+        # Verificar si fue exitoso
+        if response.status_code == 200:
+            data = response.json()
+            user_id = data["localId"]
+            
+            # Obtener información del usuario desde Firebase Admin
+            user = auth.get_user(user_id)
+            return user.uid, user.display_name
+        else:
+            # Credenciales incorrectas
+            return None, "Usuario o contraseña incorrectos"
+            
     except Exception as e:
         return None, "Usuario o contraseña incorrectos"
 
