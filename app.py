@@ -738,7 +738,7 @@ elif st.session_state.vista_actual == 'curso':
                 
                 # Crear texto para mostrar si es día no registrado
                 dias_no_registrados = []
-                for i, (d, h) in enumerate(zip(d_mat[m], h_mat[m])):
+                for d, h in zip(d_mat[m], h_mat[m]):  # ← Sin enumerate
                     if d is None and h is None:
                         dias_no_registrados.append("ℹ️ Día no registrado")
                     else:
