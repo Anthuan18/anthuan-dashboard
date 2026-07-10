@@ -539,7 +539,7 @@ if st.session_state.vista_actual == 'general':
         # ============================================
         # GRÁFICOS CON TODOS LOS DÍAS (INCLUYENDO 0%)
         # ============================================
-        fechas, disc_prom, vel_prom, horas_prom, ejercicios_prom = [], [], [], [], []
+        fechas, disc_prom, vel_prom, horas_prom, ejercicios_prom, materias_str_prom = [], [], [], [], [], []
         
         # Eliminar duplicados por fecha
         fechas_vistas = set()
@@ -559,27 +559,36 @@ if st.session_state.vista_actual == 'general':
                 disc_prom.append(0)
                 vel_prom.append(0)
                 horas_prom.append(0)
+                ejercicios_prom.append(0)
+                materias_str_prom.append("Sin registro")
             else:
                 # Día registrado, calcular valores reales
                 if dia["materias"]:
                     disc_prom.append(sum(m["Disciplina"] for m in dia["materias"].values()) / len(dia["materias"]))
                     vel_prom.append(sum(m["Velocidad"] for m in dia["materias"].values()) / len(dia["materias"]))
-                    # Guardar horas estudiadas
                     horas_prom.append(dia.get("Total_Horas_Estudiadas", 0))
-                    # Guardar ejercicios resueltos
                     ejercicios_prom.append(sum(m["Ejercicios_Resueltos"] for m in dia["materias"].values()))
+
+                    # NUEVO: Guardar nombres de las materias estudiadas
+                    materias_list = list(dia["materias"].keys())
+                    materias_str = "<br>- ".join(materias_list)
+                    materias_str_prom.append(materias_str)
+                
                 else:
                     disc_prom.append(0)
                     vel_prom.append(0)
                     horas_prom.append(0)
                     ejercicios_prom.append(0)
+                    materias_str_prom.append("Sin registro")
 
         promedio_disc = sum(disc_prom) / len(disc_prom) if disc_prom else 0
         st.subheader(f"🔥 DISCIPLINA: {promedio_disc:.1f}%")      
         fig_disc = go.Figure()
-        fig_disc.add_trace(go.Scatter(x=fechas, y=disc_prom, mode='lines+markers', name='Disciplina', line=dict(color='#FF4500', width=3), marker=dict(size=8, color='#FF4500'), 
-            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>',
-            customdata=horas_prom))        
+        fig_disc.add_trace(go.Scatter(x=fechas, y=disc_prom, mode='lines+markers', name='Disciplina', 
+            line=dict(color='#FF4500', width=3), 
+            marker=dict(size=8, color='#FF4500'), 
+            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata[0]}h<br>%{customdata[1]}<extra></extra>',
+            customdata=list(zip(horas_prom, materias_str_prom))))        
         fig_disc.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 150]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc, use_container_width=True)
         st.divider()
