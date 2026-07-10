@@ -560,7 +560,16 @@ if st.session_state.vista_actual == 'general':
                 vel_prom.append(0)
                 horas_prom.append(0)
                 ejercicios_prom.append(0)
-                materias_str_prom.append("Sin registro")
+                
+                # NUEVO: Obtener materias programadas para ese día
+                dia_semana = f.weekday()  # 0=Lunes, 1=Martes... 6=Domingo
+                materias_programadas = HORARIO_MATERIAS.get(dia_semana, [])
+                
+                if materias_programadas:
+                    materias_str = "<br>- ".join(materias_programadas)
+                    materias_str_prom.append(f"️ Día no registrado<br>Materias programadas:<br>- {materias_str}")
+                else:
+                    materias_str_prom.append("ℹ️ Día no registrado")
             else:
                 # Día registrado, calcular valores reales
                 if dia["materias"]:
