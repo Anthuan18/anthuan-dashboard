@@ -4,6 +4,13 @@ from firebase_admin import credentials, auth, firestore
 import json
 import os
 
+st.set_page_config(
+    page_title="EDRA - Pre UNI", 
+    page_icon="🎓", 
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
 # ============================================
 # CONFIGURACIÓN DE FIREBASE
 # ============================================
@@ -65,8 +72,10 @@ def login_usuario(username, password):
         email_fantasma = f"{username}@unidashboard.com"
         
         # Obtener la API Key de Streamlit Secrets
-        api_key = st.secrets.get("firebase_api_key", "AIzaSyC3IjmFQAtWH70uAjw-vonjQeEFICA-jFY")
-        
+        api_key = st.secrets.get("firebase_api_key")
+        if not api_key:
+            st.error("🔐 Falta configurar 'firebase_api_key' en los Secrets de Streamlit")
+            st.stop()        
         # URL de la API REST de Firebase para verificar contraseña
         url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
         
