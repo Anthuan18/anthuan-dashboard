@@ -37,6 +37,16 @@ db = firestore.client()
 def crear_usuario(username, password):
     """Crea un nuevo usuario usando el truco del email fantasma"""
     try:
+                # Validar username
+        username = username.strip()
+        if not username:
+            return None, "El nombre de usuario no puede estar vacío"
+        if len(username) < 3:
+            return None, "El nombre de usuario debe tener al menos 3 caracteres"
+        if "@" in username:
+            return None, "El nombre de usuario no puede contener @"
+        if " " in username:
+            return None, "El nombre de usuario no puede contener espacios"
         # Truco: convertir username en email fantasma
         email_fantasma = f"{username}@unidashboard.com"
         
@@ -67,6 +77,17 @@ def crear_usuario(username, password):
 def login_usuario(username, password):
     """Verifica las credenciales del usuario usando Firebase REST API"""
     import requests
+
+        # Validar username
+    username = username.strip()
+    if not username:
+        return None, "El nombre de usuario no puede estar vacío"
+    if len(username) < 3:
+        return None, "El nombre de usuario debe tener al menos 3 caracteres"
+    if "@" in username:
+        return None, "El nombre de usuario no puede contener @"
+    if " " in username:
+        return None, "El nombre de usuario no puede contener espacios"
     
     try:
         email_fantasma = f"{username}@unidashboard.com"
