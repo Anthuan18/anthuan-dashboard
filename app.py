@@ -758,16 +758,16 @@ elif st.session_state.vista_actual == 'curso':
         for dia in datos["diario"][-30:]:
             f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
             for m in mats:
-            if m in dia["materias"]:
-                d_mat[m].append(dia["materias"][m]["Disciplina"])
-                v_mat[m].append(dia["materias"][m]["Velocidad"])
-                h_mat[m].append(dia["materias"][m].get("horas_estudiadas", 0))
-                e_mat[m].append(dia["materias"][m].get("Ejercicios_Resueltos", 0))
-            else:
-                d_mat[m].append(None)
-                v_mat[m].append(None)
-                h_mat[m].append(None)
-                e_mat[m].append(None)
+                if m in dia["materias"]:
+                    d_mat[m].append(dia["materias"][m]["Disciplina"])
+                    v_mat[m].append(dia["materias"][m]["Velocidad"])
+                    h_mat[m].append(dia["materias"][m].get("horas_estudiadas", 0))
+                    e_mat[m].append(dia["materias"][m].get("Ejercicios_Resueltos", 0))
+                else:
+                    d_mat[m].append(None)
+                    v_mat[m].append(None)
+                    h_mat[m].append(None)
+                    e_mat[m].append(None)
 
         st.subheader("\U0001F525 DISCIPLINA")
         fig_disc_mat = go.Figure()
