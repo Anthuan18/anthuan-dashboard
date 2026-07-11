@@ -750,7 +750,74 @@ elif st.session_state.vista_actual == 'curso':
                     st.write(f"\u23F0 Horas totales: {int(s['horas'])}h")
                 with c2:
                     st.write(f"\U0001F525 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
-                    st.write(f"⚡ VELOCIDAD: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
+                    st.write(f"\u26A1 VELOCIDAD: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
+                
+                # BOTÓN PARA VER GRÁFICOS
+                if st.button(f" Ver gráficos de {mat}", key=f"btn_graf_{mat}", use_container_width=True):
+                    st.divider()
+                    st.markdown(f"###  Evolución de {simbolo} {mat}")
+                    
+                    datos_mat = []
+                    for dia in sorted(datos["diario"], key=lambda x: x["fecha"]):
+                        if mat in dia["materias"]:
+                            datos_mat.append({
+                                "fecha": datetime.strptime(dia["fecha"], "%Y-%m-%d"),
+                                "disciplina": dia["materias"][mat]["Disciplina"],
+                                "velocidad": dia["materias"][mat]["Velocidad"],
+                                "horas": dia["materias"][mat].get("horas_estudiadas", 0),
+                                "ejercicios": dia["materias"][mat].get("Ejercicios_Resueltos", 0)
+                            })
+                    
+                    if datos_mat:
+                        fechas = [d["fecha"] for d in datos_mat]
+                        disciplinas = [d["disciplina"] for d in datos_mat]
+                        velocidades = [d["velocidad"] for d in datos_mat]
+                        horas = [d["horas"] for d in datos_mat]
+                        ejercicios = [d["ejercicios"] for d in datos_mat]
+                        
+                        color_idx = mats.index(mat) if mat in mats else 0
+                        color_mat = COLORES_MATERIAS[color_idx]
+                        
+                        # GRÁFICO 1: DISCIPLINA
+                        fig_disc = go.Figure()
+                        fig_disc.add_trace(go.Scatter(
+                            x=fechas, y=disciplinas, mode='lines+markers',
+                            name='Disciplina',
+                            line=dict(color=color_mat, width=3),
+                            marker=dict(size=8),
+                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>',
+                            customdata=horas
+                        ))
+                        fig_disc.update_layout(
+                            yaxis_title='Disciplina (%)', 
+                            yaxis=dict(range=[0, 150]), 
+                            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), 
+                            hovermode='x unified', 
+                            height=350, margin=dict(l=50, r=20, t=20, b=50)
+                        )
+                        st.plotly_chart(fig_disc, use_container_width=True)
+                        
+                        # GRÁFICO 2: VELOCIDAD
+                        max_vel = max(velocidades) if velocidades else 30
+                        fig_vel = go.Figure()
+                        fig_vel.add_trace(go.Scatter(
+                            x=fechas, y=velocidades, mode='lines+markers',
+                            name='Velocidad',
+                            line=dict(color='gold', width=3),
+                            marker=dict(size=8),
+                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejer/h<br>Ejercicios: %{customdata[0]}<br>Horas: %{customdata[1]}h<extra></extra>',
+                            customdata=list(zip(ejercicios, horas))
+                        ))
+                        fig_vel.update_layout(
+                            yaxis_title='Velocidad (ejercicios/h)', 
+                            yaxis=dict(range=[0, max(30, max_vel*1.2)]), 
+                            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), 
+                            hovermode='x unified', 
+                            height=350, margin=dict(l=50, r=20, t=20, b=50)
+                        )
+                        st.plotly_chart(fig_vel, use_container_width=True)
+                    else:
+                        st.warning("⚠️ No hay datos para mostrar gráficos.")
         st.divider()
 
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
