@@ -538,35 +538,22 @@ if st.session_state.vista_actual == 'general':
                 dia_data = next(d for d in datos["diario"] if d["fecha"] == fecha_str)
                 dias_completos.append(dia_data)
             else:
-                # Día NO registrado, crear registro ficticio
+                # Día NO registrado, crear registro ficticio con 0%
                 dia_semana = dia_actual.weekday()
                 nombre_dia = NOMBRES_DIAS[dia_semana]
                 horas_disponibles = HORAS_DISPONIBLES[dia_semana]
                 
-                # Obtener SOLO las materias programadas para este día de la semana
-                materias_programadas = HORARIO_MATERIAS.get(dia_semana, [])
-                
-                # Crear el registro con SOLO esas materias (en 0%)
-                materias_ficticias = {}
-                for mat in materias_programadas:
-                    if mat in mats:  # Solo si está en nuestra lista de materias
-                        materias_ficticias[mat] = {
-                            "Disciplina": 0,
-                            "Velocidad": 0,
-                            "horas_estudiadas": 0,
-                            "Ejercicios_Resueltos": 0
-                        }
-                
+                # Crear registro ficticio con 0 horas y 0 ejercicios
                 registro_ficticio = {
                     "fecha": fecha_str,
                     "dia": nombre_dia,
                     "horas_disponibles_total": horas_disponibles,
-                    "materias": materias_ficticias,  # ← SOLO las materias programadas
+                    "materias": {},
                     "Total_Ejercicios_Resueltos_Dia": 0,
                     "Total_Horas_Estudiadas": 0,
-                    "es_ficticio": True
+                    "es_ficticio": True  # Marcador para saber que es un día no registrado
                 }
-                dias_completos_curso.append(registro_ficticio)
+                dias_completos.append(registro_ficticio)
             
             dia_actual += timedelta(days=1)
         
@@ -767,141 +754,60 @@ elif st.session_state.vista_actual == 'curso':
         st.divider()
 
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
-        
-        # ============================================
-        # DETECTAR DÍAS FALTANTES Y AGREGARLOS
-        # ============================================
-        fechas_registradas = set()
-        for dia in datos["diario"]:
-            fechas_registradas.add(dia["fecha"])
-        
-        if datos["diario"]:
-            primer_registro = min(datos["diario"][-30:], key=lambda x: x["fecha"])
-            fecha_inicio = datetime.strptime(primer_registro["fecha"], "%Y-%m-%d")
-            fecha_hoy = hora_peru()
-            
-            dias_completos_curso = []
-            dia_actual = fecha_inicio
-            
-            while dia_actual.date() <= fecha_hoy.date():
-                fecha_str = dia_actual.strftime("%Y-%m-%d")
-                
-                if any(d["fecha"] == fecha_str for d in dias_completos_curso):
-                    dia_actual += timedelta(days=1)
-                    continue
-                
-                if fecha_str in fechas_registradas:
-                    dia_data = next(d for d in datos["diario"] if d["fecha"] == fecha_str)
-                    dias_completos_curso.append(dia_data)
-                else:
-                    dia_semana = dia_actual.weekday()
-                    nombre_dia = NOMBRES_DIAS[dia_semana]
-                    horas_disponibles = HORAS_DISPONIBLES[dia_semana]
-                    
-                    registro_ficticio = {
-                        "fecha": fecha_str,
-                        "dia": nombre_dia,
-                        "horas_disponibles_total": horas_disponibles,
-                        "materias": {},
-                        "Total_Ejercicios_Resueltos_Dia": 0,
-                        "Total_Horas_Estudiadas": 0,
-                        "es_ficticio": True
-                    }
-                    dias_completos_curso.append(registro_ficticio)
-                
-                dia_actual += timedelta(days=1)
-            
-            dias_vistos = {}
-            for dia in dias_completos_curso:
-                fecha = dia["fecha"]
-                if fecha not in dias_vistos:
-                    dias_vistos[fecha] = dia
-            dias_completos_curso = list(dias_vistos.values())
-            dias_a_procesar = dias_completos_curso[-30:]
-        else:
-            dias_a_procesar = []
-        
-        # ============================================
-        # PROCESAR DATOS (CON DÍAS FICTICIOS)
-        # ============================================
         f_det, d_mat, v_mat, h_mat, e_mat = [], {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}
-        
-        for dia in dias_a_procesar:
-            f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
-            for m in mats:
-                if m in dia["materias"]:
-                    d_mat[m].append(dia["materias"][m]["Disciplina"])
-                    v_mat[m].append(dia["materias"][m]["Velocidad"])
-                    h_mat[m].append(dia["materias"][m].get("horas_estudiadas", 0))
-                    e_mat[m].append(dia["materias"][m].get("Ejercicios_Resueltos", 0))
-                else:
-                    d_mat[m].append(None)
-                    v_mat[m].append(None)
-                    h_mat[m].append(None)
-                    e_mat[m].append(None)
-        
-        # ============================================
-        # GRÁFICO DE DISCIPLINA
-        # ============================================
+        for dia in datos["diario"][-30:]:
+            if dia["dia"] != "Domingo":
+                f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
+                for m in mats:
+                    if m in dia["materias"]:
+                        d_mat[m].append(dia["materias"][m]["Disciplina"])
+                        v_mat[m].append(dia["materias"][m]["Velocidad"])
+                        h_mat[m].append(dia["materias"][m].get("horas_estudiadas", 0))
+                        e_mat[m].append(dia["materias"][m].get("Ejercicios_Resueltos", 0))
+                    else:
+                        d_mat[m].append(None)
+                        v_mat[m].append(None)
+                        h_mat[m].append(None)
+                        e_mat[m].append(None)
+
         st.subheader("\U0001F525 DISCIPLINA")
         fig_disc_mat = go.Figure()
-        
         for i, m in enumerate(mats):
             val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
             if val:
-                ff = f_det
-                dd = [d if d is not None else 0 for d in d_mat[m]]
-                hh = [h if h is not None else 0 for h in h_mat[m]]
-                
-                dias_no_registrados = []
-                for f, d, h in zip(f_det, d_mat[m], h_mat[m]):
-                    dia_data = next((dia for dia in dias_a_procesar if dia["fecha"] == f.strftime("%Y-%m-%d")), None)
-                    if dia_data and dia_data.get("es_ficticio", False):
-                        dia_semana = f.weekday()
-                        materias_programadas = HORARIO_MATERIAS.get(dia_semana, [])
-                        if materias_programadas:
-                            materias_str = "<br>- ".join(materias_programadas)
-                            dias_no_registrados.append(f"️ Día no registrado<br>Materias programadas:<br>- {materias_str}")
-                        else:
-                            dias_no_registrados.append("ℹ️ Día no registrado")
-                    else:
-                        dias_no_registrados.append("")
-                
+                ff, dd = zip(*val)
+                # Filtrar horas para que coincidan con ff y dd
+                hh = [h for f, h in zip(f_det, h_mat[m]) if h is not None]
+        
                 fig_disc_mat.add_trace(go.Scatter(x=ff, y=dd, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}',
                     line=dict(color=COLORES_MATERIAS[i], width=2),
                     marker=dict(size=6),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata[0]}h<br>%{customdata[1]}<extra></extra>',
-                    customdata=list(zip(hh, dias_no_registrados))))
-        
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>',
+                    customdata=hh))                          
+         
         fig_disc_mat.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 150]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc_mat, use_container_width=True)
         st.divider()
-        
-        # ============================================
-        # GRÁFICO DE VELOCIDAD
-        # ============================================
+
         st.subheader("\u26A1 VELOCIDAD")
         fig_vel_mat = go.Figure()
-        
         for i, m in enumerate(mats):
             val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
             if val:
                 ff, vv = zip(*val)
+                # Filtrar horas y ejercicios para que coincidan
                 hh = [h for f, h in zip(f_det, h_mat[m]) if h is not None]
                 ee = [e for f, e in zip(f_det, e_mat[m]) if e is not None]
+                
                 fig_vel_mat.add_trace(go.Scatter(x=ff, y=vv, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}', 
                     line=dict(color=COLORES_MATERIAS[i], width=2), 
                     marker=dict(size=6), 
                     hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + m + ': %{y:.1f} ejer/h<br>-Resolviste %{customdata[0]} ejer en %{customdata[1]}h<extra></extra>',
                     customdata=list(zip(ee, hh))))
-        
         fig_vel_mat.update_layout(yaxis_title='Velocidad (ejercicios/h)', yaxis=dict(range=[0, max(30, max([v for v in sum(v_mat.values(), []) if v is not None])*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_vel_mat, use_container_width=True)
         st.divider()
-        
-        # ============================================
-        # GRÁFICO DE EJERCICIOS VS HORAS
-        # ============================================
+
         st.subheader("\U0001F4CA EJERCICIOS VS HORAS")
         ej_tot = {m:0 for m in mats}
         hr_tot = {m:0 for m in mats}
@@ -910,6 +816,7 @@ elif st.session_state.vista_actual == 'curso':
                 if m in ej_tot:
                     ej_tot[m] += s["Ejercicios_Resueltos"]
                     hr_tot[m] += s["horas_estudiadas"]
+        
         etiquetas = [f"{SIMBOLOS_CURSOS[m]} {m}" for m in mats]
         fig_barras = go.Figure()
         fig_barras.add_trace(go.Bar(name='Ejercicios', x=etiquetas, y=[ej_tot[m] for m in mats], marker_color='#3498DB', hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'))
