@@ -718,9 +718,12 @@ if st.session_state.vista_actual == 'general':
 # ============================================
 # VISTA: RENDIMIENTO POR CURSO
 # ============================================
+# ============================================
+# VISTA: RENDIMIENTO POR CURSO
+# ============================================
 elif st.session_state.vista_actual == 'curso':
-    st.header("\U0001F4DA SECCIÓN: RENDIMIENTO POR CURSO")
-    if st.button("\u2B05\uFE0F Volver al inicio", key="back_curso"):
+    st.header("📚 SECCIÓN: RENDIMIENTO POR CURSO")
+    if st.button("⬅️ Volver al inicio", key="back_curso"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
     st.divider()
@@ -728,103 +731,158 @@ elif st.session_state.vista_actual == 'curso':
     datos = cargar_datos()
     
     if datos["diario"]:
-        st.subheader("\U0001F4D6 ESTADÍSTICAS")
-        materias_stats = {}
-        for dia in datos["diario"]:
-            for mat, stats in dia["materias"].items():
-                if mat not in materias_stats:
-                    materias_stats[mat] = {"dias": 0, "ejercicios": 0, "horas": 0, "disc": [], "vel": []}
-                materias_stats[mat]["dias"] += 1
-                materias_stats[mat]["ejercicios"] += stats["Ejercicios_Resueltos"]
-                materias_stats[mat]["horas"] += stats["horas_estudiadas"]
-                materias_stats[mat]["disc"].append(stats["Disciplina"])
-                materias_stats[mat]["vel"].append(stats["Velocidad"])
-
-        for mat, s in materias_stats.items():
-            simbolo = SIMBOLOS_CURSOS.get(mat, "\U0001F4DA")
-            with st.expander(f"\u25BC {simbolo} {mat}", expanded=False):
-                c1, c2 = st.columns(2)
-                with c1:
-                    st.write(f"\U0001F4C5 Días estudiados: {s['dias']}")
-                    st.write(f"\U0001F4DD Ejercicios totales: {s['ejercicios']}")
-                    st.write(f"\u23F0 Horas totales: {int(s['horas'])}h")
-                with c2:
-                    st.write(f"\U0001F525 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
-                    st.write(f"⚡ VELOCIDAD: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
-        st.divider()
-
-        mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
-        f_det, d_mat, v_mat, h_mat, e_mat = [], {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}
-        for dia in datos["diario"][-30:]:
-            if dia["dia"] != "Domingo":
-                f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
-                for m in mats:
-                    if m in dia["materias"]:
-                        d_mat[m].append(dia["materias"][m]["Disciplina"])
-                        v_mat[m].append(dia["materias"][m]["Velocidad"])
-                        h_mat[m].append(dia["materias"][m].get("horas_estudiadas", 0))
-                        e_mat[m].append(dia["materias"][m].get("Ejercicios_Resueltos", 0))
-                    else:
-                        d_mat[m].append(None)
-                        v_mat[m].append(None)
-                        h_mat[m].append(None)
-                        e_mat[m].append(None)
-
-        st.subheader("\U0001F525 DISCIPLINA")
-        fig_disc_mat = go.Figure()
-        for i, m in enumerate(mats):
-            val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
-            if val:
-                ff, dd = zip(*val)
-                # Filtrar horas para que coincidan con ff y dd
-                hh = [h for f, h in zip(f_det, h_mat[m]) if h is not None]
+        st.subheader("📖 ESTADÍSTICAS POR CURSO")
         
-                fig_disc_mat.add_trace(go.Scatter(x=ff, y=dd, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}',
-                    line=dict(color=COLORES_MATERIAS[i], width=2),
-                    marker=dict(size=6),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>',
-                    customdata=hh))                          
-         
-        fig_disc_mat.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 150]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
-        st.plotly_chart(fig_disc_mat, use_container_width=True)
-        st.divider()
+        # 1. Fechas límite para calcular el "Universo de Días"
+        primer_registro = min(datos["diario"], key=lambda x: x["fecha"])
+        fecha_inicio_global = datetime.strptime(primer_registro["fecha"], "%Y-%m-%d")
+        fecha_hoy = hora_peru()
 
-        st.subheader("\u26A1 VELOCIDAD")
-        fig_vel_mat = go.Figure()
-        for i, m in enumerate(mats):
-            val = [(f, v) for f, v in zip(f_det, v_mat[m]) if v is not None]
-            if val:
-                ff, vv = zip(*val)
-                # Filtrar horas y ejercicios para que coincidan
-                hh = [h for f, h in zip(f_det, h_mat[m]) if h is not None]
-                ee = [e for f, e in zip(f_det, e_mat[m]) if e is not None]
+        # 2. Generar los expanders para cada curso
+        mats_nombres = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
+        
+        for i, mat in enumerate(mats_nombres):
+            simbolo = SIMBOLOS_CURSOS.get(mat, "📚")
+            color_mat = COLORES_MATERIAS[i]
+            
+            with st.expander(f"▼ {simbolo} {mat}", expanded=False):
                 
-                fig_vel_mat.add_trace(go.Scatter(x=ff, y=vv, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}', 
-                    line=dict(color=COLORES_MATERIAS[i], width=2), 
-                    marker=dict(size=6), 
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + m + ': %{y:.1f} ejer/h<br>-Resolviste %{customdata[0]} ejer en %{customdata[1]}h<extra></extra>',
-                    customdata=list(zip(ee, hh))))
-        fig_vel_mat.update_layout(yaxis_title='Velocidad (ejercicios/h)', yaxis=dict(range=[0, max(30, max([v for v in sum(v_mat.values(), []) if v is not None])*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
-        st.plotly_chart(fig_vel_mat, use_container_width=True)
-        st.divider()
+                # --- CÁLCULO ESTRICTO (INCLUYENDO DÍAS FICTICIOS) ---
+                fechas_mat = []
+                disc_mat = []
+                vel_mat = []
+                total_ejercicios = 0
+                total_horas = 0
+                dias_reales_estudiados = 0
+                
+                dia_actual = fecha_inicio_global
+                while dia_actual.date() <= fecha_hoy.date():
+                    dia_semana = dia_actual.weekday()
+                    fecha_str = dia_actual.strftime("%Y-%m-%d")
+                    
+                    # ¿Tocaba estudiar esta materia este día?
+                    if mat in HORARIO_MATERIAS.get(dia_semana, []):
+                        fechas_mat.append(dia_actual)
+                        
+                        # Buscar si hay un registro real para este día
+                        registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
+                        
+                        if registro_dia and mat in registro_dia.get("materias", {}):
+                            # DÍA REAL
+                            stats_mat = registro_dia["materias"][mat]
+                            disc_mat.append(stats_mat["Disciplina"])
+                            vel_mat.append(stats_mat["Velocidad"])
+                            total_ejercicios += stats_mat["Ejercicios_Resueltos"]
+                            total_horas += stats_mat.get("horas_estudiadas", 0)
+                            dias_reales_estudiados += 1
+                        else:
+                            # DÍA FICTICIO (Penalización por no estudiar)
+                            disc_mat.append(0)
+                            vel_mat.append(0)
+                    
+                    dia_actual += timedelta(days=1)
 
-        st.subheader("\U0001F4CA EJERCICIOS VS HORAS")
-        ej_tot = {m:0 for m in mats}
-        hr_tot = {m:0 for m in mats}
-        for dia in datos["diario"]:
-            for m, s in dia["materias"].items():
-                if m in ej_tot:
-                    ej_tot[m] += s["Ejercicios_Resueltos"]
-                    hr_tot[m] += s["horas_estudiadas"]
+                # --- MOSTRAR MÉTRICAS ---
+                universo_dias = len(fechas_mat) # Cuántas veces le tocaba estudiar en total
+                
+                if universo_dias > 0:
+                    promedio_disc = sum(disc_mat) / universo_dias
+                    promedio_vel = sum(vel_mat) / universo_dias
+                    
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.write(f"📅 Cumplimiento: {dias_reales_estudiados} de {universo_dias} días obligatorios")
+                        st.write(f"📝 Ejercicios totales: {total_ejercicios}")
+                        st.write(f"⏰ Horas totales: {int(total_horas)}h")
+                    with c2:
+                        st.write(f"🔥 Disciplina Real: {promedio_disc:.1f}%")
+                        st.write(f"⚡ Velocidad Real: {promedio_vel:.1f} ej/h")
+                else:
+                    st.info(f"Aún no han pasado días en los que te toque estudiar {mat}.")
+                
+                st.divider()
+                
+                # --- BOTÓN PARA VER GRÁFICOS ---
+                estado_btn = f"ver_graficos_{mat}"
+                if estado_btn not in st.session_state:
+                    st.session_state[estado_btn] = False
+                
+                if st.button(f"📊 Ver gráficos de {mat}", key=f"btn_{mat}", use_container_width=True):
+                    st.session_state[estado_btn] = not st.session_state[estado_btn]
+                
+                # --- DIBUJAR GRÁFICOS SI ESTÁ ACTIVO ---
+                if st.session_state[estado_btn] and universo_dias > 0:
+                    # Gráfico Disciplina
+                    fig_disc = go.Figure()
+                    fig_disc.add_trace(go.Scatter(
+                        x=fechas_mat, y=disc_mat, mode='lines+markers', name='Disciplina',
+                        line=dict(color=color_mat, width=3), marker=dict(size=8),
+                        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<extra></extra>'
+                    ))
+                    fig_disc.update_layout(title=f"Evolución de Disciplina - {mat}", yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), margin=dict(l=20, r=20, t=40, b=20), height=300)
+                    st.plotly_chart(fig_disc, use_container_width=True, key=f"plot_disc_{mat}")
+                    
+                    # Gráfico Velocidad
+                    fig_vel = go.Figure()
+                    max_vel = max(vel_mat) if vel_mat else 10
+                    fig_vel.add_trace(go.Scatter(
+                        x=fechas_mat, y=vel_mat, mode='lines+markers', name='Velocidad',
+                        line=dict(color='gold', width=3), marker=dict(size=8, color=color_mat),
+                        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ej/h<extra></extra>'
+                    ))
+                    fig_vel.update_layout(title=f"Evolución de Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(20, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
+                    st.plotly_chart(fig_vel, use_container_width=True, key=f"plot_vel_{mat}")
         
-        etiquetas = [f"{SIMBOLOS_CURSOS[m]} {m}" for m in mats]
+        # ==========================================
+        # GRÁFICO GENERAL: EJERCICIOS VS HORAS
+        # ==========================================
+        st.divider()
+        st.subheader("📊 EJERCICIOS VS HORAS (TOTAL ACUMULADO)")
+        
+        ej_tot = {m:0 for m in mats_nombres}
+        hr_tot = {m:0 for m in mats_nombres}
+        
+        for dia in datos["diario"]:
+            for m, s in dia.get("materias", {}).items():
+                if m in ej_tot:
+                    ej_tot[m] += s.get("Ejercicios_Resueltos", 0)
+                    hr_tot[m] += s.get("horas_estudiadas", 0)
+        
+        etiquetas = [f"{SIMBOLOS_CURSOS.get(m, '📚')} {m}" for m in mats_nombres]
+        
         fig_barras = go.Figure()
-        fig_barras.add_trace(go.Bar(name='Ejercicios', x=etiquetas, y=[ej_tot[m] for m in mats], marker_color='#3498DB', hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'))
-        fig_barras.add_trace(go.Bar(name='Horas', x=etiquetas, y=[hr_tot[m] for m in mats], marker_color='#E74C3C', hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>'))
-        fig_barras.update_layout(barmode='group', yaxis_title='Cantidad', yaxis=dict(range=[0, max(max(ej_tot.values()), max(hr_tot.values()))*1.2]), xaxis_title='Materia', height=500, margin=dict(l=50, r=20, t=20, b=50))
+        fig_barras.add_trace(go.Bar(
+            name='Ejercicios', 
+            x=etiquetas, 
+            y=[ej_tot[m] for m in mats_nombres], 
+            marker_color='#3498DB', 
+            hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'
+        ))
+        
+        fig_barras.add_trace(go.Bar(
+            name='Horas', 
+            x=etiquetas, 
+            y=[hr_tot[m] for m in mats_nombres], 
+            marker_color='#E74C3C', 
+            hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>'
+        ))
+        
+        # Calcular el máximo para escalar bien el gráfico
+        max_y = max(max(ej_tot.values(), default=0), max(hr_tot.values(), default=0))
+        
+        fig_barras.update_layout(
+            barmode='group', 
+            yaxis_title='Cantidad', 
+            yaxis=dict(range=[0, (max_y * 1.2) if max_y > 0 else 10]), 
+            xaxis_title='Materia', 
+            height=500, 
+            margin=dict(l=50, r=20, t=20, b=50)
+        )
+        
         st.plotly_chart(fig_barras, use_container_width=True)
+                    
     else:
-        st.warning("\u26A0\uFE0F No hay datos de materias registrados.")
+        st.warning("⚠️ No hay materias registradas.")
 
     # ============================================
     # VISTA: REGISTRO
