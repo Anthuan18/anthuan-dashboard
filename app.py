@@ -880,7 +880,6 @@ elif st.session_state.vista_actual == 'curso':
                         )
                         st.plotly_chart(fig_vel, use_container_width=True)
                         
-                        st.divider()
                     else:
                         st.warning("⚠️ No hay datos para mostrar gráficos.")
         st.divider()
