@@ -791,14 +791,14 @@ elif st.session_state.vista_actual == 'curso':
                     
                     c1, c2 = st.columns(2)
                     with c1:
-                        st.write(f"📅 Cumplimiento: {dias_reales_estudiados} de {universo_dias} días obligatorios")
+                        st.write(f"📅 Días estudiados: {dias_reales_estudiados}")
                         st.write(f"📝 Ejercicios totales: {total_ejercicios}")
                         st.write(f"⏰ Horas totales: {int(total_horas)}h")
                     with c2:
-                        st.write(f"🔥 Disciplina Real: {promedio_disc:.1f}%")
-                        st.write(f"⚡ Velocidad Real: {promedio_vel:.1f} ej/h")
+                        st.write(f"🔥 Disciplina: {promedio_disc:.1f}%")
+                        st.write(f"⚡ Velocidad: {promedio_vel:.1f} ejercicio/h")
                 else:
-                    st.info(f"Aún no han pasado días en los que te toque estudiar {mat}.")
+                    st.info(f"Aún no se registró {mat}.")
                 
                 st.divider()
                 
@@ -819,7 +819,7 @@ elif st.session_state.vista_actual == 'curso':
                         line=dict(color=color_mat, width=3), marker=dict(size=8),
                         hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<extra></extra>'
                     ))
-                    fig_disc.update_layout(title=f"Evolución de Disciplina - {mat}", yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), margin=dict(l=20, r=20, t=40, b=20), height=300)
+                    fig_disc.update_layout(title=f"🔥Disciplina - {mat}", yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                     st.plotly_chart(fig_disc, use_container_width=True, key=f"plot_disc_{mat}")
                     
                     # Gráfico Velocidad
@@ -830,14 +830,14 @@ elif st.session_state.vista_actual == 'curso':
                         line=dict(color='gold', width=3), marker=dict(size=8, color=color_mat),
                         hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ej/h<extra></extra>'
                     ))
-                    fig_vel.update_layout(title=f"Evolución de Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(20, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
+                    fig_vel.update_layout(title=f"⚡Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(30, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                     st.plotly_chart(fig_vel, use_container_width=True, key=f"plot_vel_{mat}")
 
         # ==========================================
         # GRÁFICOS COMPARATIVOS: LÍNEAS MÚLTIPLES
         # ==========================================
         st.divider()
-        st.subheader("📈 EVOLUCIÓN COMPARATIVA (TODOS LOS CURSOS)")
+        st.subheader("📈 COMPARACIÓN DE TODOS LOS CURSOS")
         
         # Crear los lienzos (Figures) para ambos gráficos
         fig_disc_global = go.Figure()
@@ -903,7 +903,7 @@ elif st.session_state.vista_actual == 'curso':
         )
 
         # Mostrar los gráficos usando pestañas
-        tab1, tab2 = st.tabs(["🔥 Disciplina General", "⚡ Velocidad General"])
+        tab1, tab2 = st.tabs(["🔥 Disciplina", "⚡ Velocidad"])
         with tab1:
             st.plotly_chart(fig_disc_global, use_container_width=True, key="plot_global_disc")
         with tab2:
@@ -913,7 +913,7 @@ elif st.session_state.vista_actual == 'curso':
         # GRÁFICO GENERAL: EJERCICIOS VS HORAS
         # ==========================================
         st.divider()
-        st.subheader("📊 EJERCICIOS VS HORAS (TOTAL ACUMULADO)")
+        st.subheader("📊 EJERCICIOS Y HORAS EN TOTAL")
         
         ej_tot = {m:0 for m in mats_nombres}
         hr_tot = {m:0 for m in mats_nombres}
