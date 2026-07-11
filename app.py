@@ -759,16 +759,17 @@ elif st.session_state.vista_actual == 'curso':
                     st.write(f"\u26A1 VELOCIDAD: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
                 
                 # BOTÓN PARA VER GRÁFICOS
-                if st.button(f"\U0001F4CA Ver gráficos de {mat}", key=f"btn_graf_{mat}", use_container_width=True):
+                if st.button(f"📊 Ver gráficos de {mat}", key=f"btn_graf_{mat}", use_container_width=True):
                     st.divider()
                     st.markdown(f"### 📈 Evolución de {simbolo} {mat}")
                     
-                    # 1. CREAR DÍAS FICTICIOS (desde primer registro hasta hoy)
-                    fechas_registradas = set()
-                    for dia in datos["diario"]:
-                        fechas_registradas.add(dia["fecha"])
+                    # Obtener qué días de la semana tiene programada esta materia
+                    dias_programados = []
+                    for dia_semana, materias in HORARIO_MATERIAS.items():
+                        if mat in materias:
+                            dias_programados.append(dia_semana)
                     
-                    # Obtener primer registro de ESTA materia
+                    # Obtener días reales donde estudió esta materia
                     dias_mat = [dia for dia in datos["diario"] if mat in dia["materias"]]
                     
                     if dias_mat:
@@ -776,24 +777,31 @@ elif st.session_state.vista_actual == 'curso':
                         fecha_inicio = datetime.strptime(primer_dia["fecha"], "%Y-%m-%d")
                         fecha_hoy = hora_peru()
                         
-                        # Generar lista completa de días
+                        # Generar lista de días SOLO los que tiene programada esta materia
                         dias_completos = []
                         dia_actual = fecha_inicio
                         
                         while dia_actual.date() <= fecha_hoy.date():
+                            dia_semana = dia_actual.weekday()
                             fecha_str = dia_actual.strftime("%Y-%m-%d")
-                            if fecha_str in fechas_registradas:
-                                dia_data = next(d for d in datos["diario"] if d["fecha"] == fecha_str)
-                                dias_completos.append(dia_data)
-                            else:
-                                dias_completos.append({
-                                    "fecha": fecha_str,
-                                    "es_ficticio": True,
-                                    "materias": {}
-                                })
+                            
+                            # Solo procesar si es un día programado para esta materia
+                            if dia_semana in dias_programados:
+                                if fecha_str in [d["fecha"] for d in datos["diario"]]:
+                                    # Día registrado
+                                    dia_data = next(d for d in datos["diario"] if d["fecha"] == fecha_str)
+                                    dias_completos.append(dia_data)
+                                else:
+                                    # Día NO registrado = ficticio
+                                    dias_completos.append({
+                                        "fecha": fecha_str,
+                                        "es_ficticio": True,
+                                        "materias": {}
+                                    })
+                            
                             dia_actual += timedelta(days=1)
                         
-                        # 2. PROCESAR DATOS DE LA MATERIA
+                        # Procesar datos
                         fechas = []
                         disciplinas = []
                         velocidades = []
@@ -814,7 +822,7 @@ elif st.session_state.vista_actual == 'curso':
                                 horas.append(dia["materias"][mat].get("horas_estudiadas", 0))
                                 ejercicios.append(dia["materias"][mat].get("Ejercicios_Resueltos", 0))
                         
-                        # 3. GRÁFICO DE DISCIPLINA
+                        # Gráfico de Disciplina
                         color_idx = mats.index(mat) if mat in mats else 0
                         color_mat = COLORES_MATERIAS[color_idx]
                         
@@ -837,7 +845,7 @@ elif st.session_state.vista_actual == 'curso':
                         )
                         st.plotly_chart(fig_disc, use_container_width=True)
                         
-                        # 4. GRÁFICO DE VELOCIDAD
+                        # Gráfico de Velocidad
                         max_vel = max(velocidades) if velocidades else 30
                         fig_vel = go.Figure()
                         fig_vel.add_trace(go.Scatter(
