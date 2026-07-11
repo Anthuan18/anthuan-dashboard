@@ -832,6 +832,82 @@ elif st.session_state.vista_actual == 'curso':
                     ))
                     fig_vel.update_layout(title=f"Evolución de Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(20, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                     st.plotly_chart(fig_vel, use_container_width=True, key=f"plot_vel_{mat}")
+
+        # ==========================================
+        # GRÁFICOS COMPARATIVOS: LÍNEAS MÚLTIPLES
+        # ==========================================
+        st.divider()
+        st.subheader("📈 EVOLUCIÓN COMPARATIVA (TODOS LOS CURSOS)")
+        
+        # Crear los lienzos (Figures) para ambos gráficos
+        fig_disc_global = go.Figure()
+        fig_vel_global = go.Figure()
+        
+        # Calcular los datos estrictos para cada materia y añadirlos al gráfico
+        for i, mat in enumerate(mats_nombres):
+            fechas_mat = []
+            disc_mat = []
+            vel_mat = []
+            
+            dia_actual = fecha_inicio_global
+            while dia_actual.date() <= fecha_hoy.date():
+                dia_semana = dia_actual.weekday()
+                fecha_str = dia_actual.strftime("%Y-%m-%d")
+                
+                # Solo evaluamos si la materia tocaba ese día
+                if mat in HORARIO_MATERIAS.get(dia_semana, []):
+                    fechas_mat.append(dia_actual)
+                    
+                    registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
+                    if registro_dia and mat in registro_dia.get("materias", {}):
+                        stats_mat = registro_dia["materias"][mat]
+                        disc_mat.append(stats_mat["Disciplina"])
+                        vel_mat.append(stats_mat["Velocidad"])
+                    else:
+                        # Castigo del 0%
+                        disc_mat.append(0)
+                        vel_mat.append(0)
+                
+                dia_actual += timedelta(days=1)
+            
+            # Dibujar las líneas solo si hay datos para esa materia
+            if fechas_mat:
+                color_mat = COLORES_MATERIAS[i]
+                simbolo = SIMBOLOS_CURSOS.get(mat, "")
+                
+                # Trazado de Disciplina
+                fig_disc_global.add_trace(go.Scatter(
+                    x=fechas_mat, y=disc_mat, mode='lines+markers', name=f"{simbolo} {mat}",
+                    line=dict(color=color_mat, width=2), marker=dict(size=6),
+                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{mat}: %{{y:.1f}}%<extra></extra>'
+                ))
+                
+                # Trazado de Velocidad
+                fig_vel_global.add_trace(go.Scatter(
+                    x=fechas_mat, y=vel_mat, mode='lines+markers', name=f"{simbolo} {mat}",
+                    line=dict(color=color_mat, width=2), marker=dict(size=6),
+                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{mat}: %{{y:.1f}} ej/h<extra></extra>'
+                ))
+
+        # Mejorar el diseño visual de los gráficos
+        fig_disc_global.update_layout(
+            yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), 
+            hovermode='x', margin=dict(l=20, r=20, t=20, b=20), height=400,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
+        
+        fig_vel_global.update_layout(
+            yaxis_title="Velocidad (Ejercicios/h)", 
+            hovermode='x', margin=dict(l=20, r=20, t=20, b=20), height=400,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
+
+        # Mostrar los gráficos usando pestañas
+        tab1, tab2 = st.tabs(["🔥 Disciplina General", "⚡ Velocidad General"])
+        with tab1:
+            st.plotly_chart(fig_disc_global, use_container_width=True, key="plot_global_disc")
+        with tab2:
+            st.plotly_chart(fig_vel_global, use_container_width=True, key="plot_global_vel")
         
         # ==========================================
         # GRÁFICO GENERAL: EJERCICIOS VS HORAS
