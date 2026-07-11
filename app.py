@@ -885,7 +885,8 @@ elif st.session_state.vista_actual == 'curso':
                         
                     else:
                         st.warning("⚠️ No hay datos para mostrar gráficos.")
-               st.divider()
+                    
+        st.divider()
 
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
         f_det, d_mat, v_mat, h_mat, e_mat = [], {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}
