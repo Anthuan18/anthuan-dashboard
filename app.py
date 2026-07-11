@@ -538,22 +538,35 @@ if st.session_state.vista_actual == 'general':
                 dia_data = next(d for d in datos["diario"] if d["fecha"] == fecha_str)
                 dias_completos.append(dia_data)
             else:
-                # Día NO registrado, crear registro ficticio con 0%
+                # Día NO registrado, crear registro ficticio
                 dia_semana = dia_actual.weekday()
                 nombre_dia = NOMBRES_DIAS[dia_semana]
                 horas_disponibles = HORAS_DISPONIBLES[dia_semana]
                 
-                # Crear registro ficticio con 0 horas y 0 ejercicios
+                # Obtener SOLO las materias programadas para este día de la semana
+                materias_programadas = HORARIO_MATERIAS.get(dia_semana, [])
+                
+                # Crear el registro con SOLO esas materias (en 0%)
+                materias_ficticias = {}
+                for mat in materias_programadas:
+                    if mat in mats:  # Solo si está en nuestra lista de materias
+                        materias_ficticias[mat] = {
+                            "Disciplina": 0,
+                            "Velocidad": 0,
+                            "horas_estudiadas": 0,
+                            "Ejercicios_Resueltos": 0
+                        }
+                
                 registro_ficticio = {
                     "fecha": fecha_str,
                     "dia": nombre_dia,
                     "horas_disponibles_total": horas_disponibles,
-                    "materias": {},
+                    "materias": materias_ficticias,  # ← SOLO las materias programadas
                     "Total_Ejercicios_Resueltos_Dia": 0,
                     "Total_Horas_Estudiadas": 0,
-                    "es_ficticio": True  # Marcador para saber que es un día no registrado
+                    "es_ficticio": True
                 }
-                dias_completos.append(registro_ficticio)
+                dias_completos_curso.append(registro_ficticio)
             
             dia_actual += timedelta(days=1)
         
