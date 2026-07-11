@@ -385,33 +385,36 @@ COLORES_MATERIAS = ["#0BDCF4", "#E4EA38", "#5E664A", "#35C938", "#503EDA", "#E01
 ARCHIVO_GUARDADO = "anthuan_stats.json"
 
 def cargar_datos():
-    """Carga los datos del usuario actual desde Firestore"""
+    """Carga los datos del usuario actual desde Firestore (con cache en session_state)"""
     if 'user_id' not in st.session_state:
         return {"diario": [], "semanal": []}
     
     user_id = st.session_state['user_id']
+    cache_key = f"cached_datos_{user_id}"
     
+    # CACHE: Si ya cargamos en esta sesión, devolver desde memoria (¡instantáneo!)
+    if cache_key in st.session_state:
+        return st.session_state[cache_key]
+    
+    # Primera carga: leer de Firestore
     try:
-        # Obtener documento del usuario desde Firestore
         doc_ref = db.collection('usuarios').document(user_id)
         doc = doc_ref.get()
         
         if doc.exists:
             datos = doc.to_dict()
-            
-            # Asegurarnos de que existan las claves
             if 'diario' not in datos:
                 datos['diario'] = []
             if 'semanal' not in datos:
                 datos['semanal'] = []
             
-# NO filtrar fechas - mantener todos los registros
-# El usuario decide qué datos ingresar
-            
+            # Guardar en cache para próximas lecturas
+            st.session_state[cache_key] = datos
             return datos
         else:
-            # Si no existe documento, retornar estructura vacía
-            return {"diario": [], "semanal": []}
+            default = {"diario": [], "semanal": []}
+            st.session_state[cache_key] = default
+            return default
     except Exception as e:
         st.error(f"Error al cargar datos: {e}")
         return {"diario": [], "semanal": []}
@@ -440,6 +443,16 @@ def guardar_datos(datos):
         }
         
         doc_ref.update(datos_a_guardar)
+
+                # ACTUALIZAR CACHE: Guardar datos frescos en session_state
+        # para que las próximas cargas sean instantáneas
+        cache_key = f"cached_datos_{user_id}"
+        st.session_state[cache_key] = {
+            'diario': datos_a_guardar['diario'],
+            'semanal': datos_a_guardar['semanal'],
+            'materias': datos_a_guardar.get('materias', {})
+        }
+        
         st.success("✅ Datos guardados correctamente")
         return True
         
