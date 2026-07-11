@@ -756,34 +756,39 @@ elif st.session_state.vista_actual == 'curso':
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
         f_det, d_mat, v_mat, h_mat, e_mat = [], {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}
         for dia in datos["diario"][-30:]:
-            if dia["dia"] != "Domingo":
-                f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
-                for m in mats:
-                    if m in dia["materias"]:
-                        d_mat[m].append(dia["materias"][m]["Disciplina"])
-                        v_mat[m].append(dia["materias"][m]["Velocidad"])
-                        h_mat[m].append(dia["materias"][m].get("horas_estudiadas", 0))
-                        e_mat[m].append(dia["materias"][m].get("Ejercicios_Resueltos", 0))
-                    else:
-                        d_mat[m].append(None)
-                        v_mat[m].append(None)
-                        h_mat[m].append(None)
-                        e_mat[m].append(None)
+        f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
+        for m in mats:
+            if m in dia["materias"]:
+                d_mat[m].append(dia["materias"][m]["Disciplina"])
+                v_mat[m].append(dia["materias"][m]["Velocidad"])
+                h_mat[m].append(dia["materias"][m].get("horas_estudiadas", 0))
+                e_mat[m].append(dia["materias"][m].get("Ejercicios_Resueltos", 0))
+            else:
+                d_mat[m].append(None)
+                v_mat[m].append(None)
+                h_mat[m].append(None)
+                e_mat[m].append(None)
 
         st.subheader("\U0001F525 DISCIPLINA")
         fig_disc_mat = go.Figure()
-        for i, m in enumerate(mats):
-            val = [(f, d) for f, d in zip(f_det, d_mat[m]) if d is not None]
-            if val:
-                ff, dd = zip(*val)
-                # Filtrar horas para que coincidan con ff y dd
-                hh = [h for f, h in zip(f_det, h_mat[m]) if h is not None]
-        
-                fig_disc_mat.add_trace(go.Scatter(x=ff, y=dd, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}',
-                    line=dict(color=COLORES_MATERIAS[i], width=2),
-                    marker=dict(size=6),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>',
-                    customdata=hh))                          
+        # Incluir TODOS los días (incluso los ficticios)
+        ff = f_det
+        dd = [d if d is not None else 0 for d in d_mat[m]]
+        hh = [h if h is not None else 0 for h in h_mat[m]]
+
+        # Crear texto para mostrar si es día no registrado
+        dias_no_registrados = []
+        for d, h in zip(d_mat[m], h_mat[m]):
+            if d is None and h is None:
+                dias_no_registrados.append("ℹ️ Día no registrado")
+            else:
+                dias_no_registrados.append("")
+
+        fig_disc_mat.add_trace(go.Scatter(x=ff, y=dd, mode='lines+markers', name=f'{SIMBOLOS_CURSOS[m]} {m}',
+            line=dict(color=COLORES_MATERIAS[i], width=2),
+            marker=dict(size=6),
+            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata[0]}h<br>%{customdata[1]}<extra></extra>',
+            customdata=list(zip(hh, dias_no_registrados))))
          
         fig_disc_mat.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 150]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=500, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc_mat, use_container_width=True)
