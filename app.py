@@ -652,7 +652,7 @@ if st.session_state.vista_actual == 'general':
             fig_vel.add_trace(go.Scatter(x=fechas, y=vel_prom, mode='lines+markers', name='Velocidad', 
                 line=dict(color='gold', width=3), 
                 marker=dict(size=8, color='gold'), 
-                hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejer/h<br>-%{customdata[0]} ejer en %{customdata[1]}h<br>% de {customdata[2]}<extra></extra>',
+                hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejer/h<br>-%{customdata[0]} ejer en %{customdata[1]}h<br> de %{customdata[2]}<extra></extra>',
                 customdata=list(zip(ejercicios_prom, horas_prom, materias_str_prom))))
             fig_vel.update_layout(yaxis_title='Velocidad (ej/h)', yaxis=dict(range=[0, max(30, max(vel_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
             st.plotly_chart(fig_vel, use_container_width=True)
