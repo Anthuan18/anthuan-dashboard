@@ -728,157 +728,137 @@ elif st.session_state.vista_actual == 'curso':
     datos = cargar_datos()
     
     if datos["diario"]:
-        st.subheader("\U0001F4D6 ESTADÍSTICAS")
-        
-        # Calcular estadísticas por materia
-        materias_stats = {}
-        for dia in datos["diario"]:
-            for mat, stats in dia["materias"].items():
-                if mat not in materias_stats:
-                    materias_stats[mat] = {"dias": 0, "ejercicios": 0, "horas": 0, "disc": [], "vel": []}
-                materias_stats[mat]["dias"] += 1
-                materias_stats[mat]["ejercicios"] += stats["Ejercicios_Resueltos"]
-                materias_stats[mat]["horas"] += stats["horas_estudiadas"]
-                materias_stats[mat]["disc"].append(stats["Disciplina"])
-                materias_stats[mat]["vel"].append(stats["Velocidad"])
-        
-        # Mostrar expanders con estadísticas y botón de gráficos
-        for mat, s in materias_stats.items():
-            simbolo = SIMBOLOS_CURSOS.get(mat, "\U0001F4DA")
-            with st.expander(f"\u25BC {simbolo} {mat}", expanded=False):
-                c1, c2 = st.columns(2)
-                with c1:
-                    st.write(f"\U0001F4C5 Días estudiados: {s['dias']}")
-                    st.write(f"\U0001F4DD Ejercicios totales: {s['ejercicios']}")
-                    st.write(f"\u23F0 Horas totales: {int(s['horas'])}h")
-                with c2:
-                    st.write(f"\U0001F525 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
-                    st.write(f"\u26A1 VELOCIDAD: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
+    st.subheader("\U0001F4D6 ESTADÍSTICAS")
+    
+    # Calcular estadísticas por materia
+    materias_stats = {}
+    for dia in datos["diario"]:
+        for mat, stats in dia["materias"].items():
+            if mat not in materias_stats:
+                materias_stats[mat] = {"dias": 0, "ejercicios": 0, "horas": 0, "disc": [], "vel": []}
+            materias_stats[mat]["dias"] += 1
+            materias_stats[mat]["ejercicios"] += stats["Ejercicios_Resueltos"]
+            materias_stats[mat]["horas"] += stats["horas_estudiadas"]
+            materias_stats[mat]["disc"].append(stats["Disciplina"])
+            materias_stats[mat]["vel"].append(stats["Velocidad"])
+    
+    # Lista de materias para los colores
+    mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
+    
+    # Mostrar expanders con estadísticas y botón de gráficos
+    for mat, s in materias_stats.items():
+        simbolo = SIMBOLOS_CURSOS.get(mat, "\U0001F4DA")
+        with st.expander(f"\u25BC {simbolo} {mat}", expanded=False):
+            c1, c2 = st.columns(2)
+            with c1:
+                st.write(f"\U0001F4C5 Días estudiados: {s['dias']}")
+                st.write(f"\U0001F4DD Ejercicios totales: {s['ejercicios']}")
+                st.write(f"\u23F0 Horas totales: {int(s['horas'])}h")
+            with c2:
+                st.write(f"\U0001F525 Disciplina: {sum(s['disc'])/len(s['disc']):.1f}%")
+                st.write(f"\u26A1 VELOCIDAD: {sum(s['vel'])/len(s['vel']):.1f} ejercicios/h")
+            
+            # BOTÓN PARA VER GRÁFICOS
+            if st.button(f"\U0001F4CA Ver gráficos de {mat}", key=f"btn_graf_{mat}", use_container_width=True):
+                st.divider()
+                st.markdown(f"### 📈 Evolución de {simbolo} {mat}")
                 
-                # BOTÓN PARA VER GRÁFICOS
-                if st.button(f"\U0001F4CA Ver gráficos de {mat}", key=f"btn_graf_{mat}", use_container_width=True):
-                    st.divider()
-                    st.markdown(f"###  Evolución de {simbolo} {mat}")
+                # 1. CREAR DÍAS FICTICIOS (desde primer registro hasta hoy)
+                fechas_registradas = set()
+                for dia in datos["diario"]:
+                    fechas_registradas.add(dia["fecha"])
+                
+                # Obtener primer registro de ESTA materia
+                dias_mat = [dia for dia in datos["diario"] if mat in dia["materias"]]
+                
+                if dias_mat:
+                    primer_dia = min(dias_mat, key=lambda x: x["fecha"])
+                    fecha_inicio = datetime.strptime(primer_dia["fecha"], "%Y-%m-%d")
+                    fecha_hoy = hora_peru()
                     
-                    # ============================================
-                    # 1. CREAR DÍAS FICTICIOS (desde primer registro hasta hoy)
-                    # ============================================
-                    fechas_registradas = set()
-                    for dia in datos["diario"]:
-                        fechas_registradas.add(dia["fecha"])
+                    # Generar lista completa de días
+                    dias_completos = []
+                    dia_actual = fecha_inicio
                     
-                    # Obtener primer registro de ESTA materia
-                    dias_mat = [dia for dia in datos["diario"] if mat in dia["materias"]]
+                    while dia_actual.date() <= fecha_hoy.date():
+                        fecha_str = dia_actual.strftime("%Y-%m-%d")
+                        if fecha_str in fechas_registradas:
+                            dia_data = next(d for d in datos["diario"] if d["fecha"] == fecha_str)
+                            dias_completos.append(dia_data)
+                        else:
+                            dias_completos.append({
+                                "fecha": fecha_str,
+                                "es_ficticio": True,
+                                "materias": {}
+                            })
+                        dia_actual += timedelta(days=1)
                     
-                    if dias_mat:
-                        primer_dia = min(dias_mat, key=lambda x: x["fecha"])
-                        fecha_inicio = datetime.strptime(primer_dia["fecha"], "%Y-%m-%d")
-                        fecha_hoy = hora_peru()
-                        
-                        # Generar lista completa de días
-                        dias_completos = []
-                        dia_actual = fecha_inicio
-                        
-                        while dia_actual.date() <= fecha_hoy.date():
-                            fecha_str = dia_actual.strftime("%Y-%m-%d")
-                            
-                            if fecha_str in fechas_registradas:
-                                # Día registrado
-                                dia_data = next(d for d in datos["diario"] if d["fecha"] == fecha_str)
-                                dias_completos.append(dia_data)
-                            else:
-                                # Día NO registrado = ficticio
-                                dias_completos.append({
-                                    "fecha": fecha_str,
-                                    "es_ficticio": True,
-                                    "materias": {}
-                                })
-                            
-                            dia_actual += timedelta(days=1)
-                        
-                        # ============================================
-                        # 2. PROCESAR DATOS DE LA MATERIA
-                        # ============================================
-                        fechas = []
-                        disciplinas = []
-                        velocidades = []
-                        horas = []
-                        ejercicios = []
-                        
-                        for dia in dias_completos:
-                            fecha = datetime.strptime(dia["fecha"], "%Y-%m-%d")
-                            fechas.append(fecha)
-                            
-                            if dia.get("es_ficticio", False) or mat not in dia["materias"]:
-                                # Día ficticio o no estudió esta materia
-                                disciplinas.append(0)
-                                velocidades.append(0)
-                                horas.append(0)
-                                ejercicios.append(0)
-                            else:
-                                # Día real con datos
-                                disciplinas.append(dia["materias"][mat]["Disciplina"])
-                                velocidades.append(dia["materias"][mat]["Velocidad"])
-                                horas.append(dia["materias"][mat].get("horas_estudiadas", 0))
-                                ejercicios.append(dia["materias"][mat].get("Ejercicios_Resueltos", 0))
-                        
-                        # ============================================
-                        # 3. GRÁFICO DE DISCIPLINA
-                        # ============================================
-                        color_idx = mats.index(mat) if mat in mats else 0
-                        color_mat = COLORES_MATERIAS[color_idx]
-                        
-                        fig_disc = go.Figure()
-                        fig_disc.add_trace(go.Scatter(
-                            x=fechas, y=disciplinas, mode='lines+markers',
-                            name='Disciplina',
-                            line=dict(color=color_mat, width=3),
-                            marker=dict(size=8),
-                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>',
-                            customdata=horas
-                        ))
-                        fig_disc.update_layout(
-                            yaxis_title='Disciplina (%)',
-                            yaxis=dict(range=[0, 150]),
-                            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
-                            hovermode='x unified',
-                            height=350,
-                            margin=dict(l=50, r=20, t=20, b=50)
-                        )
-                        st.plotly_chart(fig_disc, use_container_width=True)
-                        
-                        # ============================================
-                        # 4. GRÁFICO DE VELOCIDAD
-                        # ============================================
-                        max_vel = max(velocidades) if velocidades else 30
-                        
-                        fig_vel = go.Figure()
-                        fig_vel.add_trace(go.Scatter(
-                            x=fechas, y=velocidades, mode='lines+markers',
-                            name='Velocidad',
-                            line=dict(color='gold', width=3),
-                            marker=dict(size=8),
-                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejer/h<br>Ejercicios: %{customdata[0]}<br>Horas: %{customdata[1]}h<extra></extra>',
-                            customdata=list(zip(ejercicios, horas))
-                        ))
-                        fig_vel.update_layout(
-                            yaxis_title='Velocidad (ejercicios/h)',
-                            yaxis=dict(range=[0, max(30, max_vel*1.2)]),
-                            xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
-                            hovermode='x unified',
-                            height=350,
-                            margin=dict(l=50, r=20, t=20, b=50)
-                        )
-                        st.plotly_chart(fig_vel, use_container_width=True)
-                    else:
-                        st.warning("⚠️ No hay datos para mostrar gráficos.")
-        
-        st.divider()
-        
-        # ============================================
-        # GRÁFICO DE EJERCICIOS VS HORAS (COMPARATIVO)
-        # ============================================
-        st.subheader("\U0001F4CA EJERCICIOS VS HORAS (Comparativo)")
+                    # 2. PROCESAR DATOS DE LA MATERIA
+                    fechas = []
+                    disciplinas = []
+                    velocidades = []
+                    horas = []
+                    ejercicios = []
+                    
+                    for dia in dias_completos:
+                        fecha = datetime.strptime(dia["fecha"], "%Y-%m-%d")
+                        fechas.append(fecha)
+                        if dia.get("es_ficticio", False) or mat not in dia["materias"]:
+                            disciplinas.append(0)
+                            velocidades.append(0)
+                            horas.append(0)
+                            ejercicios.append(0)
+                        else:
+                            disciplinas.append(dia["materias"][mat]["Disciplina"])
+                            velocidades.append(dia["materias"][mat]["Velocidad"])
+                            horas.append(dia["materias"][mat].get("horas_estudiadas", 0))
+                            ejercicios.append(dia["materias"][mat].get("Ejercicios_Resueltos", 0))
+                    
+                    # 3. GRÁFICO DE DISCIPLINA
+                    color_idx = mats.index(mat) if mat in mats else 0
+                    color_mat = COLORES_MATERIAS[color_idx]
+                    
+                    fig_disc = go.Figure()
+                    fig_disc.add_trace(go.Scatter(
+                        x=fechas, y=disciplinas, mode='lines+markers',
+                        name='Disciplina',
+                        line=dict(color=color_mat, width=3),
+                        marker=dict(size=8),
+                        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>',
+                        customdata=horas
+                    ))
+                    fig_disc.update_layout(
+                        yaxis_title='Disciplina (%)',
+                        yaxis=dict(range=[0, 150]),
+                        xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
+                        hovermode='x unified',
+                        height=350,
+                        margin=dict(l=50, r=20, t=20, b=50)
+                    )
+                    st.plotly_chart(fig_disc, use_container_width=True)
+                    
+                    # 4. GRÁFICO DE VELOCIDAD
+                    max_vel = max(velocidades) if velocidades else 30
+                    fig_vel = go.Figure()
+                    fig_vel.add_trace(go.Scatter(
+                        x=fechas, y=velocidades, mode='lines+markers',
+                        name='Velocidad',
+                        line=dict(color='gold', width=3),
+                        marker=dict(size=8),
+                        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ejer/h<br>Ejercicios: %{customdata[0]}<br>Horas: %{customdata[1]}h<extra></extra>',
+                        customdata=list(zip(ejercicios, horas))
+                    ))
+                    fig_vel.update_layout(
+                        yaxis_title='Velocidad (ejercicios/h)',
+                        yaxis=dict(range=[0, max(30, max_vel*1.2)]),
+                        xaxis=dict(tickformat='%Y-%m-%d', tickangle=45),
+                        hovermode='x unified',
+                        height=350,
+                        margin=dict(l=50, r=20, t=20, b=50)
+                    )
+                    st.plotly_chart(fig_vel, use_container_width=True)
+                else:
+                    st.warning("️ No hay datos para mostrar gráficos.")
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
         ej_tot = {m:0 for m in mats}
         hr_tot = {m:0 for m in mats}
