@@ -740,6 +740,9 @@ elif st.session_state.vista_actual == 'curso':
                 materias_stats[mat]["disc"].append(stats["Disciplina"])
                 materias_stats[mat]["vel"].append(stats["Velocidad"])
 
+        # DEFINIR mats ANTES del loop
+        mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
+        
         for mat, s in materias_stats.items():
             simbolo = SIMBOLOS_CURSOS.get(mat, "\U0001F4DA")
             with st.expander(f"\u25BC {simbolo} {mat}", expanded=False):
