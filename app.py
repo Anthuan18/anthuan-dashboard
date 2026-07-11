@@ -757,6 +757,9 @@ elif st.session_state.vista_actual == 'curso':
                 
                 # BOTÓN PARA VER GRÁFICOS
                 if st.button(f" Ver gráficos de {mat}", key=f"btn_graf_{mat}", use_container_width=True):
+                    # Agrega pass si no hay nada que hacer
+                    pass
+                                
                 st.divider()
                 
                 # ============================================
