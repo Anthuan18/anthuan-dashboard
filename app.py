@@ -634,7 +634,7 @@ if st.session_state.vista_actual == 'general':
                     materias_str_prom.append("Sin registro")
 
         promedio_disc = sum(disc_prom) / len(disc_prom) if disc_prom else 0
-        st.subheader(f"🔥 DISCIPLINA(D): {promedio_disc:.1f}%")      
+        st.subheader(f"🔥 DISCIPLINA: {promedio_disc:.1f}%")      
         fig_disc = go.Figure()
         fig_disc.add_trace(go.Scatter(x=fechas, y=disc_prom, mode='lines+markers', name='Disciplina', 
             line=dict(color='#FF4500', width=3), 
@@ -646,12 +646,11 @@ if st.session_state.vista_actual == 'general':
         st.divider()
 
         promedio_vel = sum(vel_prom) / len(vel_prom) if vel_prom else 0
-        st.subheader(f"⚡ VELOCIDAD(V): {promedio_vel:.1f} ejercicios/h")
+        st.subheader(f"⚡ VELOCIDAD: {promedio_vel:.1f} ejercicios/h")
         fig_vel = go.Figure()
         if vel_prom:
             fig_vel.add_trace(go.Scatter(x=fechas, y=vel_prom, mode='lines+markers', name='Velocidad', 
-                line=dict(color='gold', width=3), 
-                marker=dict(size=8, color='gold'), 
+                line=dict(color='gold', width=3),  
                 hovertemplate='⚡%{y:.1f}ejer/h⚡ <br> %{customdata[0]} ejer en %{customdata[1]}h<br> de %{customdata[2]}<extra></extra>',
                 customdata=list(zip(ejercicios_prom, horas_prom, materias_str_prom))))
             fig_vel.update_layout(yaxis_title='Velocidad (ej/h)', yaxis=dict(range=[0, max(30, max(vel_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
