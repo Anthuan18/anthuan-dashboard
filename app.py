@@ -756,8 +756,8 @@ elif st.session_state.vista_actual == 'curso':
         mats = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
         f_det, d_mat, v_mat, h_mat, e_mat = [], {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}, {m:[] for m in mats}
         for dia in datos["diario"][-30:]:
-        f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
-        for m in mats:
+            f_det.append(datetime.strptime(dia["fecha"], "%Y-%m-%d"))
+            for m in mats:
             if m in dia["materias"]:
                 d_mat[m].append(dia["materias"][m]["Disciplina"])
                 v_mat[m].append(dia["materias"][m]["Velocidad"])
