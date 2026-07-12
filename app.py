@@ -225,6 +225,23 @@ if st.sidebar.button("🚪 Cerrar Sesión"):
     st.session_state['logged_in'] = False
     st.rerun()
 
+# --- NUEVO BOTÓN PARA AJUSTES ---
+if st.sidebar.button("⚙️ Ajustes del Ciclo"):
+    st.session_state['show_ajustes'] = True
+
+# --- LÓGICA DE LA VENTANA DE AJUSTES ---
+if st.session_state.get('show_ajustes', False):
+    # Usamos st.dialog para una ventana flotante limpia (disponible en Streamlit moderno)
+    @st.dialog("Configuración del Ciclo")
+    def ventana_ajustes():
+        st.write("Gestiona las fechas y cursos de tu preparación:")
+        fecha_fin = st.date_input("Fecha de finalización del ciclo")
+        # Aquí irían los inputs para modificar cursos y horas
+        if st.button("Guardar cambios"):
+            # Lógica para guardar en Firestore
+            st.rerun()
+    
+    ventana_ajustes()
 # ============================================
 # AQUÍ VA EL RESTO DE TU DASHBOARD ACTUAL
 # ============================================
