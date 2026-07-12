@@ -929,9 +929,11 @@ elif st.session_state.vista_actual == 'registro':
             with c1: h_in = st.number_input(f"Horas", min_value=0, value=0, step=1, key=f"h_{m}")
             with c2: e_in = st.number_input(f"Ejercicios", min_value=0, value=0, step=1, key=f"e_{m}")
             
+            temas_in = st.text_input("Tema/s estudiado", placeholder="Ej: Vectores, Polinomios", key=f"temas_{m}")
+            
             disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
             vel = e_in / h_in if h_in > 0 else 0
-            reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
+            reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Temas": temas_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
             tot_ej += e_in; tot_hr += h_in
             st.divider()
 
