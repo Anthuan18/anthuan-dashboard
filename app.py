@@ -665,6 +665,7 @@ elif st.session_state.vista_actual == 'curso':
                 vel_mat = []
                 horas_mat = []      # NUEVO: Para guardar las horas diarias
                 ejercicios_mat = [] # NUEVO: Para guardar los ejercicios diarios
+                temas_mat = []
                 
                 total_ejercicios = 0
                 total_horas = 0
@@ -686,6 +687,7 @@ elif st.session_state.vista_actual == 'curso':
                             vel_mat.append(stats_mat["Velocidad"])
                             horas_mat.append(stats_mat.get("horas_estudiadas", 0))
                             ejercicios_mat.append(stats_mat.get("Ejercicios_Resueltos", 0))
+                            temas_mat.append(stats_mat.get("Temas", "Sin tema"))
                             
                             total_ejercicios += stats_mat.get("Ejercicios_Resueltos", 0)
                             total_horas += stats_mat.get("horas_estudiadas", 0)
@@ -695,7 +697,8 @@ elif st.session_state.vista_actual == 'curso':
                             vel_mat.append(0)
                             horas_mat.append(0)
                             ejercicios_mat.append(0)
-                    
+                            temas_mat.append("-")
+                            
                     dia_actual += timedelta(days=1)
 
                 # --- MOSTRAR MÉTRICAS ---
@@ -739,7 +742,7 @@ elif st.session_state.vista_actual == 'curso':
                             x=fechas_mat, y=disc_mat, mode='lines+markers', name='Disciplina',
                             line=dict(color=color_mat, width=3), marker=dict(size=8),
                             customdata=list(zip(horas_mat, temas_mat)),
-                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br><b>%{customdata[1]}</b><br>🔥%{y:.1f}%🔥<br> %{customdata}h<extra></extra>'
+                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br><b>%{customdata[1]}</b><br>🔥%{y:.1f}%🔥<br> %{customdata[0]}h<extra></extra>'
                         ))
                         fig_disc.update_layout(title=f"🔥Disciplina - {mat}", yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                         st.plotly_chart(fig_disc, use_container_width=True, key=f"plot_disc_{mat}")
