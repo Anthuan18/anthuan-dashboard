@@ -702,13 +702,13 @@ if st.session_state.vista_actual == 'general':
             notas_uni = [n for n, t in zip(notas_sim, tipos_sim) if t == "UNI"]
             
             fig_exam = go.Figure()
-            fig_exam.add_trace(go.Scatter(x=fechas_sim, y=notas_sim, mode='lines', name='Tendencia', line=dict(color='green', width=2), showlegend=False))
+            fig_exam.add_trace(go.Scatter(x=fechas_sim, y=notas_sim, mode='lines', line=dict(color='green', width=2), showlegend=False))
             if fechas_sem:
                 fig_exam.add_trace(go.Scatter(x=fechas_sem, y=notas_sem, mode='markers', name='Semanal', marker=dict(size=10, color='blue', symbol='circle'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Semanal: %{y:.1f}<extra></extra>'))
             if fechas_uni:
                 fig_exam.add_trace(go.Scatter(x=fechas_uni, y=notas_uni, mode='markers', name='Tipo UNI', marker=dict(size=10, color='red', symbol='square'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>UNI: %{y:.1f}<extra></extra>'))
             
-            fig_exam.update_layout(yaxis_title='Nota (0-20)', yaxis=dict(range=[0, 20]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
+            fig_exam.update_layout(yaxis_title='Nota (0-20)', yaxis=dict(range=[0, 20]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='closest', height=400, margin=dict(l=50, r=20, t=20, b=50))
             st.plotly_chart(fig_exam, use_container_width=True)
         else:
             st.info("\u26A0\uFE0F Aún no hay datos de exámenes registrados.")
