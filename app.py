@@ -641,7 +641,7 @@ if st.session_state.vista_actual == 'general':
             marker=dict(size=8, color='#FF4500'), 
             hovertemplate='🔥%{y:.1f}%🔥<br> %{customdata[0]}h de<br>%{customdata[1]}<extra></extra>',
             customdata=list(zip(horas_prom, materias_str_prom))))        
-        fig_disc.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 150]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
+        fig_disc.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 150]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='closest', height=400, margin=dict(l=50, r=20, t=20, b=50))
         st.plotly_chart(fig_disc, use_container_width=True)
         st.divider()
 
@@ -654,7 +654,7 @@ if st.session_state.vista_actual == 'general':
                 marker=dict(size=8, color='gold'),
                 hovertemplate='⚡%{y:.1f}ejer/h⚡ <br> %{customdata[0]} ejer en %{customdata[1]}h<br> de %{customdata[2]}<extra></extra>',
                 customdata=list(zip(ejercicios_prom, horas_prom, materias_str_prom))))
-            fig_vel.update_layout(yaxis_title='Velocidad (ejer/h)', yaxis=dict(range=[0, max(30, max(vel_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
+            fig_vel.update_layout(yaxis_title='Velocidad (ejer/h)', yaxis=dict(range=[0, max(30, max(vel_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='closest', height=400, margin=dict(l=50, r=20, t=20, b=50))
             st.plotly_chart(fig_vel, use_container_width=True)
         else:
             st.warning("️ No hay datos de velocidad disponibles")
@@ -822,7 +822,7 @@ elif st.session_state.vista_actual == 'curso':
                         customdata=horas_mat, # Inyectamos las horas
                         hovertemplate='<b>%{x|%Y-%m-%d}</b><br>🔥%{y:.1f}%🔥<br> %{customdata}h<extra></extra>'
                     ))
-                    fig_disc.update_layout(title=f"Evolución de Disciplina - {mat}", yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), margin=dict(l=20, r=20, t=40, b=20), height=300)
+                    fig_disc.update_layout(title=f"🔥Disciplina - {mat}", yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                     st.plotly_chart(fig_disc, use_container_width=True, key=f"plot_disc_{mat}")
                     
                     # Gráfico Velocidad
@@ -834,7 +834,7 @@ elif st.session_state.vista_actual == 'curso':
                         customdata=list(zip(ejercicios_mat, horas_mat)), # Inyectamos ejercicios y horas
                         hovertemplate='<b>%{x|%Y-%m-%d}</b><br>⚡%{y:.1f} ejer/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
                     ))
-                    fig_vel.update_layout(title=f"Evolución de Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(20, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
+                    fig_vel.update_layout(title=f"⚡Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(20, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                     st.plotly_chart(fig_vel, use_container_width=True, key=f"plot_vel_{mat}")
 
         # ==========================================
@@ -891,7 +891,7 @@ elif st.session_state.vista_actual == 'curso':
                     x=fechas_mat, y=vel_mat, mode='lines+markers', name=f"{simbolo} {mat}",
                     line=dict(color=color_mat, width=2), marker=dict(size=6),
                     customdata=list(zip(ejercicios_mat, horas_mat)),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + '<br>⚡%{y:.1f} eje/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + '<br>⚡%{y:.1f} ejer/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
                 ))
 
         fig_disc_global.update_layout(
