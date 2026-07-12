@@ -638,7 +638,7 @@ if st.session_state.vista_actual == 'general':
         fig_disc = go.Figure()
         fig_disc.add_trace(go.Scatter(x=fechas, y=disc_prom, mode='lines+markers', name='Disciplina', 
             line=dict(color='#FF4500', width=3), 
-            marker=dict(size=8), 
+            marker=dict(size=8, color='#FF4500'), 
             hovertemplate='🔥%{y:.1f}%🔥<br> %{customdata[0]}h de<br>%{customdata[1]}<extra></extra>',
             customdata=list(zip(horas_prom, materias_str_prom))))        
         fig_disc.update_layout(yaxis_title='Disciplina (%)', yaxis=dict(range=[0, 150]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
@@ -651,7 +651,7 @@ if st.session_state.vista_actual == 'general':
         if vel_prom:
             fig_vel.add_trace(go.Scatter(x=fechas, y=vel_prom, mode='lines+markers', name='Velocidad', 
                 line=dict(color='gold', width=3),
-                marker=dict(size=8),
+                marker=dict(size=8, color='gold'),
                 hovertemplate='⚡%{y:.1f}ejer/h⚡ <br> %{customdata[0]} ejer en %{customdata[1]}h<br> de %{customdata[2]}<extra></extra>',
                 customdata=list(zip(ejercicios_prom, horas_prom, materias_str_prom))))
             fig_vel.update_layout(yaxis_title='Velocidad (ejer/h)', yaxis=dict(range=[0, max(30, max(vel_prom)*1.2)]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='x unified', height=400, margin=dict(l=50, r=20, t=20, b=50))
@@ -841,7 +841,7 @@ elif st.session_state.vista_actual == 'curso':
         # GRÁFICOS COMPARATIVOS: LÍNEAS MÚLTIPLES
         # ==========================================
         st.divider()
-        st.subheader("📈 EVOLUCIÓN COMPARATIVA (TODOS LOS CURSOS)")
+        st.subheader("📈 COMPARACIÓN DE TODOS LOS CURSOS")
         
         fig_disc_global = go.Figure()
         fig_vel_global = go.Figure()
@@ -884,14 +884,14 @@ elif st.session_state.vista_actual == 'curso':
                     x=fechas_mat, y=disc_mat, mode='lines+markers', name=f"{simbolo} {mat}",
                     line=dict(color=color_mat, width=2), marker=dict(size=6),
                     customdata=horas_mat,
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + ': %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>'
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + '<br>🔥%{y:.1f}%🔥<br> %{customdata}h<extra></extra>'
                 ))
                 
                 fig_vel_global.add_trace(go.Scatter(
                     x=fechas_mat, y=vel_mat, mode='lines+markers', name=f"{simbolo} {mat}",
                     line=dict(color=color_mat, width=2), marker=dict(size=6),
                     customdata=list(zip(ejercicios_mat, horas_mat)),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + ': %{y:.1f} eje/h<br> %{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + '<br>⚡%{y:.1f} eje/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
                 ))
 
         fig_disc_global.update_layout(
@@ -906,7 +906,7 @@ elif st.session_state.vista_actual == 'curso':
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
 
-        tab1, tab2 = st.tabs(["🔥 Disciplina General", "⚡ Velocidad General"])
+        tab1, tab2 = st.tabs(["🔥 Disciplina", "⚡ Velocidad"])
         with tab1:
             st.plotly_chart(fig_disc_global, use_container_width=True, key="plot_global_disc")
         with tab2:
@@ -916,7 +916,7 @@ elif st.session_state.vista_actual == 'curso':
         # GRÁFICO GENERAL: EJERCICIOS VS HORAS
         # ==========================================
         st.divider()
-        st.subheader("📊 EJERCICIOS VS HORAS (TOTAL ACUMULADO)")
+        st.subheader("📊 EJERCICIOS Y HORAS EN TOTAL")
         
         ej_tot = {m:0 for m in mats_nombres}
         hr_tot = {m:0 for m in mats_nombres}
