@@ -126,7 +126,7 @@ def login_usuario(username, password):
         return None, "Usuario o contraseña incorrectos"
 
 def pantalla_login():
-    """Muestra la pantalla de login con Google, usuario y registro integrado"""
+    """Muestra la pantalla de login con pestañas organizadas"""
     st.set_page_config(page_title="EDRA - Pre UNI", layout="wide")
     
     st.title("🎓 EDRA - Pre UNI")
@@ -134,77 +134,64 @@ def pantalla_login():
     st.markdown("Estadísticas de rendimiento académico (EDRA) para postulantes a la Universidad Nacional de Ingeniería")
     st.divider()
     
-    # Solo 1 tab: Iniciar Sesión
-    tab1 = st.tabs(["🔐 Iniciar Sesión"])
+    # Creamos las dos pestañas para organizar la pantalla
+    tab1, tab2 = st.tabs(["🔐 Iniciar Sesión", "📝 Crear Cuenta"])
     
-    with tab1[0]:
-        st.markdown("### Bienvenido de vuelta")
-        st.divider()
+    with tab1:
+        st.markdown("#### Acceso a tu cuenta")
         
-        # ============================================
-        # BOTÓN 1: Google Sign-In
-        # ============================================
-        if st.button("🔴🟡🟢🔵 Iniciar sesión con Google", 
-                     use_container_width=True, 
-                     key="btn_google",
-                     type="secondary"):
-            try:
-                st.info("🔄 Configurando Google Sign-In...")
-                st.warning("⚠️ Esta función estará disponible pronto")
-            except Exception as e:
-                st.error(f"Error: {e}")
+        # Google Sign-In (Preparado para la futura implementación)
+        if st.button("🔴🟡🟢🔵 Iniciar sesión con Google", use_container_width=True, key="btn_google"):
+            st.warning("⚠️ Esta función estará disponible pronto")
         
         st.divider()
         
-        # ============================================
-        # BOTÓN 2: Toggle para login con usuario
-        # ============================================
-        if 'mostrar_login_usuario' not in st.session_state:
-            st.session_state.mostrar_login_usuario = False
+        # Formulario Login
+        username_login = st.text_input("Nombre de usuario", key="username_login")
+        password_login = st.text_input("Contraseña", type="password", key="password_login")
         
-        if st.button("👤 Iniciar sesión con nombre de usuario",
-                     use_container_width=True,
-                     key="btn_toggle_usuario",
-                     type="secondary"):
-            st.session_state.mostrar_login_usuario = not st.session_state.mostrar_login_usuario
+        if st.button("🚀 Entrar", type="primary", use_container_width=True):
+            if username_login and password_login:
+                user_id, username = login_usuario(username_login, password_login)
+                if user_id:
+                    st.session_state['user_id'] = user_id
+                    st.session_state['username'] = username
+                    st.session_state['logged_in'] = True
+                    st.rerun()
+                else:
+                    st.error(username) # Aquí se muestra el error de login_usuario
+            else:
+                st.warning("⚠️ Completa todos los campos")
+                    
+    with tab2:
+        st.markdown("#### Crea tu cuenta")
         
-        # ============================================
-        # Formulario de login (aparece/desaparece)
-        # ============================================
-        if st.session_state.mostrar_login_usuario:
-            st.divider()
-            st.markdown("#### Ingresa tus credenciales:")
+        username_register = st.text_input("Elige un nombre de usuario", key="username_register")
+        password_register = st.text_input("Elige una contraseña", type="password", key="password_register")
+        password_confirm = st.text_input("Confirma tu contraseña", type="password", key="password_confirm")
+
+        if st.button("🎯 Registrarme", type="primary", use_container_width=True):
+            username_register = username_register.strip()
+            password_register = password_register.strip()
+            password_confirm = password_confirm.strip()
             
-            username_login = st.text_input(
-                "Nombre de usuario", 
-                key="username_login",
-                placeholder="Ej: test123"
-            )
-            password_login = st.text_input(
-                "Contraseña", 
-                type="password", 
-                key="password_login",
-                placeholder="Tu contraseña"
-            )
-            
-            if st.button("🚀 Entrar", 
-                         key="btn_login",
-                         type="primary",
-                         use_container_width=True):
-                if username_login and password_login:
-                    user_id, username = login_usuario(username_login, password_login)
+            if username_register and password_register and password_confirm:
+                if len(password_register) < 6:
+                    st.error("❌ La contraseña debe tener al menos 6 caracteres")
+                elif password_register == password_confirm:
+                    user_id, result = crear_usuario(username_register, password_register)
                     if user_id:
+                        st.success("¡Cuenta creada!")
                         st.session_state['user_id'] = user_id
-                        st.session_state['username'] = username
+                        st.session_state['username'] = username_register
                         st.session_state['logged_in'] = True
-                        st.success(f"¡Bienvenido {username}!")
                         st.rerun()
                     else:
-                        st.error(username)
+                        st.error(f"Error: {result}")
                 else:
-                    st.warning("⚠️ Completa todos los campos")
-        
-        st.divider()
+                    st.error("❌ Las contraseñas no coinciden.")
+            else:
+                st.warning("⚠️ Completa todos los campos")
         
         # ============================================
         # PREGUNTA: ¿No tienes una cuenta? (ROJO NEÓN)
