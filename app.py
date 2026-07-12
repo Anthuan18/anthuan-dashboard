@@ -715,9 +715,7 @@ if st.session_state.vista_actual == 'general':
     else:
         st.warning("\u26A0\uFE0F Aún no hay datos registrados.")
 
-# ============================================
-# VISTA: RENDIMIENTO POR CURSO
-# ============================================
+
 # ============================================
 # VISTA: RENDIMIENTO POR CURSO
 # ============================================
@@ -751,6 +749,9 @@ elif st.session_state.vista_actual == 'curso':
                 fechas_mat = []
                 disc_mat = []
                 vel_mat = []
+                horas_mat = []      # NUEVO: Para guardar las horas diarias
+                ejercicios_mat = [] # NUEVO: Para guardar los ejercicios diarios
+                
                 total_ejercicios = 0
                 total_horas = 0
                 dias_reales_estudiados = 0
@@ -760,30 +761,31 @@ elif st.session_state.vista_actual == 'curso':
                     dia_semana = dia_actual.weekday()
                     fecha_str = dia_actual.strftime("%Y-%m-%d")
                     
-                    # ¿Tocaba estudiar esta materia este día?
                     if mat in HORARIO_MATERIAS.get(dia_semana, []):
                         fechas_mat.append(dia_actual)
                         
-                        # Buscar si hay un registro real para este día
                         registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
                         
                         if registro_dia and mat in registro_dia.get("materias", {}):
-                            # DÍA REAL
                             stats_mat = registro_dia["materias"][mat]
                             disc_mat.append(stats_mat["Disciplina"])
                             vel_mat.append(stats_mat["Velocidad"])
-                            total_ejercicios += stats_mat["Ejercicios_Resueltos"]
+                            horas_mat.append(stats_mat.get("horas_estudiadas", 0))
+                            ejercicios_mat.append(stats_mat.get("Ejercicios_Resueltos", 0))
+                            
+                            total_ejercicios += stats_mat.get("Ejercicios_Resueltos", 0)
                             total_horas += stats_mat.get("horas_estudiadas", 0)
                             dias_reales_estudiados += 1
                         else:
-                            # DÍA FICTICIO (Penalización por no estudiar)
                             disc_mat.append(0)
                             vel_mat.append(0)
+                            horas_mat.append(0)
+                            ejercicios_mat.append(0)
                     
                     dia_actual += timedelta(days=1)
 
                 # --- MOSTRAR MÉTRICAS ---
-                universo_dias = len(fechas_mat) # Cuántas veces le tocaba estudiar en total
+                universo_dias = len(fechas_mat)
                 
                 if universo_dias > 0:
                     promedio_disc = sum(disc_mat) / universo_dias
@@ -791,14 +793,14 @@ elif st.session_state.vista_actual == 'curso':
                     
                     c1, c2 = st.columns(2)
                     with c1:
-                        st.write(f"📅 Días estudiados: {dias_reales_estudiados}")
+                        st.write(f"📅 Cumplimiento: {dias_reales_estudiados} de {universo_dias} días obligatorios")
                         st.write(f"📝 Ejercicios totales: {total_ejercicios}")
                         st.write(f"⏰ Horas totales: {int(total_horas)}h")
                     with c2:
-                        st.write(f"🔥 Disciplina: {promedio_disc:.1f}%")
-                        st.write(f"⚡ Velocidad: {promedio_vel:.1f} ejercicios/h")
+                        st.write(f"🔥 Disciplina Real: {promedio_disc:.1f}%")
+                        st.write(f"⚡ Velocidad Real: {promedio_vel:.1f} ej/h")
                 else:
-                    st.info(f"Aún no se registró {mat}.")
+                    st.info(f"Aún no han pasado días en los que te toque estudiar {mat}.")
                 
                 st.divider()
                 
@@ -817,9 +819,10 @@ elif st.session_state.vista_actual == 'curso':
                     fig_disc.add_trace(go.Scatter(
                         x=fechas_mat, y=disc_mat, mode='lines+markers', name='Disciplina',
                         line=dict(color=color_mat, width=3), marker=dict(size=8),
-                        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<extra></extra>'
+                        customdata=horas_mat, # Inyectamos las horas
+                        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Disciplina: %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>'
                     ))
-                    fig_disc.update_layout(title=f"🔥Disciplina - {mat}", yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), margin=dict(l=20, r=20, t=40, b=20), height=300)
+                    fig_disc.update_layout(title=f"Evolución de Disciplina - {mat}", yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                     st.plotly_chart(fig_disc, use_container_width=True, key=f"plot_disc_{mat}")
                     
                     # Gráfico Velocidad
@@ -828,33 +831,33 @@ elif st.session_state.vista_actual == 'curso':
                     fig_vel.add_trace(go.Scatter(
                         x=fechas_mat, y=vel_mat, mode='lines+markers', name='Velocidad',
                         line=dict(color='gold', width=3), marker=dict(size=8, color=color_mat),
-                        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ej/h<extra></extra>'
+                        customdata=list(zip(ejercicios_mat, horas_mat)), # Inyectamos ejercicios y horas
+                        hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Velocidad: %{y:.1f} ej/h<br>-resolviste %{customdata[0]} ejr en %{customdata[1]}h<extra></extra>'
                     ))
-                    fig_vel.update_layout(title=f"⚡Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(30, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
+                    fig_vel.update_layout(title=f"Evolución de Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(20, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                     st.plotly_chart(fig_vel, use_container_width=True, key=f"plot_vel_{mat}")
 
         # ==========================================
         # GRÁFICOS COMPARATIVOS: LÍNEAS MÚLTIPLES
         # ==========================================
         st.divider()
-        st.subheader("📈 COMPARACIÓN DE TODOS LOS CURSOS")
+        st.subheader("📈 EVOLUCIÓN COMPARATIVA (TODOS LOS CURSOS)")
         
-        # Crear los lienzos (Figures) para ambos gráficos
         fig_disc_global = go.Figure()
         fig_vel_global = go.Figure()
         
-        # Calcular los datos estrictos para cada materia y añadirlos al gráfico
         for i, mat in enumerate(mats_nombres):
             fechas_mat = []
             disc_mat = []
             vel_mat = []
+            horas_mat = []
+            ejercicios_mat = []
             
             dia_actual = fecha_inicio_global
             while dia_actual.date() <= fecha_hoy.date():
                 dia_semana = dia_actual.weekday()
                 fecha_str = dia_actual.strftime("%Y-%m-%d")
                 
-                # Solo evaluamos si la materia tocaba ese día
                 if mat in HORARIO_MATERIAS.get(dia_semana, []):
                     fechas_mat.append(dia_actual)
                     
@@ -863,33 +866,34 @@ elif st.session_state.vista_actual == 'curso':
                         stats_mat = registro_dia["materias"][mat]
                         disc_mat.append(stats_mat["Disciplina"])
                         vel_mat.append(stats_mat["Velocidad"])
+                        horas_mat.append(stats_mat.get("horas_estudiadas", 0))
+                        ejercicios_mat.append(stats_mat.get("Ejercicios_Resueltos", 0))
                     else:
-                        # Castigo del 0%
                         disc_mat.append(0)
                         vel_mat.append(0)
+                        horas_mat.append(0)
+                        ejercicios_mat.append(0)
                 
                 dia_actual += timedelta(days=1)
             
-            # Dibujar las líneas solo si hay datos para esa materia
             if fechas_mat:
                 color_mat = COLORES_MATERIAS[i]
                 simbolo = SIMBOLOS_CURSOS.get(mat, "")
                 
-                # Trazado de Disciplina
                 fig_disc_global.add_trace(go.Scatter(
                     x=fechas_mat, y=disc_mat, mode='lines+markers', name=f"{simbolo} {mat}",
                     line=dict(color=color_mat, width=2), marker=dict(size=6),
-                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{mat}: %{{y:.1f}}%<extra></extra>'
+                    customdata=horas_mat,
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + ': %{y:.1f}%<br>Horas: %{customdata}h<extra></extra>'
                 ))
                 
-                # Trazado de Velocidad
                 fig_vel_global.add_trace(go.Scatter(
                     x=fechas_mat, y=vel_mat, mode='lines+markers', name=f"{simbolo} {mat}",
                     line=dict(color=color_mat, width=2), marker=dict(size=6),
-                    hovertemplate=f'<b>%{{x|%Y-%m-%d}}</b><br>{mat}: %{{y:.1f}} ej/h<extra></extra>'
+                    customdata=list(zip(ejercicios_mat, horas_mat)),
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + ': %{y:.1f} ej/h<br>-resolviste %{customdata[0]} ejr en %{customdata[1]}h<extra></extra>'
                 ))
 
-        # Mejorar el diseño visual de los gráficos
         fig_disc_global.update_layout(
             yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), 
             hovermode='x', margin=dict(l=20, r=20, t=20, b=20), height=400,
@@ -902,18 +906,17 @@ elif st.session_state.vista_actual == 'curso':
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
 
-        # Mostrar los gráficos usando pestañas
-        tab1, tab2 = st.tabs(["🔥 Disciplina", "⚡ Velocidad"])
+        tab1, tab2 = st.tabs(["🔥 Disciplina General", "⚡ Velocidad General"])
         with tab1:
             st.plotly_chart(fig_disc_global, use_container_width=True, key="plot_global_disc")
         with tab2:
             st.plotly_chart(fig_vel_global, use_container_width=True, key="plot_global_vel")
-        
+
         # ==========================================
         # GRÁFICO GENERAL: EJERCICIOS VS HORAS
         # ==========================================
         st.divider()
-        st.subheader("📊 EJERCICIOS Y HORAS EN TOTAL")
+        st.subheader("📊 EJERCICIOS VS HORAS (TOTAL ACUMULADO)")
         
         ej_tot = {m:0 for m in mats_nombres}
         hr_tot = {m:0 for m in mats_nombres}
@@ -929,30 +932,21 @@ elif st.session_state.vista_actual == 'curso':
         fig_barras = go.Figure()
         fig_barras.add_trace(go.Bar(
             name='Ejercicios', 
-            x=etiquetas, 
-            y=[ej_tot[m] for m in mats_nombres], 
-            marker_color='#3498DB', 
-            hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'
+            x=etiquetas, y=[ej_tot[m] for m in mats_nombres], 
+            marker_color='#3498DB', hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'
         ))
         
         fig_barras.add_trace(go.Bar(
             name='Horas', 
-            x=etiquetas, 
-            y=[hr_tot[m] for m in mats_nombres], 
-            marker_color='#E74C3C', 
-            hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>'
+            x=etiquetas, y=[hr_tot[m] for m in mats_nombres], 
+            marker_color='#E74C3C', hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>'
         ))
         
-        # Calcular el máximo para escalar bien el gráfico
         max_y = max(max(ej_tot.values(), default=0), max(hr_tot.values(), default=0))
         
         fig_barras.update_layout(
-            barmode='group', 
-            yaxis_title='Cantidad', 
-            yaxis=dict(range=[0, (max_y * 1.2) if max_y > 0 else 10]), 
-            xaxis_title='Materia', 
-            height=500, 
-            margin=dict(l=50, r=20, t=20, b=50)
+            barmode='group', yaxis_title='Cantidad', yaxis=dict(range=[0, (max_y * 1.2) if max_y > 0 else 10]), 
+            xaxis_title='Materia', height=500, margin=dict(l=50, r=20, t=20, b=50)
         )
         
         st.plotly_chart(fig_barras, use_container_width=True)
