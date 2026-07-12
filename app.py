@@ -753,7 +753,7 @@ elif st.session_state.vista_actual == 'curso':
                         max_vel = max(vel_mat) if vel_mat else 10
                         fig_vel.add_trace(go.Scatter(
                             x=fechas_mat, y=vel_mat, mode='lines+markers', name='Velocidad',
-                            line=dict(color='gold', width=3), marker=dict(size=8, color=color_mat),
+                            line=dict(color=color_mat, width=3), marker=dict(size=8),
                             customdata=list(zip(ejercicios_mat, horas_mat, temas_mat)), # Inyectamos ejercicios y horas
                             hovertemplate='<b>%{x|%Y-%m-%d}</b><br><b>%{customdata[2]}</b><br>⚡%{y:.1f} ejer/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
                         ))
