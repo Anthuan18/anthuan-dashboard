@@ -738,8 +738,8 @@ elif st.session_state.vista_actual == 'curso':
                         fig_disc.add_trace(go.Scatter(
                             x=fechas_mat, y=disc_mat, mode='lines+markers', name='Disciplina',
                             line=dict(color=color_mat, width=3), marker=dict(size=8),
-                            customdata=horas_mat, # Inyectamos las horas
-                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>🔥%{y:.1f}%🔥<br> %{customdata}h<extra></extra>'
+                            customdata=list(zip(horas_mat, temas_mat)),
+                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br><b>%{customdata[1]}</b><br>🔥%{y:.1f}%🔥<br> %{customdata}h<extra></extra>'
                         ))
                         fig_disc.update_layout(title=f"🔥Disciplina - {mat}", yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                         st.plotly_chart(fig_disc, use_container_width=True, key=f"plot_disc_{mat}")
@@ -751,8 +751,8 @@ elif st.session_state.vista_actual == 'curso':
                         fig_vel.add_trace(go.Scatter(
                             x=fechas_mat, y=vel_mat, mode='lines+markers', name='Velocidad',
                             line=dict(color='gold', width=3), marker=dict(size=8, color=color_mat),
-                            customdata=list(zip(ejercicios_mat, horas_mat)), # Inyectamos ejercicios y horas
-                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br>⚡%{y:.1f} ejer/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
+                            customdata=list(zip(ejercicios_mat, horas_mat, temas_mat)), # Inyectamos ejercicios y horas
+                            hovertemplate='<b>%{x|%Y-%m-%d}</b><br><b>%{customdata[1]}</b><br>⚡%{y:.1f} ejer/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
                         ))
                         fig_vel.update_layout(title=f"⚡Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(20, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
                         st.plotly_chart(fig_vel, use_container_width=True, key=f"plot_vel_{mat}")
