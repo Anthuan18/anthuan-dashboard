@@ -745,7 +745,7 @@ elif st.session_state.vista_actual == 'curso':
                         st.plotly_chart(fig_disc, use_container_width=True, key=f"plot_disc_{mat}")
                     
                     # Gráfico Velocidad
-                    with tab_vel
+                    with tab_vel:
                         fig_vel = go.Figure()
                         max_vel = max(vel_mat) if vel_mat else 10
                         fig_vel.add_trace(go.Scatter(
