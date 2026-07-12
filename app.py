@@ -145,6 +145,8 @@ def pantalla_login():
             st.warning("⚠️ Esta función estará disponible pronto")
         
         st.divider()
+
+        st.markdown("#### 👤 Iniciar sesión con nombre de usuario")
         
         # Formulario Login
         username_login = st.text_input("Nombre de usuario", key="username_login")
