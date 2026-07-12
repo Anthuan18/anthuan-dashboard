@@ -523,8 +523,8 @@ if st.session_state.vista_actual == 'general':
                 materias_programadas = HORARIO_MATERIAS.get(dia_semana, [])
                 
                 if materias_programadas:
-                    materias_str = "<br>- ".join(materias_programadas)
-                    materias_str_prom.append(f"️ Día no registrado<br>Materias programadas:<br>- {materias_str}")
+                    materias_str = "<br>+ ".join(materias_programadas)
+                    materias_str_prom.append(f"️ Día no registrado<br>Materias programadas:<br>+ {materias_str}")
                 else:
                     materias_str_prom.append("ℹ️ Día no registrado")
             else:
@@ -537,7 +537,7 @@ if st.session_state.vista_actual == 'general':
 
                     # NUEVO: Guardar nombres de las materias estudiadas
                     materias_list = list(dia["materias"].keys())
-                    materias_str = "<br>- ".join(materias_list)
+                    materias_str = "<br>+ ".join(materias_list)
                     materias_str_prom.append(materias_str)
                 
                 else:
