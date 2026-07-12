@@ -821,7 +821,7 @@ elif st.session_state.vista_actual == 'curso':
         )
         
         fig_vel_global.update_layout(
-            yaxis_title="Velocidad (Ejercicios/h)", 
+            yaxis_title="Velocidad (Ejercicios/h)", yaxis=dict(range=[0, 20]),
             hovermode='x', margin=dict(l=20, r=20, t=20, b=20), height=400,
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
