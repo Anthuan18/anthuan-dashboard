@@ -464,7 +464,7 @@ if st.session_state.vista_actual == 'inicio':
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
-   else:
+    else:
 
         if st.session_state.vista_actual == 'general':
             st.header("📈 SECCIÓN: RENDIMIENTO GENERAL")
