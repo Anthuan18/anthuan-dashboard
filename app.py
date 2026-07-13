@@ -198,39 +198,40 @@ def pantalla_login():
         
 @st.dialog("⚙️ Configuración del Ciclo Académico")
 def ventana_ajustes():
-    st.write("Modifica los parámetros de tu preparación para mantener tus estadísticas precisas:")
-    
-    # Obtenemos el usuario activo
-    username = st.session_state.get('username', 'Usuario')
-    
-    # Referencia al documento del usuario en Firestore utilizando tu objeto 'db'
+    username = st.session_state.get('username')
     doc_ref = db.collection("usuarios").document(username)
-    doc_snap = doc_ref.get()
-    
-    if doc_snap.exists:
-        datos_user = doc_snap.to_dict()
-        
-        # 1. Cargar la fecha de fin actual desde Firestore (o una por defecto)
-        fecha_fin_str = datos_user.get("fecha_fin_ciclo", "2026-08-15")
-        fecha_fin_actual = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
-        
-        # Input interactivo para cambiar la fecha
-        nueva_fecha_fin = st.date_input("Nueva fecha de finalización del ciclo", value=fecha_fin_actual)
+    doc = doc_ref.get().to_dict() or {}
+
+    # Pestañas para organizar la configuración
+    tab1, tab2 = st.tabs(["📅 Cronograma", "📚 Cursos y Metas"])
+
+    with tab1:
+        st.subheader("Fechas del Ciclo")
+        f_inicio = st.date_input("Inicio del ciclo", value=datetime.strptime(doc.get("fecha_inicio_ciclo", "2026-03-01"), "%Y-%m-%d"))
+        f_fin = st.date_input("Fin del ciclo", value=datetime.strptime(doc.get("fecha_fin_ciclo", "2026-08-15"), "%Y-%m-%d"))
+
+    with tab2:
+        st.subheader("Parámetros de Estudio")
+        # Lista de cursos (se guarda como texto separado por comas o lista)
+        cursos = st.text_input("Cursos (separados por coma)", value=", ".join(doc.get("cursos", [])) if isinstance(doc.get("cursos"), list) else "")
+        horas = st.number_input("Horas de estudio diarias", min_value=1, value=doc.get("horas_diarias", 4))
         
         st.divider()
-        st.subheader("Ajustes Avanzados")
-        st.caption("Si modificas tu horario o deseas añadir/quitar un curso, puedes registrarlo aquí.")
-        
-        # 2. Botón para confirmar y guardar los cambios
-        if st.button("Guardar Cambios", type="primary", use_container_width=True):
-            # Guardamos la nueva configuración directamente en tu Firestore
-            doc_ref.update({
-                "fecha_fin_ciclo": nueva_fecha_fin.strftime("%Y-%m-%d")
-            })
-            st.success("¡Configuración actualizada con éxito!")
-            st.rerun()
-    else:
-        st.error("No se pudieron cargar tus datos de configuración desde Firestore.")
+        st.subheader("Exámenes y Simulacros")
+        preguntas = st.number_input("Nro. de preguntas por examen", min_value=1, value=doc.get("preguntas_examen", 100))
+        simulacros = st.checkbox("¿Realizarás simulacros tipo UNI?", value=doc.get("simulacros", True))
+
+    if st.button("Guardar todo"):
+        doc_ref.set({
+            "fecha_inicio_ciclo": f_inicio.strftime("%Y-%m-%d"),
+            "fecha_fin_ciclo": f_fin.strftime("%Y-%m-%d"),
+            "cursos": [c.strip() for c in cursos.split(",")],
+            "horas_diarias": horas,
+            "preguntas_examen": preguntas,
+            "simulacros": simulacros
+        }, merge=True)
+        st.success("¡Configuración guardada!")
+        st.rerun()
 
 
 # ============================================
