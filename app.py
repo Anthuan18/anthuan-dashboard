@@ -877,7 +877,14 @@ elif st.session_state.vista_actual == 'curso':
         fig_disc_global = go.Figure()
         fig_vel_global = go.Figure()
         
-        for i, mat in enumerate(mats_nombres):
+        # 1. Definimos los cursos a comparar a partir del catálogo dinámico
+        mats_datos = catalogo_usuario if catalogo_usuario else CATALOGO_PREDETERMINADO
+        
+        for i, curso_info in enumerate(mats_datos):
+            mat = curso_info.get("nombre", "Curso")
+            color_mat = curso_info.get("color", "#FF4500")
+            simbolo = "📖"  # Símbolo unificado y elegante
+            
             fechas_mat = []
             disc_mat = []
             vel_mat = []
@@ -887,9 +894,17 @@ elif st.session_state.vista_actual == 'curso':
             dia_actual = fecha_inicio_global
             while dia_actual.date() <= fecha_hoy.date():
                 dia_semana = dia_actual.weekday()
+                nombre_dia = NOMBRES_DIAS[dia_semana]
                 fecha_str = dia_actual.strftime("%Y-%m-%d")
                 
-                if mat in HORARIO_MATERIAS.get(dia_semana, []):
+                # Verificamos si este curso estaba programado en el horario dinámico
+                materias_programadas_dia = horario_usuario.get(nombre_dia, [])
+                if not materias_programadas_dia and not catalogo_usuario:
+                    materias_programadas_dia = HORARIO_PREDETERMINADO.get(nombre_dia, [])
+                
+                nombres_programados = [m["curso"] for m in materias_programadas_dia if m.get("curso")]
+                
+                if mat in nombres_programados:
                     fechas_mat.append(dia_actual)
                     
                     registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
@@ -908,9 +923,6 @@ elif st.session_state.vista_actual == 'curso':
                 dia_actual += timedelta(days=1)
             
             if fechas_mat:
-                color_mat = COLORES_MATERIAS[i]
-                simbolo = SIMBOLOS_CURSOS.get(mat, "")
-                
                 fig_disc_global.add_trace(go.Scatter(
                     x=fechas_mat, y=disc_mat, mode='lines+markers', name=f"{simbolo} {mat}",
                     line=dict(color=color_mat, width=2), marker=dict(size=6),
@@ -925,6 +937,12 @@ elif st.session_state.vista_actual == 'curso':
                     hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + '<br>⚡%{y:.1f} ejer/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
                 ))
 
+        # Determinar el rango de la velocidad dinámicamente
+        max_vel_global = 20
+        for trace in fig_vel_global.data:
+            if trace.y:
+                max_vel_global = max(max_vel_global, max(trace.y) * 1.2)
+
         fig_disc_global.update_layout(
             yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), 
             hovermode='x', margin=dict(l=20, r=20, t=20, b=20), height=400,
@@ -932,7 +950,7 @@ elif st.session_state.vista_actual == 'curso':
         )
         
         fig_vel_global.update_layout(
-            yaxis_title="Velocidad (Ejercicios/h)", yaxis=dict(range=[0, 20]),
+            yaxis_title="Velocidad (Ejercicios/h)", yaxis=dict(range=[0, max_vel_global]),
             hovermode='x', margin=dict(l=20, r=20, t=20, b=20), height=400,
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
@@ -943,14 +961,18 @@ elif st.session_state.vista_actual == 'curso':
         with tab2:
             st.plotly_chart(fig_vel_global, use_container_width=True, key="plot_global_vel")
 
+
         # ==========================================
         # GRÁFICO GENERAL: EJERCICIOS VS HORAS
         # ==========================================
         st.divider()
         st.subheader("📊 EJERCICIOS Y HORAS EN TOTAL")
         
-        ej_tot = {m:0 for m in mats_nombres}
-        hr_tot = {m:0 for m in mats_nombres}
+        # Inicializamos los diccionarios acumuladores de forma dinámica
+        mats_nombres_dinamicos = [curso_info.get("nombre", "Curso") for curso_info in mats_datos]
+        
+        ej_tot = {m: 0 for m in mats_nombres_dinamicos}
+        hr_tot = {m: 0 for m in mats_nombres_dinamicos}
         
         for dia in datos["diario"]:
             for m, s in dia.get("materias", {}).items():
@@ -958,18 +980,18 @@ elif st.session_state.vista_actual == 'curso':
                     ej_tot[m] += s.get("Ejercicios_Resueltos", 0)
                     hr_tot[m] += s.get("horas_estudiadas", 0)
         
-        etiquetas = [f"{SIMBOLOS_CURSOS.get(m, '📚')} {m}" for m in mats_nombres]
+        etiquetas = [f"📖 {m}" for m in mats_nombres_dinamicos]
         
         fig_barras = go.Figure()
         fig_barras.add_trace(go.Bar(
             name='Ejercicios', 
-            x=etiquetas, y=[ej_tot[m] for m in mats_nombres], 
+            x=etiquetas, y=[ej_tot[m] for m in mats_nombres_dinamicos], 
             marker_color='#3498DB', hovertemplate='<b>%{x}</b><br>Ejercicios: %{y}<extra></extra>'
         ))
         
         fig_barras.add_trace(go.Bar(
             name='Horas', 
-            x=etiquetas, y=[hr_tot[m] for m in mats_nombres], 
+            x=etiquetas, y=[hr_tot[m] for m in mats_nombres_dinamicos], 
             marker_color='#E74C3C', hovertemplate='<b>%{x}</b><br>Horas: %{y:.1f}h<extra></extra>'
         ))
         
