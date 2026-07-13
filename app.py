@@ -600,7 +600,7 @@ if st.session_state.vista_actual == 'general':
                 disc_prom.append(0)
                 vel_prom.append(0)
                 horas_prom.append(0)
-                 ejercicios_prom.append(0)
+                ejercicios_prom.append(0)
                 
                 # DINÁMICO: Obtener materias programadas usando el nombre del día
                 nombre_dia = dia.get("dia", NOMBRES_DIAS[f.weekday()])
