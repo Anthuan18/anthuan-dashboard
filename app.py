@@ -387,8 +387,13 @@ if 'autenticado' not in st.session_state:
 # ============================================
 # Obtener el nombre del usuario logueado
 usuario_actual = st.session_state.get('username', 'Usuario')
+datos_usuario = cargar_datos()
 
-st.title(f"🎓 EDRA de {usuario_actual} - Ciclo Semestral básico 2027-1")
+# Intentamos obtener el ciclo de la configuración, si no existe ponemos uno por defecto
+config_actual = datos_usuario.get("config", {})
+nombre_ciclo = config_actual.get("ciclo", "Semestral básico 2027-1")
+
+st.title(f"🎓 EDRA de {usuario_actual} - {nombre_ciclo}")
 st.markdown(f"### 👋 Hola {usuario_actual}, aquí verás tus estadísticas de rendimiento académico.")
 st.divider()
 
@@ -410,6 +415,10 @@ if st.session_state.vista_actual == 'inicio':
             st.session_state.vista_actual = 'registro'
             st.rerun()
     st.divider()
+
+        if st.button("⚙️ Configuración del Ciclo"):
+            st.session_state.vista_actual = 'configuracion'
+            st.rerun()
 
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
