@@ -587,6 +587,9 @@ if st.session_state.vista_actual == 'general':
                  fechas_vistas.add(dia["fecha"])
                  dias_unicos.append(dia)
 
+        # Extraemos el horario del config del usuario para las etiquetas
+        horario_usuario = config_actual.get("horario", {})
+
         for dia in dias_unicos[-30:]:
         
             f = datetime.strptime(dia["fecha"], "%Y-%m-%d")
@@ -597,11 +600,18 @@ if st.session_state.vista_actual == 'general':
                 disc_prom.append(0)
                 vel_prom.append(0)
                 horas_prom.append(0)
-                ejercicios_prom.append(0)
+                 ejercicios_prom.append(0)
                 
-                # NUEVO: Obtener materias programadas para ese día
-                dia_semana = f.weekday()  # 0=Lunes, 1=Martes... 6=Domingo
-                materias_programadas = HORARIO_MATERIAS.get(dia_semana, [])
+                # DINÁMICO: Obtener materias programadas usando el nombre del día
+                nombre_dia = dia.get("dia", NOMBRES_DIAS[f.weekday()])
+                materias_dia_config = horario_usuario.get(nombre_dia, [])
+                
+                # Si está vacío el config, usamos el respaldo predeterminado
+                if not materias_dia_config:
+                    materias_dia_config = HORARIO_PREDETERMINADO.get(nombre_dia, [])
+                
+                # Extraemos solo los nombres de los cursos para armar el texto
+                materias_programadas = [m["curso"] for m in materias_dia_config if m.get("curso")]
                 
                 if materias_programadas:
                     materias_str = "<br>+ ".join(materias_programadas)
@@ -616,7 +626,7 @@ if st.session_state.vista_actual == 'general':
                     horas_prom.append(dia.get("Total_Horas_Estudiadas", 0))
                     ejercicios_prom.append(sum(m["Ejercicios_Resueltos"] for m in dia["materias"].values()))
 
-                    # NUEVO: Guardar nombres de las materias estudiadas
+                    # Guardar nombres de las materias estudiadas
                     materias_list = list(dia["materias"].keys())
                     materias_str = "<br>+ ".join(materias_list)
                     materias_str_prom.append(materias_str)
@@ -655,7 +665,7 @@ if st.session_state.vista_actual == 'general':
             st.warning("️ No hay datos de velocidad disponibles")
 
         # --- EXÁMENES ---
-        st.subheader("\U0001F4C4 EXÁMENES")
+        st.subheader("📄 EXÁMENES")
         prom_sem, prom_uni, cnt_sem, cnt_uni = 0, 0, 0, 0
         prec_sem_total, prec_uni_total = 0, 0
         fechas_sim, notas_sim, tipos_sim = [], [], []
@@ -684,11 +694,11 @@ if st.session_state.vista_actual == 'general':
 
         col1, col2 = st.columns(2)
         with col1: 
-            st.metric("\U0001F947 Promedio Semanales", f"{prom_sem:.1f}")
-            st.metric("\U0001F3AF Precisión", f"{prec_sem_prom:.1f}%")
+            st.metric("🥇 Promedio Semanales", f"{prom_sem:.1f}")
+            st.metric("🎯 Precisión", f"{prec_sem_prom:.1f}%")
         with col2: 
-            st.metric("\U0001F3C6 Promedio Tipo UNI", f"{prom_uni:.1f}")
-            st.metric("\U0001F3AF Precisión", f"{prec_uni_prom:.1f}%")
+            st.metric("🏆 Promedio Tipo UNI", f"{prom_uni:.1f}")
+            st.metric("🎯 Precisión", f"{prec_uni_prom:.1f}%")
             
         if fechas_sim:
             fechas_sem = [f for f, t in zip(fechas_sim, tipos_sim) if t == "Semanal"]
@@ -706,9 +716,7 @@ if st.session_state.vista_actual == 'general':
             fig_exam.update_layout(yaxis_title='Nota (0-20)', yaxis=dict(range=[0, 20]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='closest', height=400, margin=dict(l=50, r=20, t=20, b=50))
             st.plotly_chart(fig_exam, use_container_width=True)
         else:
-            st.info("\u26A0\uFE0F Aún no hay datos de exámenes registrados.")
-    else:
-        st.warning("\u26A0\uFE0F Aún no hay datos registrados.")
+            st.info("⚠️ Aún no hay datos de exámenes registrados.")
 
 
 # ============================================
