@@ -202,7 +202,7 @@ def pagina_configuracion_completa():
             st.session_state['pagina_ajustes'] = None
             st.rerun()
         
-        st.title("⚙️ Configuración del Ciclo Académico")    
+    st.title("⚙️ Configuración del Ciclo Académico")    
     
     username = st.session_state.get('username')
     doc_ref = db.collection("usuarios").document(username)
