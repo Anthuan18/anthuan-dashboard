@@ -454,8 +454,6 @@ if st.session_state.vista_actual == 'inicio':
     st.divider()
 
         if st.button("⚙️ Configuración del Ciclo Académico", use_container_width=True):
-            # Aquí llamamos a la función que creamos antes
-            # Esto activará la navegación a la página completa de ajustes
             st.session_state['pagina_ajustes'] = 'menu' 
             st.rerun()
 # ============================================
