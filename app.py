@@ -194,15 +194,6 @@ def pantalla_login():
                     st.error("❌ Las contraseñas no coinciden.")
             else:
                 st.warning("⚠️ Completa todos los campos")
-        
-        # ============================================
-        # PREGUNTA: ¿No tienes una cuenta? (ROJO NEÓN)
-        # ============================================
-
-        
-        # ============================================
-        # Formulario de registro (aparece/desaparece)
-        # ============================================
 
 
 # ============================================
@@ -274,34 +265,45 @@ st.markdown("""
 # CONFIGURACIÓN Y DATOS
 # ============================================
 
-# DICCIONARIO DE SÍMBOLOS - VERIFICAR QUE ESTÉN TODOS
-SIMBOLOS_CURSOS = {
-    "Aritmética": "\U0001F522",  # 🔢
-    "Álgebra": "\U0001F521",     # 🔡
-    "Geometría": "\U0001F310",   # 🌐
-    "Trigonometría": "\U0001F4D0", # 📐
-    "Física": "\u2699\uFE0F",    # ⚙️
-    "Química": "\U0001F9EA"      # 🧪
+# ==========================================================
+# CONFIGURACIÓN Y DATOS DE RESPALDO (FALLBACK)
+# ==========================================================
+
+# Catálogo predeterminado por si un usuario nuevo aún no configura el suyo
+CATALOGO_PREDETERMINADO = [
+    {"nombre": "Aritmética", "color": "#0BDCF4"},
+    {"nombre": "Álgebra", "color": "#E4EA38"},
+    {"nombre": "Geometría", "color": "#5E664A"},
+    {"nombre": "Trigonometría", "color": "#35C938"},
+    {"nombre": "Física", "color": "#503EDA"},
+    {"nombre": "Química", "color": "#E01C1C"},
+    {"nombre": "Raz. Matemático", "color": "#C540A2"}
+]
+
+# Horario predeterminado de respaldo mapeado por el nombre del día
+HORARIO_PREDETERMINADO = {
+    "Lunes": [{"curso": "Aritmética", "horas": 6}],
+    "Martes": [{"curso": "Álgebra", "horas": 6}],
+    "Miércoles": [{"curso": "Geometría", "horas": 6}],
+    "Jueves": [{"curso": "Trigonometría", "horas": 6}],
+    "Viernes": [{"curso": "Física", "horas": 6}],
+    "Sábado": [{"curso": "Química", "horas": 7}],
+    "Domingo": [
+        {"curso": "Aritmética", "horas": 2},
+        {"curso": "Álgebra", "horas": 2},
+        {"curso": "Geometría", "horas": 2},
+        {"curso": "Trigonometría", "horas": 2},
+        {"curso": "Física", "horas": 3},
+        {"curso": "Química", "horas": 2}
+    ]
 }
 
-HORAS_DISPONIBLES = {0: 6, 1: 6, 2: 6, 3: 6, 4: 6, 5: 7, 6: 13}
-HORARIO_MATERIAS = {
-    0: ["Aritmética"], 1: ["Álgebra"], 2: ["Geometría"],
-    3: ["Trigonometría"], 4: ["Física"], 5: ["Química"],
-    6: ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
-}
-HORAS_DOMINGO_POR_MATERIA = {
-    "Aritmética": 2, "Álgebra": 2, "Geometría": 2, 
-    "Trigonometría": 2, "Física": 3, "Química": 2
-}
 NOMBRES_DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-COLORES_MATERIAS = ["#0BDCF4", "#E4EA38", "#5E664A", "#35C938", "#503EDA", "#E01C1C", "#C540A2"]
-ARCHIVO_GUARDADO = "anthuan_stats.json"
 
 def cargar_datos():
     """Carga los datos del usuario actual desde Firestore (con cache en session_state)"""
     if 'user_id' not in st.session_state:
-        return {"diario": [], "semanal": []}
+        return {"diario": [], "semanal": [], "config": {}}
     
     user_id = st.session_state['user_id']
     cache_key = f"cached_datos_{user_id}"
@@ -321,17 +323,39 @@ def cargar_datos():
                 datos['diario'] = []
             if 'semanal' not in datos:
                 datos['semanal'] = []
+            if 'config' not in datos or not isinstance(datos['config'], dict):
+                datos['config'] = {}
+            
+            # Asegurar campos clave dentro de config para evitar fallos de lectura
+            if 'catalogo_cursos' not in datos['config']:
+                datos['config']['catalogo_cursos'] = []
+            if 'horario' not in datos['config']:
+                datos['config']['horario'] = {}
             
             # Guardar en cache para próximas lecturas
             st.session_state[cache_key] = datos
             return datos
         else:
-            default = {"diario": [], "semanal": []}
+            # Estructura por defecto para usuarios completamente nuevos
+            default = {
+                "diario": [], 
+                "semanal": [], 
+                "config": {
+                    "ciclo": "",
+                    "universidad": "UNI",
+                    "tipo_preparacion": "",
+                    "proceso_admision": "",
+                    "fecha_inicio": "",
+                    "fecha_fin": "",
+                    "catalogo_cursos": [], # Vacío para saber que es un usuario nuevo
+                    "horario": {}
+                }
+            }
             st.session_state[cache_key] = default
             return default
     except Exception as e:
         st.error(f"Error al cargar datos: {e}")
-        return {"diario": [], "semanal": []}
+        return {"diario": [], "semanal": [], "config": {}}
 
 def guardar_datos(datos):
     """Guarda los datos del usuario actual en Firestore"""
@@ -382,43 +406,75 @@ if 'vista_actual' not in st.session_state:
 if 'autenticado' not in st.session_state:
     st.session_state.autenticado = False
 
-# ============================================
-# ENCABEZADO Y NAVEGACIÓN
-# ============================================
+# ==========================================================
+# ENCEBEZADO Y NAVEGACIÓN
+# ==========================================================
+
 # Obtener el nombre del usuario logueado
 usuario_actual = st.session_state.get('username', 'Usuario')
 datos_usuario = cargar_datos()
 
-# Intentamos obtener el ciclo de la configuración, si no existe ponemos uno por defecto
+# Intentamos obtener la configuración
 config_actual = datos_usuario.get("config", {})
-nombre_ciclo = config_actual.get("ciclo", "Semestral básico 2027-1")
+catalogo_cursos = config_actual.get("catalogo_cursos", [])
 
-st.title(f"🎓 EDRA de {usuario_actual} - {nombre_ciclo}")
-st.markdown(f"### 👋 Hola {usuario_actual}, aquí verás tus estadísticas de rendimiento académico.")
-st.divider()
+# Si no hay cursos, el ciclo se muestra como no configurado
+if not catalogo_cursos:
+    nombre_cycle_display = "Ciclo sin configurar"
+else:
+    nombre_cycle_display = config_actual.get("ciclo", "Semestral básico 2027-1")
 
-if st.session_state.vista_actual == 'inicio':
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("\U0001F4C8 RENDIMIENTO GENERAL", use_container_width=True, key="btn_general"):
-            st.session_state.vista_actual = 'general'
-            st.rerun()
-    with col2:
-        if st.button("\U0001F4DA RENDIMIENTO POR CURSO", use_container_width=True, key="btn_curso"):
-            st.session_state.vista_actual = 'curso'
-            st.rerun()
-    
+st.title(f"🎓 EDRA de {usuario_actual} - {nombre_cycle_display}")
+
+# LÓGICA DE CONTROL DE ACCESO (BLOQUEO SEGURO)
+if not catalogo_cursos:
+    # ------------------------------------------------------
+    # PANTALLA DE BIENVENIDA PARA USUARIOS NUEVOS
+    # ------------------------------------------------------
+    st.markdown(f"### 👋 ¡Hola {usuario_actual}! Bienvenido a tu panel de preparación.")
+    st.info(
+        "Para empezar a medir tu rendimiento y llevar un control exacto de tu disciplina diario, "
+        "primero necesitas configurar las materias de tu ciclo y las horas que les dedicarás a solas."
+    )
     st.divider()
+    
+    # Solo se muestra el botón de configuración centrado
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("\U0001F4E5 REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
-            st.session_state.vista_actual = 'registro'
-            st.rerun()
-
-        if st.button("⚙️ Configuración del Ciclo"):
+        st.warning("⚠️ El acceso al dashboard estará bloqueado hasta que guardes tu configuración por primera vez.")
+        if st.button("⚙️ Configurar mi Ciclo Académico", use_container_width=True, key="btn_config_onboarding"):
             st.session_state.vista_actual = 'configuracion'
             st.rerun()
+
+else:
+    # ------------------------------------------------------
+    # DASHBOARD COMPLETO PARA USUARIOS CONFIGURADOS
+    # ------------------------------------------------------
+    st.markdown(f"### 👋 Hola {usuario_actual}, aquí verás tus estadísticas de rendimiento académico.")
     st.divider()
+    
+    if st.session_state.vista_actual == 'inicio':
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📊 RENDIMIENTO GENERAL", use_container_width=True, key="btn_general"):
+                st.session_state.vista_actual = 'general'
+                st.rerun()
+        with col2:
+            if st.button("📘 RENDIMIENTO POR CURSO", use_container_width=True, key="btn_curso"):
+                st.session_state.vista_actual = 'curso'
+                st.rerun()
+                
+        st.divider()
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("📥 REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
+                st.session_state.vista_actual = 'registro'
+                st.rerun()
+                
+            if st.button("⚙️ Configuración del Ciclo", use_container_width=True, key="btn_config_normal"):
+                st.session_state.vista_actual = 'configuracion'
+                st.rerun()
+        st.divider()
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
