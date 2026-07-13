@@ -1070,10 +1070,70 @@ elif st.session_state.vista_actual == 'configuracion':
     
     # Renderizamos los inputs asignándolos SIEMPRE a variables, controlando sus bloques con las pestañas correspondientes
     with tab1:
-        st.subheader("📅 Cronograma del Ciclo")
-        nuevo_ciclo = st.text_input("Nombre de tu ciclo actual", value=config_actual.get("ciclo", ""), key="input_ciclo")
-        nueva_uni = st.text_input("Universidad objetivo", value=config_actual.get("universidad", "UNI"), key="input_uni")
-        # Aquí podrás agregar en el futuro inputs de fechas de inicio/fin
+            st.subheader("📅 Cronograma del Ciclo")
+            
+            # 1. Selectores para construir el nombre del ciclo de forma dinámica
+            col_tipo, col_meta = st.columns(2)
+            with col_tipo:
+                tipos_ciclo = [
+                    "Semestral básico (Semianual)",
+                    "Semestral",
+                    "Anual",
+                    "Intensivo / Repaso"
+                ]
+                # Intentamos recuperar qué tipo estaba guardado antes
+                tipo_guardado = config_actual.get("tipo_preparacion", "Semestral básico (Semianual)")
+                if tipo_guardado not in tipos_ciclo:
+                    tipo_guardado = tipos_ciclo[0]
+                    
+                tipo_sel = st.selectbox(
+                    "Tipo de Preparación",
+                    tipos_ciclo,
+                    index=tipos_ciclo.index(tipo_guardado),
+                    key="input_tipo_preparacion"
+                )
+                
+            with col_meta:
+                meta_guardada = config_actual.get("proceso_admision", "2027-1")
+                meta_sel = st.text_input(
+                    "Proceso de Admisión Objetivo",
+                    value=meta_guardada,
+                    placeholder="Ej: 2027-1, 2026-2",
+                    key="input_proceso_admision"
+                )
+                
+            # Combinamos ambos para generar el nombre completo del ciclo
+            nuevo_ciclo = f"{tipo_sel} {meta_sel}"
+            nueva_uni = config_actual.get("universidad", "UNI") # Mantiene el destino actual
+            
+            st.divider()
+            
+            # 2. Configuración de Fechas Modificables
+            st.markdown("#### ⏳ Duración del Ciclo")
+            col_ini, col_fin = st.columns(2)
+            
+            # Convertir strings de Firebase a objetos date de Python de forma segura
+            try:
+                fecha_inicio_def = datetime.strptime(config_actual.get("fecha_inicio", fecha_hoy_peru()), "%Y-%m-%d").date()
+                fecha_fin_def = datetime.strptime(config_actual.get("fecha_fin", fecha_hoy_peru()), "%Y-%m-%d").date()
+            except Exception:
+                fecha_inicio_def = hora_peru().date()
+                fecha_fin_def = hora_peru().date()
+                
+            with col_ini:
+                f_inicio = st.date_input("Fecha de inicio del ciclo", value=fecha_inicio_def, key="input_fecha_inicio")
+            with col_fin:
+                f_fin = st.date_input("Fecha de finalización del ciclo", value=fecha_fin_def, key="input_fecha_fin")
+                
+            # 3. Validación de Ciclo Vencido (Aviso amistoso sin borrar datos)
+            hoy_date = hora_peru().date()
+            if hoy_date > f_fin:
+                st.warning(
+                    "⚠️ **Tu ciclo académico actual ha finalizado.**\n\n"
+                    "Tus datos históricos y registros anteriores se mantendrán completamente intactos en tu panel. "
+                    "Para iniciar una nueva etapa de estudio, actualiza los campos de arriba con los datos de tu siguiente ciclo "
+                    "(por ejemplo, un ciclo Repaso o el nuevo Semestral) y guarda los cambios."
+                )
 
     with tab2:
         st.subheader("📚 Configuración de Materias")
