@@ -1159,11 +1159,17 @@ elif st.session_state.vista_actual == 'configuracion':
     if st.button("💾 Guardar Cambios Generales", type="primary", key="btn_guardar_config"):
         user_id = st.session_state['user_id']
         
-        # Recuperamos los valores de los inputs usando sus 'key' únicas para asegurar que existan desde cualquier pestaña
+        # Reconstruimos el nombre del ciclo usando las selecciones de la pestaña 1
+        nombre_ciclo_completo = f"{st.session_state.input_tipo_preparacion} {st.session_state.input_proceso_admision}"
+        
         nueva_config = {
-            'ciclo': st.session_state.input_ciclo,
-            'universidad': st.session_state.input_uni,
-            'materias': st.session_state.input_materias,
+            'ciclo': nombre_ciclo_completo,
+            'universidad': config_actual.get("universidad", "UNI"),
+            'tipo_preparacion': st.session_state.input_tipo_preparacion,
+            'proceso_admision': st.session_state.input_proceso_admision,
+            'fecha_inicio': st.session_state.input_fecha_inicio.strftime("%Y-%m-%d"),
+            'fecha_fin': st.session_state.input_fecha_fin.strftime("%Y-%m-%d"),
+            'materias': st.session_state.get("input_materias", config_actual.get("materias", [])),
             'horario': config_actual.get("horario", {})
         }
         
