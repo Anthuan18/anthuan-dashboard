@@ -730,6 +730,9 @@ elif st.session_state.vista_actual == 'curso':
     st.divider()
     
     datos = cargar_datos()
+    config_actual = datos.get("config", {})
+    catalogo_usuario = config_actual.get("catalogo_cursos", [])
+    horario_usuario = config_actual.get("horario", {})
     
     if datos["diario"]:
         st.subheader("📖 ESTADÍSTICAS POR CURSO")
@@ -739,12 +742,17 @@ elif st.session_state.vista_actual == 'curso':
         fecha_inicio_global = datetime.strptime(primer_registro["fecha"], "%Y-%m-%d")
         fecha_hoy = hora_peru()
 
-        # 2. Generar los expanders para cada curso
-        mats_nombres = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
+        # 2. Generar los expanders para cada curso de forma dinámica
+        # Si por alguna razón el catálogo está vacío, usamos una lista de respaldo
+        if not catalogo_usuario:
+            mats_datos = CATALOGO_PREDETERMINADO
+        else:
+            mats_datos = catalogo_usuario
         
-        for i, mat in enumerate(mats_nombres):
-            simbolo = SIMBOLOS_CURSOS.get(mat, "📚")
-            color_mat = COLORES_MATERIAS[i]
+        for i, curso_info in enumerate(mats_datos):
+            mat = curso_info.get("nombre", "Curso")
+            color_mat = curso_info.get("color", "#FF4500")  # Color guardado o naranja por defecto
+            simbolo = "📖"  # Ícono unificado y elegante
             
             with st.expander(f" {simbolo} {mat}", expanded=False):
                 
@@ -752,8 +760,8 @@ elif st.session_state.vista_actual == 'curso':
                 fechas_mat = []
                 disc_mat = []
                 vel_mat = []
-                horas_mat = []      # NUEVO: Para guardar las horas diarias
-                ejercicios_mat = [] # NUEVO: Para guardar los ejercicios diarios
+                horas_mat = []      # Para guardar las horas diarias
+                ejercicios_mat = [] # Para guardar los ejercicios diarios
                 temas_mat = []
                 
                 total_ejercicios = 0
@@ -763,9 +771,20 @@ elif st.session_state.vista_actual == 'curso':
                 dia_actual = fecha_inicio_global
                 while dia_actual.date() <= fecha_hoy.date():
                     dia_semana = dia_actual.weekday()
+                    nombre_dia = NOMBRES_DIAS[dia_semana]
                     fecha_str = dia_actual.strftime("%Y-%m-%d")
                     
-                    if mat in HORARIO_MATERIAS.get(dia_semana, []):
+                    # Verificamos dinámicamente si el curso estaba programado para este día
+                    materias_programadas_dia = horario_usuario.get(nombre_dia, [])
+                    
+                    # Si no hay horario configurado, usamos el predeterminado
+                    if not materias_programadas_dia and not catalogo_usuario:
+                        materias_programadas_dia = HORARIO_PREDETERMINADO.get(nombre_dia, [])
+                    
+                    # Extraemos solo los nombres de los cursos programados
+                    nombres_programados = [m["curso"] for m in materias_programadas_dia if m.get("curso")]
+                    
+                    if mat in nombres_programados:
                         fechas_mat.append(dia_actual)
                         
                         registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
@@ -806,7 +825,7 @@ elif st.session_state.vista_actual == 'curso':
                         st.write(f"🔥 Disciplina: {promedio_disc:.1f}%")
                         st.write(f"⚡ Velocidad: {promedio_vel:.1f} ejer/h")
                 else:
-                    st.info(f"Por el momento no hay registro de {mat}.")
+                    st.info(f"Por el momento no hay registro programado de {mat}.")
                 
                 st.divider()
                 
@@ -843,7 +862,7 @@ elif st.session_state.vista_actual == 'curso':
                         fig_vel.add_trace(go.Scatter(
                             x=fechas_mat, y=vel_mat, mode='lines+markers', name='Velocidad',
                             line=dict(color=color_mat, width=3), marker=dict(size=8),
-                            customdata=list(zip(ejercicios_mat, horas_mat, temas_mat)), # Inyectamos ejercicios y horas
+                            customdata=list(zip(ejercicios_mat, horas_mat, temas_mat)),
                             hovertemplate='<b>%{x|%Y-%m-%d}</b><br><b>%{customdata[2]}</b><br>⚡%{y:.1f} ejer/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
                         ))
                         fig_vel.update_layout(title=f"⚡Velocidad - {mat}", yaxis_title="Ejercicios/h", yaxis=dict(range=[0, max(20, max_vel*1.2)]), margin=dict(l=20, r=20, t=40, b=20), height=300)
