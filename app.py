@@ -1047,7 +1047,7 @@ elif st.session_state.vista_actual == 'registro':
                     st.balloons()
 
 # ============================================
-# VISTA: CONFIGURACIÓN DEL CICLO (REESTRUCTURADA)
+# VISTA: CONFIGURACIÓN DEL CICLO (REESTRUCTURADA Y CORREGIDA)
 # ============================================
 elif st.session_state.vista_actual == 'configuracion':
     st.header("⚙️ CONFIGURACIÓN DEL CICLO ACADÉMICO")
@@ -1068,32 +1068,42 @@ elif st.session_state.vista_actual == 'configuracion':
     # Creamos las tres pestañas solicitadas
     tab1, tab2, tab3 = st.tabs(["📅 Cronograma", "📚 Cursos", "📝 Exámenes"])
     
+    # Renderizamos los inputs asignándolos SIEMPRE a variables, controlando sus bloques con las pestañas correspondientes
     with tab1:
         st.subheader("📅 Cronograma del Ciclo")
-        nuevo_ciclo = st.text_input("Nombre de tu ciclo actual", value=config_actual.get("ciclo", ""))
-        nueva_uni = st.text_input("Universidad objetivo", value=config_actual.get("universidad", "UNI"))
-        # Aquí podrías agregar en el futuro inputs de fechas de inicio/fin
+        nuevo_ciclo = st.text_input("Nombre de tu ciclo actual", value=config_actual.get("ciclo", ""), key="input_ciclo")
+        nueva_uni = st.text_input("Universidad objetivo", value=config_actual.get("universidad", "UNI"), key="input_uni")
+        # Aquí podrás agregar en el futuro inputs de fechas de inicio/fin
 
     with tab2:
         st.subheader("📚 Configuración de Materias")
         materias_todas = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química", "Raz. Matemático", "Raz. Verbal"]
+        
+        # Corregimos el default: si el usuario no tiene materias en Firebase, que por defecto no marque ninguna ([]) sin romper la interfaz
+        default_materias = [m for m in config_actual.get("materias", []) if m in materias_todas]
+        
         materias_seleccionadas = st.multiselect(
             "Selecciona los cursos que vas a trackear en tus jornadas", 
             materias_todas, 
-            default=config_actual.get("materias", [])
+            default=default_materias,
+            key="input_materias"
         )
 
     with tab3:
         st.subheader("📝 Configuración de Exámenes")
         st.info("Configuraciones específicas para tus simulacros (próximamente)")
 
+    st.divider()
+
     # Botón de guardado unificado al final de las pestañas
-    if st.button("💾 Guardar Cambios Generales", type="primary"):
+    if st.button("💾 Guardar Cambios Generales", type="primary", key="btn_guardar_config"):
         user_id = st.session_state['user_id']
+        
+        # Recuperamos los valores de los inputs usando sus 'key' únicas para asegurar que existan desde cualquier pestaña
         nueva_config = {
-            'ciclo': nuevo_ciclo,
-            'universidad': nueva_uni,
-            'materias': materias_seleccionadas,
+            'ciclo': st.session_state.input_ciclo,
+            'universidad': st.session_state.input_uni,
+            'materias': st.session_state.input_materias,
             'horario': config_actual.get("horario", {})
         }
         
