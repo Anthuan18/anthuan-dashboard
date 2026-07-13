@@ -453,9 +453,9 @@ if st.session_state.vista_actual == 'inicio':
             st.rerun()
     st.divider()
 
-        if st.button("⚙️ Configuración del Ciclo Académico", use_container_width=True):
-            st.session_state['pagina_ajustes'] = 'menu' 
-            st.rerun()
+    if st.button("⚙️ Configuración del Ciclo Académico", use_container_width=True):
+        st.session_state['pagina_ajustes'] = 'menu' 
+        st.rerun()
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
