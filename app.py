@@ -211,9 +211,17 @@ def ventana_ajustes():
         f_fin = st.date_input("Fin del ciclo", value=datetime.strptime(doc.get("fecha_fin_ciclo", "2026-08-15"), "%Y-%m-%d"))
 
     with tab2:
-        st.subheader("Parámetros de Estudio")
-        cursos = st.text_input("Cursos (separados por coma)", value=", ".join(doc.get("cursos", [])) if isinstance(doc.get("cursos"), list) else "")
-        horas = st.number_input("Horas de estudio diarias", min_value=1, value=doc.get("horas_diarias", 4))
+            st.subheader("Parámetros de Estudio")
+            
+            # Usamos height para que ocupe más espacio vertical y se vea más cómodo
+            cursos_text = st.text_area(
+                "Cursos (puedes escribir varios, separados por coma o por salto de línea):", 
+                value=", ".join(doc.get("cursos", [])) if isinstance(doc.get("cursos"), list) else "",
+                height=200, # Esto le da una altura de 200 píxeles para que ocupe gran parte de la ventana
+                placeholder="Ejemplo: Álgebra, Física, Trigonometría, Química..."
+            )
+            
+            horas = st.number_input("Horas de estudio diarias", min_value=1, value=doc.get("horas_diarias", 4))
 
     with tab3:
         st.subheader("Configuración de Evaluaciones")
