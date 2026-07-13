@@ -202,8 +202,8 @@ def ventana_ajustes():
     doc_ref = db.collection("usuarios").document(username)
     doc = doc_ref.get().to_dict() or {}
 
-    # Pestañas para organizar la configuración
-    tab1, tab2 = st.tabs(["📅 Cronograma", "📚 Cursos y Metas"])
+    # Creamos tres pestañas para una mejor organización
+    tab1, tab2, tab3 = st.tabs(["📅 Cronograma", "📚 Cursos y Metas", "📝 Exámenes"])
 
     with tab1:
         st.subheader("Fechas del Ciclo")
@@ -212,20 +212,21 @@ def ventana_ajustes():
 
     with tab2:
         st.subheader("Parámetros de Estudio")
-        # Lista de cursos (se guarda como texto separado por comas o lista)
         cursos = st.text_input("Cursos (separados por coma)", value=", ".join(doc.get("cursos", [])) if isinstance(doc.get("cursos"), list) else "")
         horas = st.number_input("Horas de estudio diarias", min_value=1, value=doc.get("horas_diarias", 4))
-        
-        st.divider()
-        st.subheader("Exámenes y Simulacros")
+
+    with tab3:
+        st.subheader("Configuración de Evaluaciones")
         preguntas = st.number_input("Nro. de preguntas por examen", min_value=1, value=doc.get("preguntas_examen", 100))
         simulacros = st.checkbox("¿Realizarás simulacros tipo UNI?", value=doc.get("simulacros", True))
 
-    if st.button("Guardar todo"):
+    # Botón de guardado único al final (se mantiene visible sin importar la pestaña)
+    st.divider()
+    if st.button("Guardar todo", type="primary", use_container_width=True):
         doc_ref.set({
             "fecha_inicio_ciclo": f_inicio.strftime("%Y-%m-%d"),
             "fecha_fin_ciclo": f_fin.strftime("%Y-%m-%d"),
-            "cursos": [c.strip() for c in cursos.split(",")],
+            "cursos": [c.strip() for c in cursos.split(",")] if cursos else [],
             "horas_diarias": horas,
             "preguntas_examen": preguntas,
             "simulacros": simulacros
