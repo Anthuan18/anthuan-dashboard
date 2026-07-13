@@ -1136,18 +1136,65 @@ elif st.session_state.vista_actual == 'configuracion':
                 )
 
     with tab2:
-        st.subheader("📚 Configuración de Materias")
-        materias_todas = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química", "Raz. Matemático", "Raz. Verbal"]
-        
-        # Corregimos el default: si el usuario no tiene materias en Firebase, que por defecto no marque ninguna ([]) sin romper la interfaz
-        default_materias = [m for m in config_actual.get("materias", []) if m in materias_todas]
-        
-        materias_seleccionadas = st.multiselect(
-            "Selecciona los cursos que vas a trackear en tus jornadas", 
-            materias_todas, 
-            default=default_materias,
-            key="input_materias"
-        )
+            st.subheader("📚 Configuración del Catálogo de Cursos")
+            st.caption("Registra aquí todas las materias que estudias en tu preparación y asígnales un color para los gráficos de rendimiento.")
+    
+            # Inicializamos la lista de cursos en la sesión si no existe o si se carga de la base de datos
+            if "lista_cursos_config" not in st.session_state:
+                # Intentamos recuperar lo guardado en Firestore; si no hay nada, iniciamos vacío
+                st.session_state.lista_cursos_config = config_actual.get("catalogo_cursos", [])
+    
+            # Contenedor para mostrar la tabla dinámica de cursos y colores
+            container_cursos = st.container()
+            cursos_actualizados = []
+    
+            with container_cursos:
+                # Creamos las cabeceras de las columnas estilizadas
+                col_eliminar, col_nombre_c, col_color_c = st.columns([0.5, 2, 1.5])
+                with col_nombre_c:
+                    st.markdown("**Curso:**")
+                with col_color_c:
+                    st.markdown("**Color asignado:**")
+    
+                # Iteramos sobre la lista actual de cursos para dibujar cada fila
+                for idx, item in enumerate(st.session_state.lista_cursos_config):
+                    c_eliminar, c_nombre, c_color = st.columns([0.5, 2, 1.5])
+                    
+                    with c_eliminar:
+                        # Botón pequeño con una X para remover un curso de la lista
+                        if st.button("❌", key=f"del_curso_{idx}"):
+                            st.session_state.lista_cursos_config.pop(idx)
+                            st.rerun()
+                    
+                    with c_nombre:
+                        nombre_val = st.text_input(
+                            "Nombre del curso", 
+                            value=item.get("nombre", ""), 
+                            key=f"nom_curso_{idx}", 
+                            label_visibility="collapsed"
+                        )
+                    
+                    with c_color:
+                        color_val = st.color_picker(
+                            "Elige un color", 
+                            value=item.get("color", "#1F77B4"), 
+                            key=f"col_curso_{idx}", 
+                            label_visibility="collapsed"
+                        )
+                    
+                    # Almacenamos los valores editados en tiempo real
+                    if nombre_val.strip():
+                        cursos_actualizados.append({"nombre": nombre_val.strip(), "color": color_val})
+    
+            st.divider()
+    
+            # Botón dinámico para añadir una nueva fila en blanco (igual al "+Añadir curso" de tu boceto)
+            if st.button("➕ Añadir curso", key="btn_add_curso_row"):
+                st.session_state.lista_cursos_config.append({"nombre": "", "color": "#2E7D32"})
+                st.rerun()
+    
+            # Guardamos temporalmente la lista limpia en el estado del componente para el botón unificado
+            materias_seleccionadas = cursos_actualizados
 
     with tab3:
         st.subheader("📝 Configuración de Exámenes")
@@ -1169,7 +1216,7 @@ elif st.session_state.vista_actual == 'configuracion':
             'proceso_admision': st.session_state.input_proceso_admision,
             'fecha_inicio': st.session_state.input_fecha_inicio.strftime("%Y-%m-%d"),
             'fecha_fin': st.session_state.input_fecha_fin.strftime("%Y-%m-%d"),
-            'materias': st.session_state.get("input_materias", config_actual.get("materias", [])),
+            'catalogo_cursos': materias_seleccionadas,
             'horario': config_actual.get("horario", {})
         }
         
