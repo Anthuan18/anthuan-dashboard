@@ -263,10 +263,6 @@ if st.sidebar.button("🚪 Cerrar Sesión"):
     st.session_state['logged_in'] = False
     st.rerun()
 
-# --- NUEVO BOTÓN PARA AJUSTES ---
-if st.sidebar.button("⚙️ Ajustes del Ciclo"):
-    ventana_ajustes()
-
 # ============================================
 # AQUÍ VA EL RESTO DE TU DASHBOARD ACTUAL
 # ============================================
@@ -456,6 +452,9 @@ if st.session_state.vista_actual == 'inicio':
     if st.button("⚙️ Configuración del Ciclo Académico", use_container_width=True):
         st.session_state['pagina_ajustes'] = 'menu' 
         st.rerun()
+        
+    if 'pagina_ajustes' in st.session_state and st.session_state['pagina_ajustes'] != None:
+        menu_ajustes()
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
