@@ -453,7 +453,7 @@ if st.session_state.vista_actual == 'inicio':
         st.session_state['pagina_ajustes'] = 'menu' 
         st.rerun()
         
-    if 'pagina_ajustes' in st.session_state and st.session_state['pagina_ajustes'] != None:
+if 'pagina_ajustes' in st.session_state and st.session_state['pagina_ajustes'] != None:
         menu_ajustes()
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
