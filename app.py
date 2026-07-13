@@ -1026,6 +1026,10 @@ elif st.session_state.vista_actual == 'registro':
     # VERIFICAR REGISTROS DE HOY
     # ============================================
     datos = cargar_datos()
+    config_actual = datos.get("config", {})
+    horario_usuario = config_actual.get("horario", {})
+    catalogo_usuario = config_actual.get("catalogo_cursos", [])
+    
     fecha_hoy = fecha_hoy_peru()
 
     ya_registro_hoy = any(d["fecha"] == fecha_hoy for d in datos["diario"])
@@ -1035,50 +1039,86 @@ elif st.session_state.vista_actual == 'registro':
     # ============================================
     # REGISTRO DIARIO
     # ============================================
-    st.subheader("\U0001F4DD Registro Diario")
+    st.subheader("📝 Registro Diario")
     
     if ya_registro_hoy:
         registro_hoy = next(d for d in datos["diario"] if d["fecha"] == fecha_hoy)
-        st.success("\u2705 ¡Misión Diaria Completada!")
-        st.info(f"Ya registraste tus datos de hoy. ¡Descansa y vuelve mañana! \U0001F319")
+        st.success("✅ ¡Misión Diaria Completada!")
+        st.info(f"Ya registraste tus datos de hoy. ¡Descansa y vuelve mañana! 🌙")
         st.divider()
-        st.write(f"**\U0001F4DD Ejercicios:** {registro_hoy['Total_Ejercicios_Resueltos_Dia']}")
-        st.write(f"**\u23F0 Horas:** {int(registro_hoy['Total_Horas_Estudiadas'])}h")
+        st.write(f"**📝 Ejercicios:** {registro_hoy['Total_Ejercicios_Resueltos_Dia']}")
+        st.write(f"**⏰ Horas:** {int(registro_hoy['Total_Horas_Estudiadas'])}h")
     else:
         ds = hora_peru().weekday()
         nd = NOMBRES_DIAS[ds]
-        hd = HORAS_DISPONIBLES[ds]
-        mats = HORARIO_MATERIAS[ds]
-        st.info(f"\U0001F4C5 Hoy es **{nd}**. Tienes **{hd} horas** disponibles.")
+        
+        # Obtener dinámicamente las materias configuradas para el día de hoy
+        materias_programadas_dia = horario_usuario.get(nd, [])
+        
+        # Si no hay configuración del usuario en Firestore, usamos el fallback predeterminado
+        if not materias_programadas_dia and not catalogo_usuario:
+            materias_programadas_dia = HORARIO_PREDETERMINADO.get(nd, [])
+        
+        # Calculamos el total de horas disponibles sumando las horas asignadas de cada curso programado hoy
+        hd = sum(float(m.get("horas_asignadas", 0)) for m in materias_programadas_dia if m.get("horas_asignadas"))
+        
+        st.info(f"📅 Hoy es **{nd}**. Tienes **{hd:.1f} horas** totales programadas para estudiar.")
         
         reg_mat = {}
         tot_ej, tot_hr = 0, 0
         
-        for m in mats:
-            simbolo = SIMBOLOS_CURSOS.get(m, "\U0001F4DA")
-            hd_m = HORAS_DOMINGO_POR_MATERIA[m] if ds == 6 else hd
-            st.markdown(f"### {simbolo} {m}")
-            c1, c2 = st.columns(2)
-            with c1: h_in = st.number_input(f"Horas", min_value=0, value=0, step=1, key=f"h_{m}")
-            with c2: e_in = st.number_input(f"Ejercicios", min_value=0, value=0, step=1, key=f"e_{m}")
-            
-            temas_in = st.text_input("Tema/s estudiado", placeholder="Ej: Vectores, Polinomios", key=f"temas_{m}")
-            
-            disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
-            vel = e_in / h_in if h_in > 0 else 0
-            reg_mat[m] = {"horas_disponibles": hd_m, "horas_estudiadas": float(h_in), "Ejercicios_Resueltos": e_in, "Temas": temas_in, "Disciplina": round(disc, 2), "Velocidad": round(vel, 2)}
-            tot_ej += e_in; tot_hr += h_in
-            st.divider()
+        # Si no hay materias asignadas para hoy
+        if not materias_programadas_dia:
+            st.warning("⚠️ No tienes cursos programados para estudiar el día de hoy en tu horario.")
+        else:
+            for m_prog in materias_programadas_dia:
+                m = m_prog.get("curso")
+                if not m:
+                    continue
+                
+                simbolo = "📖"  # El nuevo ícono unificado y elegante
+                hd_m = float(m_prog.get("horas_asignadas", 0))  # Horas asignadas dinámicamente a esta materia
+                
+                st.markdown(f"### {simbolo} {m}")
+                st.caption(f"⏱️ Horas programadas para este curso hoy: {hd_m}h")
+                c1, c2 = st.columns(2)
+                with c1: 
+                    h_in = st.number_input(f"Horas reales dedicadas", min_value=0.0, max_value=24.0, value=0.0, step=0.5, key=f"h_{m}")
+                with c2: 
+                    e_in = st.number_input(f"Ejercicios resueltos", min_value=0, value=0, step=1, key=f"e_{m}")
+                
+                temas_in = st.text_input("Tema/s estudiado", placeholder="Ej: Vectores, Polinomios", key=f"temas_{m}")
+                
+                disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
+                vel = e_in / h_in if h_in > 0 else 0
+                
+                reg_mat[m] = {
+                    "horas_disponibles": hd_m, 
+                    "horas_estudiadas": float(h_in), 
+                    "Ejercicios_Resueltos": e_in, 
+                    "Temas": temas_in, 
+                    "Disciplina": round(disc, 2), 
+                    "Velocidad": round(vel, 2)
+                }
+                tot_ej += e_in
+                tot_hr += h_in
+                st.divider()
 
-        if st.button("\U0001F4BE Guardar Día", type="primary", use_container_width=True):
-            datos["diario"].append({
-                "fecha": fecha_hoy, "dia": nd, "hora_registro": hora_peru().strftime("%H:%M:%S"),                    
-                "horas_disponibles_total": hd, "materias": reg_mat,
-                "Total_Ejercicios_Resueltos_Dia": tot_ej, "Total_Horas_Estudiadas": tot_hr
-            })
-            guardar_datos(datos)
-            st.success(f"\u2705 ¡Día registrado! {tot_ej} ejercicios.")
-            st.balloons()
+            if materias_programadas_dia:
+                if st.button("💾 Guardar Día", type="primary", use_container_width=True):
+                    datos["diario"].append({
+                        "fecha": fecha_hoy, 
+                        "dia": nd, 
+                        "hora_registro": hora_peru().strftime("%H:%M:%S"),                    
+                        "horas_disponibles_total": hd, 
+                        "materias": reg_mat,
+                        "Total_Ejercicios_Resueltos_Dia": tot_ej, 
+                        "Total_Horas_Estudiadas": tot_hr
+                    })
+                    guardar_datos(datos)
+                    st.success(f"✅ ¡Día registrado! {tot_ej} ejercicios resueltos en {tot_hr}h.")
+                    st.balloons()
+                    st.rerun()
 
     st.divider()
     
