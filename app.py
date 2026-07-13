@@ -500,6 +500,9 @@ if st.session_state.vista_actual == 'general':
         fecha_inicio = datetime.strptime(primer_registro["fecha"], "%Y-%m-%d")
         fecha_hoy = hora_peru()
         
+        # Traer el horario del config actual del usuario (o el de respaldo si no hay)
+        horario_usuario = config_actual.get("horario", {})
+        
         # Generar lista completa de días desde el primer registro hasta hoy
         dias_completos = []
         dia_actual = fecha_inicio
@@ -519,7 +522,21 @@ if st.session_state.vista_actual == 'general':
                 # Día NO registrado, crear registro ficticio con 0%
                 dia_semana = dia_actual.weekday()
                 nombre_dia = NOMBRES_DIAS[dia_semana]
-                horas_disponibles = HORAS_DISPONIBLES[dia_semana]
+                
+                # OBTENER HORAS PROGRAMADAS DINÁMICAMENTE
+                # Primero buscamos en su horario personalizado
+                materias_dia = horario_usuario.get(nombre_dia, [])
+                
+                # Si no tiene nada asignado en su horario personalizado, usamos el respaldo temporal
+                if not materias_dia:
+                    materias_dia = HORARIO_PREDETERMINADO.get(nombre_dia, [])
+                
+                # Sumamos las horas de todos los cursos programados para ese día
+                horas_disponibles = sum(int(m.get("horas", 0)) for m in materias_dia)
+                
+                # Si por alguna razón la suma da 0, le damos un mínimo de 1 para evitar divisiones por cero en tus métricas
+                if horas_disponibles <= 0:
+                    horas_disponibles = 4
                 
                 # Crear registro ficticio con 0 horas y 0 ejercicios
                 registro_ficticio = {
