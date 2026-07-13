@@ -1047,67 +1047,61 @@ elif st.session_state.vista_actual == 'registro':
                     st.balloons()
 
 # ============================================
-# VISTA: CONFIGURACIÓN DEL CICLO
+# VISTA: CONFIGURACIÓN DEL CICLO (REESTRUCTURADA)
 # ============================================
 elif st.session_state.vista_actual == 'configuracion':
     st.header("⚙️ CONFIGURACIÓN DEL CICLO ACADÉMICO")
     
-    # Botón de escape para regresar de inmediato a la pantalla principal
     if st.button("⬅️ Volver al inicio", key="back_config"):
         st.session_state.vista_actual = 'inicio'
         st.rerun()
-        
     st.divider()
     
-    st.markdown("### 🏔️ Planificación Estratégica")
-    st.caption("En la cima hace frío. Configura tu plan de estudios con la máxima precisión para asegurar tu objetivo.")
-    
-    # Extraer los datos guardados del usuario en Firestore para rellenar los campos
     datos = cargar_datos()
     config_actual = datos.get("config", {
         'universidad': 'UNI',
-        'ciclo': 'Semestral básico 2027-1',
-        'materias': ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química"]
+        'ciclo': 'Sin configurar',
+        'materias': [],
+        'horario': {}
     })
+
+    # Creamos las tres pestañas solicitadas
+    tab1, tab2, tab3 = st.tabs(["📅 Cronograma", "📚 Cursos", "📝 Exámenes"])
     
-    # Formulario para cambiar los parámetros de forma ordenada
-    with st.form("form_config_ciclo"):
-        col1, col2 = st.columns(2)
-        with col1:
-            nuevo_ciclo = st.text_input("Nombre de tu ciclo actual", value=config_actual.get("ciclo", ""))
-        with col2:
-            nueva_uni = st.text_input("Universidad objetivo", value=config_actual.get("universidad", "UNI"))
-        
-        st.markdown("#### 📚 Configuración de Materias")
+    with tab1:
+        st.subheader("📅 Cronograma del Ciclo")
+        nuevo_ciclo = st.text_input("Nombre de tu ciclo actual", value=config_actual.get("ciclo", ""))
+        nueva_uni = st.text_input("Universidad objetivo", value=config_actual.get("universidad", "UNI"))
+        # Aquí podrías agregar en el futuro inputs de fechas de inicio/fin
+
+    with tab2:
+        st.subheader("📚 Configuración de Materias")
         materias_todas = ["Aritmética", "Álgebra", "Geometría", "Trigonometría", "Física", "Química", "Raz. Matemático", "Raz. Verbal"]
         materias_seleccionadas = st.multiselect(
             "Selecciona los cursos que vas a trackear en tus jornadas", 
             materias_todas, 
-            default=config_actual.get("materias", materias_todas[:6])
+            default=config_actual.get("materias", [])
         )
+
+    with tab3:
+        st.subheader("📝 Configuración de Exámenes")
+        st.info("Configuraciones específicas para tus simulacros (próximamente)")
+
+    # Botón de guardado unificado al final de las pestañas
+    if st.button("💾 Guardar Cambios Generales", type="primary"):
+        user_id = st.session_state['user_id']
+        nueva_config = {
+            'ciclo': nuevo_ciclo,
+            'universidad': nueva_uni,
+            'materias': materias_seleccionadas,
+            'horario': config_actual.get("horario", {})
+        }
         
-        guardar_btn = st.form_submit_button("💾 Guardar Configuración", type="primary")
-        
-        if guardar_btn:
-            user_id = st.session_state['user_id']
-            nueva_config = {
-                'ciclo': nuevo_ciclo,
-                'universidad': nueva_uni,
-                'materias': materias_seleccionadas,
-                'horario': config_actual.get("horario", {})
-            }
-            
-            try:
-                # 1. Guardar de forma segura en Firestore usando merge=True para no alterar 'diario' ni 'semanal'
-                db.collection('usuarios').document(user_id).set({
-                    'config': nueva_config
-                }, merge=True)
-                
-                # 2. Actualizar inmediatamente la caché local para que cambien los títulos sin reiniciar
-                datos["config"] = nueva_config
-                st.session_state[f"cached_datos_{user_id}"] = datos
-                
-                st.success("✅ Configuración de ciclo actualizada correctamente.")
-                st.balloons()
-            except Exception as e:
-                st.error(f"Error al conectar con Firestore: {e}")
+        try:
+            db.collection('usuarios').document(user_id).set({'config': nueva_config}, merge=True)
+            datos["config"] = nueva_config
+            st.session_state[f"cached_datos_{user_id}"] = datos
+            st.success("✅ Configuración actualizada con éxito.")
+            st.balloons()
+        except Exception as e:
+            st.error(f"Error al guardar: {e}")
