@@ -414,12 +414,11 @@ if st.session_state.vista_actual == 'inicio':
         if st.button("\U0001F4E5 REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
             st.session_state.vista_actual = 'registro'
             st.rerun()
-    st.divider()
 
         if st.button("⚙️ Configuración del Ciclo"):
             st.session_state.vista_actual = 'configuracion'
             st.rerun()
-
+    st.divider()
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
