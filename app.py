@@ -1301,9 +1301,13 @@ elif st.session_state.vista_actual == 'configuracion':
             st.subheader("📚 Configuración del Catálogo de Cursos")
             st.caption("1. Registra aquí todas las materias que estudias en tu preparación y asígnales un color.")
             
-            # Inicializamos la lista de cursos en la sesión si no existe
-            if "lista_cursos_config" not in st.session_state:
-                st.session_state.lista_cursos_config = config_actual.get("catalogo_cursos", [])
+            # Recuperamos el ID del usuario actual para aislar la sesión
+            user_id = st.session_state.get('user_id', 'anonimo')
+            key_lista_cursos = f"lista_cursos_config_{user_id}"
+            
+            # Inicializamos la lista de cursos en la sesión del usuario si no existe
+            if key_lista_cursos not in st.session_state:
+                st.session_state[key_lista_cursos] = config_actual.get("catalogo_cursos", [])
     
             # Contenedor para mostrar la tabla dinámica de cursos y colores
             container_cursos = st.container()
@@ -1315,34 +1319,32 @@ elif st.session_state.vista_actual == 'configuracion':
                 with col_color_c:
                     st.markdown("**Color asignado:**")
     
-                # Iteramos directamente sobre st.session_state.lista_cursos_config
-                for idx, item in enumerate(st.session_state.lista_cursos_config):
+                # Iteramos usando la clave aislada por usuario
+                for idx, item in enumerate(st.session_state[key_lista_cursos]):
                     c_eliminar, c_nombre, c_color = st.columns([0.5, 2, 1.5])
                     with c_eliminar:
-                        if st.button("❌", key=f"del_curso_{idx}"):
-                            st.session_state.lista_cursos_config.pop(idx)
+                        if st.button("❌", key=f"del_curso_{user_id}_{idx}"):
+                            st.session_state[key_lista_cursos].pop(idx)
                             st.rerun()
                     with c_nombre:
-                        # Guardamos el cambio directamente en la estructura de la sesión al escribir
                         nombre_val = st.text_input(
                             "Nombre del curso", 
                             value=item.get("nombre", ""), 
-                            key=f"nom_curso_{idx}", 
+                            key=f"nom_curso_{user_id}_{idx}", 
                             label_visibility="collapsed"
                         )
-                        st.session_state.lista_cursos_config[idx]["nombre"] = nombre_val.strip()
+                        st.session_state[key_lista_cursos][idx]["nombre"] = nombre_val.strip()
                     with c_color:
-                        # Guardamos el color directamente en la estructura de la sesión al elegir
                         color_val = st.color_picker(
                             "Elige un color", 
                             value=item.get("color", "#1F77B4"), 
-                            key=f"col_curso_{idx}", 
+                            key=f"col_curso_{user_id}_{idx}", 
                             label_visibility="collapsed"
                         )
-                        st.session_state.lista_cursos_config[idx]["color"] = color_val
+                        st.session_state[key_lista_cursos][idx]["color"] = color_val
     
-            if st.button("➕ Añadir curso al catálogo", key="btn_add_curso_row"):
-                st.session_state.lista_cursos_config.append({"nombre": "", "color": "#2E7D32"})
+            if st.button("➕ Añadir curso al catálogo", key=f"btn_add_curso_row_{user_id}"):
+                st.session_state[key_lista_cursos].append({"nombre": "", "color": "#2E7D32"})
                 st.rerun()
     
             st.divider()
@@ -1353,8 +1355,8 @@ elif st.session_state.vista_actual == 'configuracion':
             st.subheader("🗓️ Distribución y Horas de Estudio Semanal")
             st.caption("2. Planifica qué cursos estudiarás cada día y cuántas horas les dedicarás a solas (sin contar clases).")
     
-            # Filtramos los cursos de la sesión que tengan un nombre válido (no vacíos)
-            cursos_validos = [c for c in st.session_state.lista_cursos_config if c.get("nombre", "").strip()]
+            # Filtramos los cursos de la sesión del usuario que tengan un nombre válido (no vacíos)
+            cursos_validos = [c for c in st.session_state[key_lista_cursos] if c.get("nombre", "").strip()]
             lista_nombres_cursos = [c["nombre"] for c in cursos_validos]
     
             if not lista_nombres_cursos:
@@ -1367,10 +1369,10 @@ elif st.session_state.vista_actual == 'configuracion':
     
                 for dia in dias_semana:
                     with st.expander(f"🔽 {dia}", expanded=False):
-                        key_estado_dia = f"items_horario_{dia}"
+                        # Clave del horario diaria también aislada por usuario
+                        key_estado_dia = f"items_horario_{dia}_{user_id}"
                         if key_estado_dia not in st.session_state:
                             inicial_dia = horario_guardado.get(dia, [])
-                            # Filtramos para asegurarnos de que el curso aún exista en el catálogo válido
                             st.session_state[key_estado_dia] = [
                                 item for item in inicial_dia if item.get("curso") in lista_nombres_cursos
                             ]
@@ -1380,7 +1382,7 @@ elif st.session_state.vista_actual == 'configuracion':
                             col_del_h, col_cur_h, col_hrs_h = st.columns([0.5, 2, 1.5])
                             
                             with col_del_h:
-                                if st.button("❌", key=f"del_h_{dia}_{h_idx}"):
+                                if st.button("❌", key=f"del_h_{user_id}_{dia}_{h_idx}"):
                                     st.session_state[key_estado_dia].pop(h_idx)
                                     st.rerun()
                             
@@ -1392,7 +1394,7 @@ elif st.session_state.vista_actual == 'configuracion':
                                     "Curso", 
                                     options=lista_nombres_cursos, 
                                     index=idx_def, 
-                                    key=f"sel_h_{dia}_{h_idx}", 
+                                    key=f"sel_h_{user_id}_{dia}_{h_idx}", 
                                     label_visibility="collapsed"
                                 )
                             
@@ -1402,13 +1404,13 @@ elif st.session_state.vista_actual == 'configuracion':
                                     min_value=1, 
                                     max_value=16, 
                                     value=int(h_item.get("horas", 3)), 
-                                    key=f"num_h_{dia}_{h_idx}", 
+                                    key=f"num_h_{user_id}_{dia}_{h_idx}", 
                                     label_visibility="collapsed"
                                 )
                             
                             cursos_del_dia.append({"curso": curso_sel, "horas": horas_sel})
     
-                        if st.button(f"➕ Añadir curso a {dia}", key=f"btn_add_h_{dia}"):
+                        if st.button(f"➕ Añadir curso a {dia}", key=f"btn_add_h_{user_id}_{dia}"):
                             st.session_state[key_estado_dia].append({"curso": lista_nombres_cursos[0], "horas": 3})
                             st.rerun()
     
