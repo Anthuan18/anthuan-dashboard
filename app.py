@@ -1220,7 +1220,7 @@ elif st.session_state.vista_actual == 'configuracion':
     })
 
     # Creamos las tres pestañas solicitadas
-    tab1, tab2, tab3 = st.tabs(["📅 Cronograma", "📚 Cursos", "📝 Exámenes"])
+    tab1, tab2, tab3 = st.tabs(["📅 Cronograma", "📚 Cursos", "📝 Exámenes"]), key=f"tabs_configuracion_{user_id}")
     
     # Renderizamos los inputs asignándolos SIEMPRE a variables, controlando sus bloques con las pestañas correspondientes
     with tab1:
