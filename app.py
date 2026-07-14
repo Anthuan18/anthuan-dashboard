@@ -426,55 +426,47 @@ else:
 
 st.title(f"🎓 EDRA de {usuario_actual} - {nombre_cycle_display}")
 
-# LÓGICA DE CONTROL DE ACCESO (BLOQUEO SEGURO)
+# ------------------------------------------------------
+# MENSAJE DE BIENVENIDA DINÁMICO
+# ------------------------------------------------------
 if not catalogo_cursos:
-    # ------------------------------------------------------
-    # PANTALLA DE BIENVENIDA PARA USUARIOS NUEVOS
-    # ------------------------------------------------------
     st.markdown(f"### 👋 ¡Hola {usuario_actual}! Bienvenido a tu panel de preparación.")
     st.info(
-        "Para empezar a medir tu rendimiento y llevar un control exacto de tu disciplina diario, "
-        "primero necesitas configurar las materias de tu ciclo y las horas que les dedicarás a solas."
+        "💡 **Consejo:** Para empezar a medir tu rendimiento y llevar un control exacto de tu disciplina diario, "
+        "ve a la sección de **Configuración del Ciclo** para registrar las materias y horas que les dedicarás a solas."
     )
+else:
+    st.markdown(f"### 👋 Hola {usuario_actual}, aquí verás tus estadísticas de rendimiento académico.")
+
+st.divider()
+
+# ------------------------------------------------------
+# ACCESO LIBRE Y UNIFICADO A TODAS LAS VISTAS
+# ------------------------------------------------------
+if st.session_state.vista_actual == 'inicio':
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📊 RENDIMIENTO GENERAL", use_container_width=True, key="btn_general"):
+            st.session_state.vista_actual = 'general'
+            st.rerun()
+    with col2:
+        if st.button("📘 RENDIMIENTO POR CURSO", use_container_width=True, key="btn_curso"):
+            st.session_state.vista_actual = 'curso'
+            st.rerun()
+            
     st.divider()
     
-    # Solo se muestra el botón de configuración centrado
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.warning("⚠️ El acceso al dashboard estará bloqueado hasta que guardes tu configuración por primera vez.")
-        if st.button("⚙️ Configurar mi Ciclo Académico", use_container_width=True, key="btn_config_onboarding"):
+        if st.button("📥 REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
+            st.session_state.vista_actual = 'registro'
+            st.rerun()
+            
+        if st.button("⚙️ Configuración del Ciclo", use_container_width=True, key="btn_config_normal"):
             st.session_state.vista_actual = 'configuracion'
             st.rerun()
-
-else:
-    # ------------------------------------------------------
-    # DASHBOARD COMPLETO PARA USUARIOS CONFIGURADOS
-    # ------------------------------------------------------
-    st.markdown(f"### 👋 Hola {usuario_actual}, aquí verás tus estadísticas de rendimiento académico.")
+            
     st.divider()
-    
-    if st.session_state.vista_actual == 'inicio':
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("📊 RENDIMIENTO GENERAL", use_container_width=True, key="btn_general"):
-                st.session_state.vista_actual = 'general'
-                st.rerun()
-        with col2:
-            if st.button("📘 RENDIMIENTO POR CURSO", use_container_width=True, key="btn_curso"):
-                st.session_state.vista_actual = 'curso'
-                st.rerun()
-                
-        st.divider()
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("📥 REGISTRAR DATOS", use_container_width=True, key="btn_registro"):
-                st.session_state.vista_actual = 'registro'
-                st.rerun()
-                
-            if st.button("⚙️ Configuración del Ciclo", use_container_width=True, key="btn_config_normal"):
-                st.session_state.vista_actual = 'configuracion'
-                st.rerun()
-        st.divider()
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
