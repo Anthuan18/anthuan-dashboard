@@ -269,34 +269,8 @@ st.markdown("""
 # CONFIGURACIÓN Y DATOS DE RESPALDO (FALLBACK)
 # ==========================================================
 
-# Catálogo predeterminado por si un usuario nuevo aún no configura el suyo
-CATALOGO_PREDETERMINADO = [
-    {"nombre": "Aritmética", "color": "#0BDCF4"},
-    {"nombre": "Álgebra", "color": "#E4EA38"},
-    {"nombre": "Geometría", "color": "#5E664A"},
-    {"nombre": "Trigonometría", "color": "#35C938"},
-    {"nombre": "Física", "color": "#503EDA"},
-    {"nombre": "Química", "color": "#E01C1C"},
-    {"nombre": "Raz. Matemático", "color": "#C540A2"}
-]
-
-# Horario predeterminado de respaldo mapeado por el nombre del día
-HORARIO_PREDETERMINADO = {
-    "Lunes": [{"curso": "Aritmética", "horas": 6}],
-    "Martes": [{"curso": "Álgebra", "horas": 6}],
-    "Miércoles": [{"curso": "Geometría", "horas": 6}],
-    "Jueves": [{"curso": "Trigonometría", "horas": 6}],
-    "Viernes": [{"curso": "Física", "horas": 6}],
-    "Sábado": [{"curso": "Química", "horas": 7}],
-    "Domingo": [
-        {"curso": "Aritmética", "horas": 2},
-        {"curso": "Álgebra", "horas": 2},
-        {"curso": "Geometría", "horas": 2},
-        {"curso": "Trigonometría", "horas": 2},
-        {"curso": "Física", "horas": 3},
-        {"curso": "Química", "horas": 2}
-    ]
-}
+CATALOGO_PREDETERMINADO = []
+HORARIO_PREDETERMINADO = {}
 
 NOMBRES_DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
@@ -1053,21 +1027,23 @@ elif st.session_state.vista_actual == 'registro':
         # Obtener dinámicamente las materias configuradas para el día de hoy
         materias_programadas_dia = horario_usuario.get(nd, [])
         
-        # Si no hay configuración del usuario en Firestore, usamos el fallback predeterminado
-        if not materias_programadas_dia and not catalogo_usuario:
-            materias_programadas_dia = HORARIO_PREDETERMINADO.get(nd, [])
-        
         # Calculamos el total de horas disponibles sumando las horas asignadas de cada curso programado hoy
-        hd = sum(float(m.get("horas_asignadas", 0)) for m in materias_programadas_dia if m.get("horas_asignadas"))
+        hd = sum(float(m.get("horas", 0)) for m in materias_programadas_dia if m.get("horas"))
         
-        st.info(f"📅 Hoy es **{nd}**. Tienes **{hd:.1f} horas** totales programadas para estudiar.")
+        # Ajustamos el mensaje informativo según la existencia de cursos reales
+        if not catalogo_usuario:
+            st.info("💡 **Aún no tienes cursos registrados en tu catálogo.** Ve a la sección de **Configuración del Ciclo** para registrar tus materias.")
+        else:
+            st.info(f"📅 Hoy es **{nd}**. Tienes **{hd:.1f} horas** totales programadas para estudiar.")
         
         reg_mat = {}
         tot_ej, tot_hr = 0, 0
         
-        # Si no hay materias asignadas para hoy
-        if not materias_programadas_dia:
-            st.warning("⚠️ No tienes cursos programados para estudiar el día de hoy en tu horario.")
+        # Si no hay materias asignadas para hoy (o no hay catálogo)
+        if not catalogo_usuario:
+            st.warning("⚠️ Debes configurar al menos un curso en el catálogo para poder registrar datos diarios.")
+        elif not materias_programadas_dia:
+            st.warning("⚠️ No tienes cursos programados para estudiar el día de hoy en tu horario semanal.")
         else:
             for m_prog in materias_programadas_dia:
                 m = m_prog.get("curso")
@@ -1075,7 +1051,7 @@ elif st.session_state.vista_actual == 'registro':
                     continue
                 
                 simbolo = "📖"  # El nuevo ícono unificado y elegante
-                hd_m = float(m_prog.get("horas_asignadas", 0))  # Horas asignadas dinámicamente a esta materia
+                hd_m = float(m_prog.get("horas", 3))  # Obtenemos las horas programadas (por defecto 3 si no se guardó)
                 
                 st.markdown(f"### {simbolo} {m}")
                 st.caption(f"⏱️ Horas programadas para este curso hoy: {hd_m}h")
