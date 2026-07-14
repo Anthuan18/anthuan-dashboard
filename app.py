@@ -873,22 +873,25 @@ elif st.session_state.vista_actual == 'curso':
                 
                 # Verificamos si este curso estaba programado en el horario dinámico
                 materias_programadas_dia = horario_usuario.get(nombre_dia, [])
-                if not materias_programadas_dia and not catalogo_usuario:
-                    materias_programadas_dia = HORARIO_PREDETERMINADO.get(nombre_dia, [])
-                
                 nombres_programados = [m["curso"] for m in materias_programadas_dia if m.get("curso")]
                 
-                if mat in nombres_programados:
-                    fechas_mat.append(dia_actual)
+                # Buscamos si el usuario registró datos reales para este curso hoy
+                registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
+                tiene_registro_real = registro_dia and mat in registro_dia.get("materias", {})
+                
+                # OPTIMIZACIÓN: Si el curso estaba programado O si de verdad se registraron datos reales (Ej: Biología recién creado)
+                if mat in nombres_programados or tiene_registro_real:
+                    # Guardamos la fecha como string para que Plotly fuerce el renderizado del eje temporal correcto
+                    fechas_mat.append(fecha_str)
                     
-                    registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
-                    if registro_dia and mat in registro_dia.get("materias", {}):
+                    if tiene_registro_real:
                         stats_mat = registro_dia["materias"][mat]
                         disc_mat.append(stats_mat["Disciplina"])
                         vel_mat.append(stats_mat["Velocidad"])
                         horas_mat.append(stats_mat.get("horas_estudiadas", 0))
                         ejercicios_mat.append(stats_mat.get("Ejercicios_Resueltos", 0))
                     else:
+                        # Estaba programado pero no se estudió (Falta de disciplina)
                         disc_mat.append(0)
                         vel_mat.append(0)
                         horas_mat.append(0)
@@ -896,19 +899,20 @@ elif st.session_state.vista_actual == 'curso':
                 
                 dia_actual += timedelta(days=1)
             
+            # Solo graficamos si el curso tiene al menos un punto de registro o programación
             if fechas_mat:
                 fig_disc_global.add_trace(go.Scatter(
                     x=fechas_mat, y=disc_mat, mode='lines+markers', name=f"{simbolo} {mat}",
                     line=dict(color=color_mat, width=2), marker=dict(size=6),
                     customdata=horas_mat,
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + '<br>🔥%{y:.1f}%🔥<br> %{customdata}h<extra></extra>'
+                    hovertemplate='<b>%{x}</b><br>' + mat + '<br>🔥%{y:.1f}%🔥<br> %{customdata}h<extra></extra>'
                 ))
                 
                 fig_vel_global.add_trace(go.Scatter(
                     x=fechas_mat, y=vel_mat, mode='lines+markers', name=f"{simbolo} {mat}",
                     line=dict(color=color_mat, width=2), marker=dict(size=6),
                     customdata=list(zip(ejercicios_mat, horas_mat)),
-                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>' + mat + '<br>⚡%{y:.1f} ejer/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
+                    hovertemplate='<b>%{x}</b><br>' + mat + '<br>⚡%{y:.1f} ejer/h⚡<br>%{customdata[0]} ejer en %{customdata[1]}h<extra></extra>'
                 ))
 
         # Determinar el rango de la velocidad dinámicamente
@@ -917,13 +921,16 @@ elif st.session_state.vista_actual == 'curso':
             if trace.y:
                 max_vel_global = max(max_vel_global, max(trace.y) * 1.2)
 
+        # Configuramos los layouts obligando a Plotly a tratar el eje X como categoría temporal limpia
         fig_disc_global.update_layout(
+            xaxis=dict(type='category', tickangle=45),
             yaxis_title="Disciplina (%)", yaxis=dict(range=[0, 150]), 
             hovermode='x', margin=dict(l=20, r=20, t=20, b=20), height=400,
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         
         fig_vel_global.update_layout(
+            xaxis=dict(type='category', tickangle=45),
             yaxis_title="Velocidad (Ejercicios/h)", yaxis=dict(range=[0, max_vel_global]),
             hovermode='x', margin=dict(l=20, r=20, t=20, b=20), height=400,
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
