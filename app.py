@@ -1281,127 +1281,228 @@ elif st.session_state.vista_actual == 'configuracion':
                 )
 
     with tab2:
-            st.subheader("📚 Configuración del Catálogo de Cursos")
-            st.caption("1. Registra aquí todas las materias que estudias en tu preparación y asígnales un color.")
-            
-            # Recuperamos el ID del usuario actual para aislar la sesión
-            user_id = st.session_state.get('user_id', 'anonimo')
-            key_lista_cursos = f"lista_cursos_config_{user_id}"
-            
-            # Inicializamos la lista de cursos en la sesión del usuario si no existe
-            if key_lista_cursos not in st.session_state:
-                st.session_state[key_lista_cursos] = config_actual.get("catalogo_cursos", [])
+            st.header("📚 Configuración del Catálogo de Cursos")
+        
+            # 1. Inicializar el estado de edición en la sesión si no existe
+            if "modo_edicion" not in st.session_state:
+                st.session_state.modo_edicion = False
     
-            # Contenedor para mostrar la tabla dinámica de cursos y colores
-            container_cursos = st.container()
-            
-            with container_cursos:
-                col_eliminar, col_nombre_c, col_color_c = st.columns([0.5, 2, 1.5])
-                with col_nombre_c:
-                    st.markdown("**Curso:**")
-                with col_color_c:
-                    st.markdown("**Color asignado:**")
+            # 2. El botón de editar exactamente con el texto "✏️Editar"
+            # Se coloca abajo del título y arriba de la indicación
+            if st.button("✏️Editar", key="btn_modo_edicion", use_container_width=False):
+                # Tofglea (invierte) el estado cada vez que se presiona
+                st.session_state.modo_edicion = not st.session_state.modo_edicion
     
-                # Iteramos usando la clave aislada por usuario
-                for idx, item in enumerate(st.session_state[key_lista_cursos]):
-                    c_eliminar, c_nombre, c_color = st.columns([0.5, 2, 1.5])
-                    with c_eliminar:
-                        if st.button("❌", key=f"del_curso_{user_id}_{idx}"):
-                            st.session_state[key_lista_cursos].pop(idx)
-                            st.rerun()
-                    with c_nombre:
-                        nombre_val = st.text_input(
-                            "Nombre del curso", 
-                            value=item.get("nombre", ""), 
-                            key=f"nom_curso_{user_id}_{idx}", 
-                            label_visibility="collapsed"
+            # Indicación (1.)
+            st.markdown("1. Registra aquí todas las materias que estudias en tu preparación y asígnales un color.")
+    
+            # --- MODO LECTURA (Por defecto: Todo limpio) ---
+            if not st.session_state.modo_edicion:
+                st.info("ℹ️ Presiona el botón **✏️Editar** de arriba para añadir nuevos cursos o eliminar existentes.")
+                
+                # Vista simple de los cursos guardados en el catálogo
+                if catalogo_usuario:
+                    st.write("### Tu Catálogo de Cursos Actual:")
+                    for curso in catalogo_usuario:
+                        color = curso.get("color", "#FF4500")
+                        nombre = curso.get("nombre", "Sin Nombre")
+                        # Mostramos los cursos de forma elegante usando HTML simple para colorear
+                        st.markdown(
+                            f'<div style="display: flex; align-items: center; margin-bottom: 8px;">'
+                            f'<div style="width: 18px; height: 18px; background-color: {color}; border-radius: 4px; margin-right: 10px;"></div>'
+                            f'<span style="font-size: 16px; font-weight: 500;">📖 {nombre}</span>'
+                            f'</div>', 
+                            unsafe_allowed_html=True
                         )
-                        st.session_state[key_lista_cursos][idx]["nombre"] = nombre_val.strip()
-                    with c_color:
-                        color_val = st.color_picker(
-                            "Elige un color", 
-                            value=item.get("color", "#1F77B4"), 
-                            key=f"col_curso_{user_id}_{idx}", 
-                            label_visibility="collapsed"
-                        )
-                        st.session_state[key_lista_cursos][idx]["color"] = color_val
+                else:
+                    st.warning("Aún no tienes cursos en tu catálogo. ¡Activa el modo edición para agregar uno!")
     
-            if st.button("➕ Añadir curso al catálogo", key=f"btn_add_curso_row_{user_id}"):
-                st.session_state[key_lista_cursos].append({"nombre": "", "color": "#2E7D32"})
-                st.rerun()
-    
-            st.divider()
-    
-            # ============================================================
-            # CRONOGRAMA SEMANAL (BLOQUES DESPLEGABLES POR DÍA)
-            # ============================================================
-            st.subheader("🗓️ Distribución y Horas de Estudio Semanal")
-            st.caption("2. Planifica qué cursos estudiarás cada día y cuántas horas les dedicarás a solas (sin contar clases).")
-    
-            # Filtramos los cursos de la sesión del usuario que tengan un nombre válido (no vacíos)
-            cursos_validos = [c for c in st.session_state[key_lista_cursos] if c.get("nombre", "").strip()]
-            lista_nombres_cursos = [c["nombre"] for c in cursos_validos]
-    
-            if not lista_nombres_cursos:
-                st.info("💡 Registra al menos un curso en el catálogo de arriba para poder armar tu horario semanal.")
-                horario_semanal_final = config_actual.get("horario", {})
+            # --- MODO EDICIÓN ACTIVO (Se revelan las herramientas) ---
             else:
-                dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-                horario_semanal_final = {}
-                horario_guardado = config_actual.get("horario", {})
-    
-                for dia in dias_semana:
-                    with st.expander(f"🔽 {dia}", expanded=False):
-                        # Clave del horario diaria también aislada por usuario
-                        key_estado_dia = f"items_horario_{dia}_{user_id}"
-                        if key_estado_dia not in st.session_state:
-                            inicial_dia = horario_guardado.get(dia, [])
-                            st.session_state[key_estado_dia] = [
-                                item for item in inicial_dia if item.get("curso") in lista_nombres_cursos
-                            ]
-    
-                        cursos_del_dia = []
-                        for h_idx, h_item in enumerate(st.session_state[key_estado_dia]):
-                            col_del_h, col_cur_h, col_hrs_h = st.columns([0.5, 2, 1.5])
-                            
-                            with col_del_h:
-                                if st.button("❌", key=f"del_h_{user_id}_{dia}_{h_idx}"):
-                                    st.session_state[key_estado_dia].pop(h_idx)
-                                    st.rerun()
-                            
-                            with col_cur_h:
-                                curso_actual = h_item.get("curso")
-                                idx_def = lista_nombres_cursos.index(curso_actual) if curso_actual in lista_nombres_cursos else 0
-                                
-                                curso_sel = st.selectbox(
-                                    "Curso", 
-                                    options=lista_nombres_cursos, 
-                                    index=idx_def, 
-                                    key=f"sel_h_{user_id}_{dia}_{h_idx}", 
-                                    label_visibility="collapsed"
-                                )
-                            
-                            with col_hrs_h:
-                                horas_sel = st.number_input(
-                                    "Horas", 
-                                    min_value=1, 
-                                    max_value=16, 
-                                    value=int(h_item.get("horas", 3)), 
-                                    key=f"num_h_{user_id}_{dia}_{h_idx}", 
-                                    label_visibility="collapsed"
-                                )
-                            
-                            cursos_del_dia.append({"curso": curso_sel, "horas": horas_sel})
-    
-                        if st.button(f"➕ Añadir curso a {dia}", key=f"btn_add_h_{user_id}_{dia}"):
-                            st.session_state[key_estado_dia].append({"curso": lista_nombres_cursos[0], "horas": 3})
+                st.success("🛠️ **Modo Edición Activo**: Ahora puedes modificar tu catálogo.")
+                
+                # Formulario para agregar un nuevo curso
+                st.write("### ➕ Añadir Nuevo Curso")
+                c1, c2 = st.columns([4, 1])
+                with c1:
+                    nuevo_curso_nombre = st.text_input("Nombre del Curso:", placeholder="Ej: Biología", key="nuevo_curso")
+                with c2:
+                    nuevo_curso_color = st.color_picker("Color:", "#2E8B57", key="nuevo_color")
+                
+                # Botones de acción alineados: Añadir a la izquierda, Cancelar edición al extremo derecho si lo deseas
+                col_add, col_spacer = st.columns([1, 2])
+                with col_add:
+                    btn_añadir = st.button("＋ Añadir curso al catálogo", use_container_width=True)
+                    
+                if btn_añadir:
+                    if nuevo_curso_nombre.strip():
+                        # Verificar que no exista ya
+                        existe = any(c["nombre"].lower() == nuevo_curso_nombre.strip().lower() for c in catalogo_usuario)
+                        if not existe:
+                            catalogo_usuario.append({
+                                "nombre": nuevo_curso_nombre.strip(),
+                                "color": nuevo_curso_color
+                            })
+                            datos["catalogo_cursos"] = catalogo_usuario
+                            guardar_datos(datos)
+                            st.success(f"¡{nuevo_curso_nombre} añadido al catálogo!")
                             st.rerun()
+                        else:
+                            st.error("Este curso ya está registrado en tu catálogo.")
+                    else:
+                        st.warning("El nombre del curso no puede estar vacío.")
     
-                        horario_semanal_final[dia] = cursos_del_dia
+                st.divider()
     
-            # Pasamos las variables limpias al ámbito general de la vista para el botón de guardado
-            materias_seleccionadas = cursos_validos
-            horario_configurado = horario_semanal_final
+                # Lista de cursos actuales con opción de eliminar en el lado derecho
+                st.write("### 📋 Administrar Cursos Existentes")
+                if catalogo_usuario:
+                    for idx, curso in enumerate(catalogo_usuario):
+                        nombre_curso = curso["nombre"]
+                        color_curso = curso["color"]
+                        
+                        # Tres columnas: Nombre (ancho), Color (pequeño), Eliminar (al lado derecho)
+                        col_nom, col_col, col_del = st.columns([4, 1, 1])
+                        
+                        with col_nom:
+                            st.text_input(f"Curso {idx+1}", value=nombre_curso, disabled=True, key=f"nom_{idx}")
+                        with col_col:
+                            st.color_picker(f"Color {idx+1}", value=color_curso, disabled=True, key=f"col_{idx}")
+                        with col_del:
+                            # Espaciado para que el botón se alinee con las cajas de texto de arriba
+                            st.write("") 
+                            btn_eliminar = st.button("❌", key=f"del_{idx}", help=f"Eliminar {nombre_curso}", use_container_width=True)
+                            
+                            if btn_eliminar:
+                                # Remover del catálogo
+                                catalogo_usuario.pop(idx)
+                                datos["catalogo_cursos"] = catalogo_usuario
+                                guardar_datos(datos)
+                                st.success(f"Se eliminó '{nombre_curso}' del catálogo.")
+                                st.rerun()
+                else:
+                    st.info("No hay cursos para mostrar o eliminar.")
+        
+                    st.caption("1. Registra aquí todas las materias que estudias en tu preparación y asígnales un color.")
+                    
+                    # Recuperamos el ID del usuario actual para aislar la sesión
+                    user_id = st.session_state.get('user_id', 'anonimo')
+                    key_lista_cursos = f"lista_cursos_config_{user_id}"
+                    
+                    # Inicializamos la lista de cursos en la sesión del usuario si no existe
+                    if key_lista_cursos not in st.session_state:
+                        st.session_state[key_lista_cursos] = config_actual.get("catalogo_cursos", [])
+            
+                    # Contenedor para mostrar la tabla dinámica de cursos y colores
+                    container_cursos = st.container()
+                    
+                    with container_cursos:
+                        col_eliminar, col_nombre_c, col_color_c = st.columns([0.5, 2, 1.5])
+                        with col_nombre_c:
+                            st.markdown("**Curso:**")
+                        with col_color_c:
+                            st.markdown("**Color asignado:**")
+            
+                        # Iteramos usando la clave aislada por usuario
+                        for idx, item in enumerate(st.session_state[key_lista_cursos]):
+                            c_eliminar, c_nombre, c_color = st.columns([0.5, 2, 1.5])
+                            with c_eliminar:
+                                if st.button("❌", key=f"del_curso_{user_id}_{idx}"):
+                                    st.session_state[key_lista_cursos].pop(idx)
+                                    st.rerun()
+                            with c_nombre:
+                                nombre_val = st.text_input(
+                                    "Nombre del curso", 
+                                    value=item.get("nombre", ""), 
+                                    key=f"nom_curso_{user_id}_{idx}", 
+                                    label_visibility="collapsed"
+                                )
+                                st.session_state[key_lista_cursos][idx]["nombre"] = nombre_val.strip()
+                            with c_color:
+                                color_val = st.color_picker(
+                                    "Elige un color", 
+                                    value=item.get("color", "#1F77B4"), 
+                                    key=f"col_curso_{user_id}_{idx}", 
+                                    label_visibility="collapsed"
+                                )
+                                st.session_state[key_lista_cursos][idx]["color"] = color_val
+            
+                    if st.button("➕ Añadir curso al catálogo", key=f"btn_add_curso_row_{user_id}"):
+                        st.session_state[key_lista_cursos].append({"nombre": "", "color": "#2E7D32"})
+                        st.rerun()
+            
+                    st.divider()
+            
+                    # ============================================================
+                    # CRONOGRAMA SEMANAL (BLOQUES DESPLEGABLES POR DÍA)
+                    # ============================================================
+                    st.subheader("🗓️ Distribución y Horas de Estudio Semanal")
+                    st.caption("2. Planifica qué cursos estudiarás cada día y cuántas horas les dedicarás a solas (sin contar clases).")
+            
+                    # Filtramos los cursos de la sesión del usuario que tengan un nombre válido (no vacíos)
+                    cursos_validos = [c for c in st.session_state[key_lista_cursos] if c.get("nombre", "").strip()]
+                    lista_nombres_cursos = [c["nombre"] for c in cursos_validos]
+            
+                    if not lista_nombres_cursos:
+                        st.info("💡 Registra al menos un curso en el catálogo de arriba para poder armar tu horario semanal.")
+                        horario_semanal_final = config_actual.get("horario", {})
+                    else:
+                        dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+                        horario_semanal_final = {}
+                        horario_guardado = config_actual.get("horario", {})
+            
+                        for dia in dias_semana:
+                            with st.expander(f"🔽 {dia}", expanded=False):
+                                # Clave del horario diaria también aislada por usuario
+                                key_estado_dia = f"items_horario_{dia}_{user_id}"
+                                if key_estado_dia not in st.session_state:
+                                    inicial_dia = horario_guardado.get(dia, [])
+                                    st.session_state[key_estado_dia] = [
+                                        item for item in inicial_dia if item.get("curso") in lista_nombres_cursos
+                                    ]
+            
+                                cursos_del_dia = []
+                                for h_idx, h_item in enumerate(st.session_state[key_estado_dia]):
+                                    col_del_h, col_cur_h, col_hrs_h = st.columns([0.5, 2, 1.5])
+                                    
+                                    with col_del_h:
+                                        if st.button("❌", key=f"del_h_{user_id}_{dia}_{h_idx}"):
+                                            st.session_state[key_estado_dia].pop(h_idx)
+                                            st.rerun()
+                                    
+                                    with col_cur_h:
+                                        curso_actual = h_item.get("curso")
+                                        idx_def = lista_nombres_cursos.index(curso_actual) if curso_actual in lista_nombres_cursos else 0
+                                        
+                                        curso_sel = st.selectbox(
+                                            "Curso", 
+                                            options=lista_nombres_cursos, 
+                                            index=idx_def, 
+                                            key=f"sel_h_{user_id}_{dia}_{h_idx}", 
+                                            label_visibility="collapsed"
+                                        )
+                                    
+                                    with col_hrs_h:
+                                        horas_sel = st.number_input(
+                                            "Horas", 
+                                            min_value=1, 
+                                            max_value=16, 
+                                            value=int(h_item.get("horas", 3)), 
+                                            key=f"num_h_{user_id}_{dia}_{h_idx}", 
+                                            label_visibility="collapsed"
+                                        )
+                                    
+                                    cursos_del_dia.append({"curso": curso_sel, "horas": horas_sel})
+            
+                                if st.button(f"➕ Añadir curso a {dia}", key=f"btn_add_h_{user_id}_{dia}"):
+                                    st.session_state[key_estado_dia].append({"curso": lista_nombres_cursos[0], "horas": 3})
+                                    st.rerun()
+            
+                                horario_semanal_final[dia] = cursos_del_dia
+            
+                    # Pasamos las variables limpias al ámbito general de la vista para el botón de guardado
+                    materias_seleccionadas = cursos_validos
+                    horario_configurado = horario_semanal_final
 
     with tab3:
         st.subheader("📝 Configuración de Exámenes")
