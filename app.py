@@ -750,18 +750,19 @@ elif st.session_state.vista_actual == 'curso':
                     nombre_dia = NOMBRES_DIAS[dia_semana]
                     fecha_str = dia_actual.strftime("%Y-%m-%d")
                     
-                    # Verificamos únicamente el horario del usuario
+                    # Verificamos si el curso estaba programado para este día
                     materias_programadas_dia = horario_usuario.get(nombre_dia, [])
-                    
-                    # Extraemos solo los nombres de los cursos programados realmente por el usuario
                     nombres_programados = [m["curso"] for m in materias_programadas_dia if m.get("curso")]
                     
-                    if mat in nombres_programados:
+                    # Buscamos si el usuario registró datos reales para este curso hoy
+                    registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
+                    tiene_registro_real = registro_dia and mat in registro_dia.get("materias", {})
+
+                    # OPTIMIZACIÓN: Si estuvo programado O si el usuario de verdad lo estudió y registró ese día
+                    if mat in nombres_programados or tiene_registro_real:
                         fechas_mat.append(dia_actual)
                         
-                        registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
-                        
-                        if registro_dia and mat in registro_dia.get("materias", {}):
+                        if tiene_registro_real:
                             stats_mat = registro_dia["materias"][mat]
                             disc_mat.append(stats_mat["Disciplina"])
                             vel_mat.append(stats_mat["Velocidad"])
@@ -773,6 +774,7 @@ elif st.session_state.vista_actual == 'curso':
                             total_horas += stats_mat.get("horas_estudiadas", 0)
                             dias_reales_estudiados += 1
                         else:
+                            # Estaba programado pero no se registró (Falta)
                             disc_mat.append(0)
                             vel_mat.append(0)
                             horas_mat.append(0)
