@@ -712,7 +712,7 @@ if st.session_state.vista_actual == 'general':
 
 
 # ============================================
-# VISTA: RENDIMIENTO POR CURSO
+# VISTA: RENDIMIENTO POR CURSO (AISLADO Y DINÁMICO)
 # ============================================
 elif st.session_state.vista_actual == 'curso':
     st.header("📚 SECCIÓN: RENDIMIENTO POR CURSO")
@@ -721,12 +721,22 @@ elif st.session_state.vista_actual == 'curso':
         st.rerun()
     st.divider()
     
+    # Obtenemos el user_id para un aislamiento limpio
+    user_id = st.session_state.get('user_id', 'anonimo')
+    
     datos = cargar_datos()
     config_actual = datos.get("config", {})
-    catalogo_usuario = config_actual.get("catalogo_cursos", [])
+    
+    # Forzamos la lectura de los cursos desde la sesión blindada o desde la base de datos
+    key_lista_cursos = f"lista_cursos_config_{user_id}"
+    if key_lista_cursos in st.session_state:
+        catalogo_usuario = [c for c in st.session_state[key_lista_cursos] if c.get("nombre", "").strip()]
+    else:
+        catalogo_usuario = config_actual.get("catalogo_cursos", [])
+        
     horario_usuario = config_actual.get("horario", {})
     
-    if datos["diario"]:
+    if datos.get("diario"):
         st.subheader("📖 ESTADÍSTICAS POR CURSO")
         
         # 1. Fechas límite para calcular el "Universo de Días"
@@ -734,26 +744,26 @@ elif st.session_state.vista_actual == 'curso':
         fecha_inicio_global = datetime.strptime(primer_registro["fecha"], "%Y-%m-%d")
         fecha_hoy = hora_peru()
 
-        # 2. Generar los expanders para cada curso de forma dinámica
-        # Si por alguna razón el catálogo está vacío, usamos una lista de respaldo
+        # 2. Generar los expanders de forma estrictamente dinámica sin fallback molesto
         if not catalogo_usuario:
-            mats_datos = CATALOGO_PREDETERMINADO
+            st.info("💡 No tienes cursos registrados en tu catálogo actual. Configúralos en la sección de Configuración.")
+            mats_datos = []
         else:
             mats_datos = catalogo_usuario
         
         for i, curso_info in enumerate(mats_datos):
             mat = curso_info.get("nombre", "Curso")
             color_mat = curso_info.get("color", "#FF4500")  # Color guardado o naranja por defecto
-            simbolo = "📖"  # Ícono unificado y elegante
+            simbolo = "📖"
             
             with st.expander(f" {simbolo} {mat}", expanded=False):
                 
-                # --- CÁLCULO ESTRICTO (INCLUYENDO DÍAS FICTICIOS) ---
+                # --- CÁLCULO ESTRICTO ---
                 fechas_mat = []
                 disc_mat = []
                 vel_mat = []
-                horas_mat = []      # Para guardar las horas diarias
-                ejercicios_mat = [] # Para guardar los ejercicios diarios
+                horas_mat = []      
+                ejercicios_mat = [] 
                 temas_mat = []
                 
                 total_ejercicios = 0
@@ -766,14 +776,10 @@ elif st.session_state.vista_actual == 'curso':
                     nombre_dia = NOMBRES_DIAS[dia_semana]
                     fecha_str = dia_actual.strftime("%Y-%m-%d")
                     
-                    # Verificamos dinámicamente si el curso estaba programado para este día
+                    # Verificamos únicamente el horario del usuario
                     materias_programadas_dia = horario_usuario.get(nombre_dia, [])
                     
-                    # Si no hay horario configurado, usamos el predeterminado
-                    if not materias_programadas_dia and not catalogo_usuario:
-                        materias_programadas_dia = HORARIO_PREDETERMINADO.get(nombre_dia, [])
-                    
-                    # Extraemos solo los nombres de los cursos programados
+                    # Extraemos solo los nombres de los cursos programados realmente por el usuario
                     nombres_programados = [m["curso"] for m in materias_programadas_dia if m.get("curso")]
                     
                     if mat in nombres_programados:
