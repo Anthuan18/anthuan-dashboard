@@ -1281,17 +1281,25 @@ elif st.session_state.vista_actual == 'configuracion':
                 )
 
     with tab2:
-        # DEFINIMOS LA VARIABLE PARA EXTRAER LOS CURSOS DEL CATÁLOGO DE LA BASE DE DATOS
+        # 1. DEFINICIÓN SEGURA DE VARIABLES PARA EVITAR EL NAMEERROR
+        user_id = st.session_state.get('user_id', 'anonimo')
+        key_lista_cursos = f"lista_cursos_config_{user_id}"
+        
+        # Recuperamos el catálogo de la base de datos
         catalogo_usuario = datos.get("catalogo_cursos", [])   
+        
+        # Inicializamos la lista de la sesión si no existe
+        if key_lista_cursos not in st.session_state:
+            st.session_state[key_lista_cursos] = list(catalogo_usuario)
                 
+        # 2. RENDERIZADO DE LA INTERFAZ
         st.header("📚 Configuración del Catálogo de Cursos")
         
-        # 1. Inicializar el estado de edición en la sesión si no existe
+        # Inicializar el estado de edición en la sesión si no existe
         if "modo_edicion" not in st.session_state:
             st.session_state.modo_edicion = False
 
-        # 2. El botón de editar exactamente con el texto "✏️Editar"
-        # Se coloca abajo del título y arriba de la indicación
+        # El botón de editar exactamente con el texto "✏️Editar"
         if st.button("✏️Editar", key="btn_modo_edicion", use_container_width=False):
             st.session_state.modo_edicion = not st.session_state.modo_edicion
 
