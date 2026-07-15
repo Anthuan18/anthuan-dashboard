@@ -1439,17 +1439,17 @@ elif st.session_state.vista_actual == 'configuracion':
                 key_estado_dia = f"items_horario_{dia}_{user_id}"
                 key_expander_abierto = f"expander_abierto_{dia}_{user_id}"
                 
-                # Inicializamos el estado del expansor en la sesión si no existe
+                # Inicializar el estado de apertura por cada día por separado
                 if key_expander_abierto not in st.session_state:
+                    # Por defecto cerrados (False)
                     st.session_state[key_expander_abierto] = False
                 
-                # Si el día ya contiene cursos, podemos elegir mantenerlo expandido por defecto,
-                # o usar el estado guardado dinámicamente.
+                # Leemos si el expansor de este día específico debe estar abierto o no
                 esta_expandido = st.session_state[key_expander_abierto]
                 
                 with st.expander(f"🔽 {dia}", expanded=esta_expandido):
-                    # Si el usuario abre manualmente el expander, registramos que interactuó
-                    st.session_state[key_expander_abierto] = True
+                    # Apagamos el flag de inmediato para que no se quede pegado en True tras la renderización
+                    st.session_state[key_expander_abierto] = False
                     
                     # Si no existe en session_state, lo inicializamos con lo que venga de la BD
                     if key_estado_dia not in st.session_state:
@@ -1467,7 +1467,8 @@ elif st.session_state.vista_actual == 'configuracion':
                         with col_del_h:
                             if st.button("❌", key=f"del_h_{user_id}_{dia}_{h_idx}"):
                                 st.session_state[key_estado_dia].pop(h_idx)
-                                st.session_state[key_expander_abierto] = True  # Forzar que se quede abierto al eliminar
+                                # Solo abrimos de forma exclusiva este día al eliminar
+                                st.session_state[key_expander_abierto] = True  
                                 st.rerun()
                         
                         with col_cur_h:
@@ -1498,7 +1499,8 @@ elif st.session_state.vista_actual == 'configuracion':
 
                     if st.button(f"➕ Añadir curso a {dia}", key=f"btn_add_h_{user_id}_{dia}"):
                         st.session_state[key_estado_dia].append({"curso": lista_nombres_cursos[0], "horas": 3})
-                        st.session_state[key_expander_abierto] = True  # ¡Aquí ocurre la magia! Forzamos apertura en el rerun
+                        # Solo abrimos de forma exclusiva este día al añadir un curso
+                        st.session_state[key_expander_abierto] = True  
                         st.rerun()
 
                     horario_semanal_final[dia] = st.session_state[key_estado_dia]
