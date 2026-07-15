@@ -1288,7 +1288,7 @@ elif st.session_state.vista_actual == 'configuracion':
         # Recuperamos el catálogo de la base de datos
         catalogo_usuario = datos.get("catalogo_cursos", [])   
         
-        # Inicializamos la lista de la sesión si no existe
+        # Inicializamos la lista de la sesión si no existe, asegurando que use los datos reales del catálogo
         if key_lista_cursos not in st.session_state:
             st.session_state[key_lista_cursos] = list(catalogo_usuario)
                 
@@ -1349,18 +1349,31 @@ elif st.session_state.vista_actual == 'configuracion':
                     # Verificar que no exista ya
                     existe = any(c["nombre"].lower() == nuevo_curso_nombre.strip().lower() for c in catalogo_usuario)
                     if not existe:
-                        catalogo_usuario.append({
+                        nuevo_elemento = {
                             "nombre": nuevo_curso_nombre.strip(),
                             "color": nuevo_curso_color
-                        })
+                        }
+                        # 1. Guardar en base de datos local
+                        catalogo_usuario.append(nuevo_elemento)
                         datos["catalogo_cursos"] = catalogo_usuario
                         guardar_datos(datos)
-                        st.success(f"¡{nuevo_curso_nombre} añadido al catálogo!")
+                        
+                        # 2. Sincronizar inmediatamente con la lista de sesión que usa el horario de abajo
+                        st.session_state[key_lista_cursos] = list(catalogo_usuario)
+                        
+                        # Mensaje temporal guardado en sesión para evitar que desaparezca con el st.rerun()
+                        st.session_state["mensaje_exito_adicion"] = f"¡{nuevo_curso_nombre} añadido al catálogo!"
                         st.rerun()
                     else:
                         st.error("Este curso ya está registrado en tu catálogo.")
                 else:
                     st.warning("El nombre del curso no puede estar vacío.")
+
+            # Mostrar el mensaje de éxito persistente si existe
+            if "mensaje_exito_adicion" in st.session_state:
+                st.success(st.session_state["mensaje_exito_adicion"])
+                # Lo removemos para que no vuelva a aparecer en la siguiente acción
+                del st.session_state["mensaje_exito_adicion"]
 
             st.divider()
 
@@ -1379,16 +1392,17 @@ elif st.session_state.vista_actual == 'configuracion':
                     with col_col:
                         st.color_picker(f"Color {idx+1}", value=color_curso, disabled=True, key=f"col_{idx}")
                     with col_del:
-                        # Espaciado para que el botón se alinee con las cajas de texto de arriba
                         st.write("") 
                         btn_eliminar = st.button("❌", key=f"del_{idx}", help=f"Eliminar {nombre_curso}", use_container_width=True)
                         
                         if btn_eliminar:
-                            # Remover del catálogo
+                            # 1. Remover de base de datos
                             catalogo_usuario.pop(idx)
                             datos["catalogo_cursos"] = catalogo_usuario
                             guardar_datos(datos)
-                            st.success(f"Se eliminó '{nombre_curso}' del catálogo.")
+                            
+                            # 2. Sincronizar con el estado de la sesión
+                            st.session_state[key_lista_cursos] = list(catalogo_usuario)
                             st.rerun()
             else:
                 st.info("No hay cursos para mostrar o eliminar.")
