@@ -1438,6 +1438,8 @@ elif st.session_state.vista_actual == 'configuracion':
             for dia in dias_semana:
                 with st.expander(f"🔽 {dia}", expanded=False):
                     key_estado_dia = f"items_horario_{dia}_{user_id}"
+                    
+                    # Si no existe en session_state, lo inicializamos con lo que venga de la BD
                     if key_estado_dia not in st.session_state:
                         inicial_dia = horario_guardado.get(dia, [])
                         st.session_state[key_estado_dia] = [
@@ -1445,6 +1447,8 @@ elif st.session_state.vista_actual == 'configuracion':
                         ]
 
                     cursos_del_dia = []
+                    
+                    # Iteramos y renderizamos los cursos asignados a este día
                     for h_idx, h_item in enumerate(st.session_state[key_estado_dia]):
                         col_del_h, col_cur_h, col_hrs_h = st.columns([0.5, 2, 1.5])
                         
@@ -1464,6 +1468,8 @@ elif st.session_state.vista_actual == 'configuracion':
                                 key=f"sel_h_{user_id}_{dia}_{h_idx}", 
                                 label_visibility="collapsed"
                             )
+                            # Guardamos el cambio de inmediato en la sesión viva
+                            st.session_state[key_estado_dia][h_idx]["curso"] = curso_sel
                         
                         with col_hrs_h:
                             horas_sel = st.number_input(
@@ -1474,6 +1480,8 @@ elif st.session_state.vista_actual == 'configuracion':
                                 key=f"num_h_{user_id}_{dia}_{h_idx}", 
                                 label_visibility="collapsed"
                             )
+                            # Guardamos el cambio de inmediato en la sesión viva
+                            st.session_state[key_estado_dia][h_idx]["horas"] = horas_sel
                         
                         cursos_del_dia.append({"curso": curso_sel, "horas": horas_sel})
 
@@ -1481,7 +1489,7 @@ elif st.session_state.vista_actual == 'configuracion':
                         st.session_state[key_estado_dia].append({"curso": lista_nombres_cursos[0], "horas": 3})
                         st.rerun()
 
-                    horario_semanal_final[dia] = cursos_del_dia
+                    horario_semanal_final[dia] = st.session_state[key_estado_dia]
 
         # Pasamos las variables limpias al ámbito general de la vista para el botón de guardado
         materias_seleccionadas = cursos_validos
@@ -1496,10 +1504,22 @@ elif st.session_state.vista_actual == 'configuracion':
     # Botón de guardado unificado al final de las pestañas
     if st.button("💾 Guardar Cambios Generales", type="primary", key="btn_guardar_config"):
         user_id = st.session_state['user_id']
+        key_lista_cursos = f"lista_cursos_config_{user_id}"
+        
+        # Reconstruimos el horario consolidando directamente desde las claves de sesión por día
+        dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        horario_consolidado = {}
+        for dia in dias_semana:
+            key_estado_dia = f"items_horario_{dia}_{user_id}"
+            if key_estado_dia in st.session_state:
+                horario_consolidado[dia] = st.session_state[key_estado_dia]
+            else:
+                horario_consolidado[dia] = config_actual.get("horario", {}).get(dia, [])
         
         # Reconstruimos el nombre del ciclo usando las selecciones de la pestaña 1
         nombre_ciclo_completo = f"{st.session_state.input_tipo_preparacion} {st.session_state.input_proceso_admision}"
         
+        # Armamos la estructura de guardado limpia y persistente
         nueva_config = {
             'ciclo': nombre_ciclo_completo,
             'universidad': config_actual.get("universidad", "UNI"),
@@ -1507,15 +1527,28 @@ elif st.session_state.vista_actual == 'configuracion':
             'proceso_admision': st.session_state.input_proceso_admision,
             'fecha_inicio': st.session_state.input_fecha_inicio.strftime("%Y-%m-%d"),
             'fecha_fin': st.session_state.input_fecha_fin.strftime("%Y-%m-%d"),
-            'catalogo_cursos': materias_seleccionadas,
-            'horario': horario_configurado
+            'catalogo_cursos': st.session_state.get(key_lista_cursos, config_actual.get("catalogo_cursos", [])),
+            'horario': horario_consolidado
         }
         
         try:
+            # 1. Guardar en Firestore (Base de datos remota)
             db.collection('usuarios').document(user_id).set({'config': nueva_config}, merge=True)
+            
+            # 2. Guardar en la estructura local del JSON ('datos' y 'config_actual') para evitar desfases en esta sesión
             datos["config"] = nueva_config
+            if 'config_actual' in locals() or 'config_actual' in globals():
+                config_actual.update(nueva_config)
+                
             st.session_state[f"cached_datos_{user_id}"] = datos
+            
+            # Forzamos la actualización de los estados diarios de la sesión con los nuevos valores
+            for dia in dias_semana:
+                key_estado_dia = f"items_horario_{dia}_{user_id}"
+                st.session_state[key_estado_dia] = horario_consolidado[dia]
+            
             st.success("✅ Configuración actualizada con éxito.")
             st.balloons()
+            st.rerun() # Hacemos rerun para refrescar los selectores con la data recién grabada
         except Exception as e:
             st.error(f"Error al guardar: {e}")
