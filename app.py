@@ -1435,25 +1435,14 @@ elif st.session_state.vista_actual == 'configuracion':
             horario_semanal_final = {}
             horario_guardado = config_actual.get("horario", {})
 
-            # 1. Creamos un identificador único para saber qué día tiene el foco activo
-            key_dia_activo = f"dia_activo_{user_id}"
-            if key_dia_activo not in st.session_state:
-                st.session_state[key_dia_activo] = None
+            # Creamos una pestaña para cada día de la semana
+            tabs = st.tabs(dias_semana)
 
-            for dia in dias_semana:
-                key_estado_dia = f"items_horario_{dia}_{user_id}"
-                key_expander_abierto = f"expander_abierto_{dia}_{user_id}"
-                
-                # 1. Por defecto, si el día no tiene estado de apertura registrado, lo inicializamos en False (cerrado)
-                if key_expander_abierto not in st.session_state:
-                    st.session_state[key_expander_abierto] = False
-
-                # 2. El expander lee SIEMPRE su estado directo de la sesión.
-                # Al interactuar con el selectbox o número de horas, este valor seguirá siendo True, evitando que se cierre.
-                with st.expander(f"🔽 {dia}", expanded=st.session_state[key_expander_abierto]):
-                    
-                    # 3. Si el expander está renderizado en pantalla, registramos que el usuario lo mantiene abierto
-                    st.session_state[key_expander_abierto] = True
+            for idx_dia, dia in enumerate(dias_semana):
+                # Renderizamos el contenido dentro de la pestaña correspondiente
+                with tabs[idx_dia]:
+                    st.write(f"#### 📅 Plan para el {dia}")
+                    key_estado_dia = f"items_horario_{dia}_{user_id}"
                     
                     # Si no existe en session_state, lo inicializamos con lo que venga de la BD
                     if key_estado_dia not in st.session_state:
@@ -1465,46 +1454,47 @@ elif st.session_state.vista_actual == 'configuracion':
                     cursos_del_dia = []
                     
                     # Iteramos y renderizamos los cursos asignados a este día
-                    for h_idx, h_item in enumerate(st.session_state[key_estado_dia]):
-                        col_del_h, col_cur_h, col_hrs_h = st.columns([0.5, 2, 1.5])
-                        
-                        with col_del_h:
-                            if st.button("❌", key=f"del_h_{user_id}_{dia}_{h_idx}"):
-                                st.session_state[key_estado_dia].pop(h_idx)
-                                # Nos aseguramos de que el estado de apertura siga activo al hacer rerun
-                                st.session_state[key_expander_abierto] = True
-                                st.rerun()
-                        
-                        with col_cur_h:
-                            curso_actual = h_item.get("curso")
-                            idx_def = lista_nombres_cursos.index(curso_actual) if curso_actual in lista_nombres_cursos else 0
+                    if st.session_state[key_estado_dia]:
+                        for h_idx, h_item in enumerate(st.session_state[key_estado_dia]):
+                            col_del_h, col_cur_h, col_hrs_h = st.columns([0.5, 2, 1.5])
                             
-                            curso_sel = st.selectbox(
-                                "Curso", 
-                                options=lista_nombres_cursos, 
-                                index=idx_def, 
-                                key=f"sel_h_{user_id}_{dia}_{h_idx}", 
-                                label_visibility="collapsed"
-                            )
-                            st.session_state[key_estado_dia][h_idx]["curso"] = curso_sel
-                        
-                        with col_hrs_h:
-                            horas_sel = st.number_input(
-                                "Horas", 
-                                min_value=1, 
-                                max_value=16, 
-                                value=int(h_item.get("horas", 3)), 
-                                key=f"num_h_{user_id}_{dia}_{h_idx}", 
-                                label_visibility="collapsed"
-                            )
-                            st.session_state[key_estado_dia][h_idx]["horas"] = horas_sel
-                        
-                        cursos_del_dia.append({"curso": curso_sel, "horas": horas_sel})
+                            with col_del_h:
+                                if st.button("❌", key=f"del_h_{user_id}_{dia}_{h_idx}"):
+                                    st.session_state[key_estado_dia].pop(h_idx)
+                                    st.rerun()
+                            
+                            with col_cur_h:
+                                curso_actual = h_item.get("curso")
+                                idx_def = lista_nombres_cursos.index(curso_actual) if curso_actual in lista_nombres_cursos else 0
+                                
+                                # Cambiar de curso aquí es 100% seguro; no cerrará nada
+                                curso_sel = st.selectbox(
+                                    "Curso", 
+                                    options=lista_nombres_cursos, 
+                                    index=idx_def, 
+                                    key=f"sel_h_{user_id}_{dia}_{h_idx}", 
+                                    label_visibility="collapsed"
+                                )
+                                st.session_state[key_estado_dia][h_idx]["curso"] = curso_sel
+                            
+                            with col_hrs_h:
+                                horas_sel = st.number_input(
+                                    "Horas", 
+                                    min_value=1, 
+                                    max_value=16, 
+                                    value=int(h_item.get("horas", 3)), 
+                                    key=f"num_h_{user_id}_{dia}_{h_idx}", 
+                                    label_visibility="collapsed"
+                                )
+                                st.session_state[key_estado_dia][h_idx]["horas"] = horas_sel
+                            
+                            cursos_del_dia.append({"curso": curso_sel, "horas": horas_sel})
+                    else:
+                        st.caption("No tienes cursos asignados para este día.")
 
+                    st.write("") # Espaciador
                     if st.button(f"➕ Añadir curso a {dia}", key=f"btn_add_h_{user_id}_{dia}"):
                         st.session_state[key_estado_dia].append({"curso": lista_nombres_cursos[0], "horas": 3})
-                        # Nos aseguramos de que el estado de apertura siga activo al hacer rerun
-                        st.session_state[key_expander_abierto] = True
                         st.rerun()
 
                     horario_semanal_final[dia] = st.session_state[key_estado_dia]
