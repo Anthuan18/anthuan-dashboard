@@ -1442,18 +1442,18 @@ elif st.session_state.vista_actual == 'configuracion':
 
             for dia in dias_semana:
                 key_estado_dia = f"items_horario_{dia}_{user_id}"
+                key_expander_abierto = f"expander_abierto_{dia}_{user_id}"
                 
-                # Determinamos si este día específico es el que tiene la orden de forzar apertura
-                debe_abrirse = (st.session_state[key_dia_activo] == dia)
-                
-                # Configuración dinámica de los argumentos del expander
-                expander_args = {"label": f"🔽 {dia}"}
-                if debe_abrirse:
-                    expander_args["expanded"] = True
-                    # Consumimos la orden de apertura limpiando la variable para que no afecte selectores/horas
-                    st.session_state[key_dia_activo] = None
+                # 1. Por defecto, si el día no tiene estado de apertura registrado, lo inicializamos en False (cerrado)
+                if key_expander_abierto not in st.session_state:
+                    st.session_state[key_expander_abierto] = False
 
-                with st.expander(**expander_args):
+                # 2. El expander lee SIEMPRE su estado directo de la sesión.
+                # Al interactuar con el selectbox o número de horas, este valor seguirá siendo True, evitando que se cierre.
+                with st.expander(f"🔽 {dia}", expanded=st.session_state[key_expander_abierto]):
+                    
+                    # 3. Si el expander está renderizado en pantalla, registramos que el usuario lo mantiene abierto
+                    st.session_state[key_expander_abierto] = True
                     
                     # Si no existe en session_state, lo inicializamos con lo que venga de la BD
                     if key_estado_dia not in st.session_state:
@@ -1471,16 +1471,14 @@ elif st.session_state.vista_actual == 'configuracion':
                         with col_del_h:
                             if st.button("❌", key=f"del_h_{user_id}_{dia}_{h_idx}"):
                                 st.session_state[key_estado_dia].pop(h_idx)
-                                # Le decimos a la app que mantenga abierto SOLAMENTE este día tras eliminar
-                                st.session_state[key_dia_activo] = dia
+                                # Nos aseguramos de que el estado de apertura siga activo al hacer rerun
+                                st.session_state[key_expander_abierto] = True
                                 st.rerun()
                         
                         with col_cur_h:
                             curso_actual = h_item.get("curso")
                             idx_def = lista_nombres_cursos.index(curso_actual) if curso_actual in lista_nombres_cursos else 0
                             
-                            # Cambiar de curso aquí NO cerrará el expander, porque ya no hay ninguna
-                            # variable booleana interfiriendo o forzando cierres (expanded=False).
                             curso_sel = st.selectbox(
                                 "Curso", 
                                 options=lista_nombres_cursos, 
@@ -1505,8 +1503,8 @@ elif st.session_state.vista_actual == 'configuracion':
 
                     if st.button(f"➕ Añadir curso a {dia}", key=f"btn_add_h_{user_id}_{dia}"):
                         st.session_state[key_estado_dia].append({"curso": lista_nombres_cursos[0], "horas": 3})
-                        # Le decimos a la app que mantenga abierto SOLAMENTE este día tras añadir
-                        st.session_state[key_dia_activo] = dia
+                        # Nos aseguramos de que el estado de apertura siga activo al hacer rerun
+                        st.session_state[key_expander_abierto] = True
                         st.rerun()
 
                     horario_semanal_final[dia] = st.session_state[key_estado_dia]
