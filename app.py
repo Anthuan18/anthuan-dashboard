@@ -1319,13 +1319,11 @@ elif st.session_state.vista_actual == 'configuracion':
                 for curso in catalogo_usuario:
                     color = curso.get("color", "#FF4500")
                     nombre = curso.get("nombre", "Sin Nombre")
-                    st.markdown(
-                        f'<div style="display: flex; align-items: center; margin-bottom: 8px;">'
-                        f'<div style="width: 18px; height: 18px; background-color: {color}; border-radius: 4px; margin-right: 10px;"></div>'
-                        f'<span style="font-size: 16px; font-weight: 500;">📖 {nombre}</span>'
-                        f'</div>', 
-                        unsafe_allowed_html=True
-                    )
+                    
+                    # Cadena HTML unificada en una sola línea para evitar el TypeError de st.markdown
+                    html_curso = f'<div style="display: flex; align-items: center; margin-bottom: 8px;"><div style="width: 18px; height: 18px; background-color: {color}; border-radius: 4px; margin-right: 10px;"></div><span style="font-size: 16px; font-weight: 500;">📖 {nombre}</span></div>'
+                    
+                    st.markdown(html_curso, unsafe_allowed_html=True)
             else:
                 st.warning("Aún no tienes cursos en tu catálogo. ¡Activa el modo edición para agregar uno!")
 
