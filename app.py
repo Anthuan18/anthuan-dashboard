@@ -11,6 +11,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Inicialización de estados de visualización
+if "mensaje_guardado" not in st.session_state:
+    st.session_state["mensaje_guardado"] = False
+    
 # ============================================
 # CONFIGURACIÓN DE FIREBASE
 # ============================================
@@ -1540,10 +1544,10 @@ elif st.session_state.vista_actual == 'configuracion':
         }
         
         try:
-            # 1. Guardar en Firestore (Base de datos remota)
+            # # 1. Guardar en Firestore (Base de datos remota) (Línea 1547)
             db.collection('usuarios').document(user_id).set({'config': nueva_config}, merge=True)
             
-            # 2. Guardar en la estructura local del JSON ('datos' y 'config_actual') para evitar desfases en esta sesión
+            # # 2. Guardar en la estructura local (Línea 1549 aprox.)
             datos["config"] = nueva_config
             if 'config_actual' in locals() or 'config_actual' in globals():
                 config_actual.update(nueva_config)
@@ -1555,8 +1559,21 @@ elif st.session_state.vista_actual == 'configuracion':
                 key_estado_dia = f"items_horario_{dia}_{user_id}"
                 st.session_state[key_estado_dia] = horario_consolidado[dia]
             
-            st.success("✅ Configuración actualizada con éxito.")
-            st.balloons()
-            st.rerun() # Hacemos rerun para refrescar los selectores con la data recién grabada
+            # ==========================================
+            # PUNTO #2: ACTIVAR BANDERA Y REINICIAR
+            # ==========================================
+            st.session_state["mensaje_guardado"] = True
+            st.rerun()  # Al hacer rerun, la app se recargará con los datos nuevos
+            
         except Exception as e:
             st.error(f"Error al guardar: {e}")
+
+# ========================================================
+# PUNTO #3: MOSTRAR EL MENSAJE SI LA BANDERA ES TRUE
+# ========================================================
+# Nota cómo este bloque está alineado al ras izquierdo (sin sangría del 'if st.button')
+if st.session_state.get("mensaje_guardado", False):
+    st.success("✅ Configuración actualizada con éxito.")
+    st.balloons()
+    # Apagamos la bandera para que desaparezca limpiamente en la próxima acción del usuario
+    st.session_state["mensaje_guardado"] = False
