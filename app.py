@@ -1281,18 +1281,22 @@ elif st.session_state.vista_actual == 'configuracion':
                 )
 
     with tab2:
-        # 1. DEFINICIÓN SEGURA DE VARIABLES PARA EVITAR EL NAMEERROR
+        # 1. DEFINICIÓN SEGURA DE VARIABLES Y PERSISTENCIA
         user_id = st.session_state.get('user_id', 'anonimo')
         key_lista_cursos = f"lista_cursos_config_{user_id}"
         
-        # Recuperamos el catálogo de la base de datos
-        catalogo_usuario_db = datos.get("catalogo_cursos", [])   
+        # Intentamos obtener la configuración del usuario actual (config_actual)
+        # Si no existe en el contexto, usamos 'datos' como respaldo
+        if 'config_actual' in locals() or 'config_actual' in globals():
+            catalogo_usuario_db = config_actual.get("catalogo_cursos", [])
+        else:
+            catalogo_usuario_db = datos.get("catalogo_cursos", [])   
         
         # Inicializamos la lista de la sesión si no existe
         if key_lista_cursos not in st.session_state:
             st.session_state[key_lista_cursos] = list(catalogo_usuario_db)
             
-        # Sincronizamos la variable con el estado de la sesión
+        # Sincronizamos la variable con el estado vivo de la sesión
         catalogo_usuario = st.session_state[key_lista_cursos]
                 
         # 2. RENDERIZADO DE LA INTERFAZ DEL CATÁLOGO
@@ -1320,9 +1324,8 @@ elif st.session_state.vista_actual == 'configuracion':
                     color = curso.get("color", "#FF4500")
                     nombre = curso.get("nombre", "Sin Nombre")
                     
-                    # Cadena HTML unificada en una sola línea para evitar el TypeError de st.markdown
+                    # HTML limpio y unificado
                     html_curso = f'<div style="display: flex; align-items: center; margin-bottom: 8px;"><div style="width: 18px; height: 18px; background-color: {color}; border-radius: 4px; margin-right: 10px;"></div><span style="font-size: 16px; font-weight: 500;">📖 {nombre}</span></div>'
-                    
                     st.markdown(html_curso, unsafe_allow_html=True)
             else:
                 st.warning("Aún no tienes cursos en tu catálogo. ¡Activa el modo edición para agregar uno!")
@@ -1351,9 +1354,15 @@ elif st.session_state.vista_actual == 'configuracion':
                             "nombre": nuevo_curso_nombre.strip(),
                             "color": nuevo_curso_color
                         }
+                        # 1. Guardar en memoria (RAM)
                         catalogo_usuario.append(nuevo_elemento)
                         st.session_state[key_lista_cursos] = catalogo_usuario
+                        
+                        # 2. Guardar físicamente tanto en 'config_actual' como en 'datos' para asegurar persistencia
+                        if 'config_actual' in locals() or 'config_actual' in globals():
+                            config_actual["catalogo_cursos"] = catalogo_usuario
                         datos["catalogo_cursos"] = catalogo_usuario
+                        
                         guardar_datos(datos)
                         
                         st.session_state["mensaje_exito_adicion"] = f"¡{nuevo_curso_nombre} añadido al catálogo!"
@@ -1386,9 +1395,15 @@ elif st.session_state.vista_actual == 'configuracion':
                         btn_eliminar = st.button("❌", key=f"del_{idx}", help=f"Eliminar {nombre_curso}", use_container_width=True)
                         
                         if btn_eliminar:
+                            # 1. Remover de memoria (RAM)
                             catalogo_usuario.pop(idx)
                             st.session_state[key_lista_cursos] = catalogo_usuario
+                            
+                            # 2. Actualizar físicamente en base de datos
+                            if 'config_actual' in locals() or 'config_actual' in globals():
+                                config_actual["catalogo_cursos"] = catalogo_usuario
                             datos["catalogo_cursos"] = catalogo_usuario
+                            
                             guardar_datos(datos)
                             st.rerun()
             else:
@@ -1397,8 +1412,6 @@ elif st.session_state.vista_actual == 'configuracion':
         # ============================================================
         # CRONOGRAMA SEMANAL (BLOQUES DESPLEGABLES POR DÍA)
         # ============================================================
-        # Nota: Este bloque ahora está perfectamente alineado con with tab2: 
-        # para que siempre se visualice en pantalla.
         st.divider()
         st.subheader("🗓️ Distribución y Horas de Estudio Semanal")
         st.caption("2. Planifica qué cursos estudiarás cada día y cuántas horas les dedicarás a solas (sin contar clases).")
