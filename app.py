@@ -1286,11 +1286,14 @@ elif st.session_state.vista_actual == 'configuracion':
         key_lista_cursos = f"lista_cursos_config_{user_id}"
         
         # Recuperamos el catálogo de la base de datos
-        catalogo_usuario = datos.get("catalogo_cursos", [])   
+        catalogo_usuario_db = datos.get("catalogo_cursos", [])   
         
-        # Inicializamos la lista de la sesión si no existe, asegurando que use los datos reales del catálogo
+        # Inicializamos la lista de la sesión si no existe
         if key_lista_cursos not in st.session_state:
-            st.session_state[key_lista_cursos] = list(catalogo_usuario)
+            st.session_state[key_lista_cursos] = list(catalogo_usuario_db)
+            
+        # IMPORTANTE: A partir de aquí, usamos la variable de sesión para que todo esté sincronizado al instante
+        catalogo_usuario = st.session_state[key_lista_cursos]
                 
         # 2. RENDERIZADO DE LA INTERFAZ
         st.header("📚 Configuración del Catálogo de Cursos")
@@ -1316,7 +1319,7 @@ elif st.session_state.vista_actual == 'configuracion':
                 for curso in catalogo_usuario:
                     color = curso.get("color", "#FF4500")
                     nombre = curso.get("nombre", "Sin Nombre")
-                    # Mostramos los cursos de forma elegante usando HTML simple para colorear
+                    # Mostramos los cursos usando HTML simple para colorear
                     st.markdown(
                         f'<div style="display: flex; align-items: center; margin-bottom: 8px;">'
                         f'<div style="width: 18px; height: 18px; background-color: {color}; border-radius: 4px; margin-right: 10px;"></div>'
@@ -1346,22 +1349,23 @@ elif st.session_state.vista_actual == 'configuracion':
                 
             if btn_añadir:
                 if nuevo_curso_nombre.strip():
-                    # Verificar que no exista ya
+                    # Verificar que no exista ya usando la lista sincronizada
                     existe = any(c["nombre"].lower() == nuevo_curso_nombre.strip().lower() for c in catalogo_usuario)
                     if not existe:
                         nuevo_elemento = {
                             "nombre": nuevo_curso_nombre.strip(),
                             "color": nuevo_curso_color
                         }
-                        # 1. Guardar en base de datos local
+                        
+                        # 1. Agregar a la lista de sesión (RAM)
                         catalogo_usuario.append(nuevo_elemento)
+                        st.session_state[key_lista_cursos] = catalogo_usuario
+                        
+                        # 2. Guardar en la base de datos persistente (Disco)
                         datos["catalogo_cursos"] = catalogo_usuario
                         guardar_datos(datos)
                         
-                        # 2. Sincronizar inmediatamente con la lista de sesión que usa el horario de abajo
-                        st.session_state[key_lista_cursos] = list(catalogo_usuario)
-                        
-                        # Mensaje temporal guardado en sesión para evitar que desaparezca con el st.rerun()
+                        # Guardamos mensaje de éxito persistente
                         st.session_state["mensaje_exito_adicion"] = f"¡{nuevo_curso_nombre} añadido al catálogo!"
                         st.rerun()
                     else:
@@ -1372,7 +1376,6 @@ elif st.session_state.vista_actual == 'configuracion':
             # Mostrar el mensaje de éxito persistente si existe
             if "mensaje_exito_adicion" in st.session_state:
                 st.success(st.session_state["mensaje_exito_adicion"])
-                # Lo removemos para que no vuelva a aparecer en la siguiente acción
                 del st.session_state["mensaje_exito_adicion"]
 
             st.divider()
@@ -1396,13 +1399,13 @@ elif st.session_state.vista_actual == 'configuracion':
                         btn_eliminar = st.button("❌", key=f"del_{idx}", help=f"Eliminar {nombre_curso}", use_container_width=True)
                         
                         if btn_eliminar:
-                            # 1. Remover de base de datos
+                            # 1. Remover de la lista de sesión
                             catalogo_usuario.pop(idx)
+                            st.session_state[key_lista_cursos] = catalogo_usuario
+                            
+                            # 2. Guardar el estado actualizado en la base de datos
                             datos["catalogo_cursos"] = catalogo_usuario
                             guardar_datos(datos)
-                            
-                            # 2. Sincronizar con el estado de la sesión
-                            st.session_state[key_lista_cursos] = list(catalogo_usuario)
                             st.rerun()
             else:
                 st.info("No hay cursos para mostrar o eliminar.")
