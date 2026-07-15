@@ -1323,7 +1323,7 @@ elif st.session_state.vista_actual == 'configuracion':
                     # Cadena HTML unificada en una sola línea para evitar el TypeError de st.markdown
                     html_curso = f'<div style="display: flex; align-items: center; margin-bottom: 8px;"><div style="width: 18px; height: 18px; background-color: {color}; border-radius: 4px; margin-right: 10px;"></div><span style="font-size: 16px; font-weight: 500;">📖 {nombre}</span></div>'
                     
-                    st.markdown(html_curso, unsafe_allowed_html=True)
+                    st.markdown(html_curso, unsafe_allow_html=True)
             else:
                 st.warning("Aún no tienes cursos en tu catálogo. ¡Activa el modo edición para agregar uno!")
 
