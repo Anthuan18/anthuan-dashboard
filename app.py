@@ -1385,17 +1385,24 @@ elif st.session_state.vista_actual == 'configuracion':
                     nombre_curso = curso["nombre"]
                     color_curso = curso["color"]
                     
+                    # Creamos un identificador único y limpio usando el nombre del curso
+                    nombre_clean = nombre_curso.replace(" ", "_").lower()
+                    key_btn_del = f"del_{nombre_clean}_{user_id}"
+                    key_input_nom = f"nom_{nombre_clean}_{user_id}"
+                    key_input_col = f"col_{nombre_clean}_{user_id}"
+                    
                     col_nom, col_col, col_del = st.columns([4, 1, 1])
                     with col_nom:
-                        st.text_input(f"Curso {idx+1}", value=nombre_curso, disabled=True, key=f"nom_{idx}")
+                        st.text_input(f"Curso {idx+1}", value=nombre_curso, disabled=True, key=key_input_nom)
                     with col_col:
-                        st.color_picker(f"Color {idx+1}", value=color_curso, disabled=True, key=f"col_{idx}")
+                        st.color_picker(f"Color {idx+1}", value=color_curso, disabled=True, key=key_input_col)
                     with col_del:
                         st.write("") 
-                        btn_eliminar = st.button("❌", key=f"del_{idx}", help=f"Eliminar {nombre_curso}", use_container_width=True)
+                        # Usamos la clave única basada en el nombre del curso actual
+                        btn_eliminar = st.button("❌", key=key_btn_del, help=f"Eliminar {nombre_curso}", use_container_width=True)
                         
                         if btn_eliminar:
-                            # 1. Remover de memoria (RAM)
+                            # 1. Remover de memoria (RAM) usando la posición actual
                             catalogo_usuario.pop(idx)
                             st.session_state[key_lista_cursos] = catalogo_usuario
                             
