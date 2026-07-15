@@ -1281,9 +1281,9 @@ elif st.session_state.vista_actual == 'configuracion':
                 )
 
     with tab2:
-         # DEFINIMOS LA VARIABLE QUE FALTA EXTRAER DE LA BASE DE DATOS:
+        # DEFINIMOS LA VARIABLE PARA EXTRAER LOS CURSOS DEL CATÁLOGO DE LA BASE DE DATOS
         catalogo_usuario = datos.get("catalogo_cursos", [])   
-            
+                
         st.header("📚 Configuración del Catálogo de Cursos")
         
         # 1. Inicializar el estado de edición en la sesión si no existe
@@ -1293,7 +1293,6 @@ elif st.session_state.vista_actual == 'configuracion':
         # 2. El botón de editar exactamente con el texto "✏️Editar"
         # Se coloca abajo del título y arriba de la indicación
         if st.button("✏️Editar", key="btn_modo_edicion", use_container_width=False):
-            # Tofglea (invierte) el estado cada vez que se presiona
             st.session_state.modo_edicion = not st.session_state.modo_edicion
 
         # Indicación (1.)
@@ -1332,7 +1331,7 @@ elif st.session_state.vista_actual == 'configuracion':
             with c2:
                 nuevo_curso_color = st.color_picker("Color:", "#2E8B57", key="nuevo_color")
             
-            # Botones de acción alineados: Añadir a la izquierda, Cancelar edición al extremo derecho si lo deseas
+            # Botones de acción: Añadir curso
             col_add, col_spacer = st.columns([1, 2])
             with col_add:
                 btn_añadir = st.button("＋ Añadir curso al catálogo", use_container_width=True)
@@ -1385,56 +1384,6 @@ elif st.session_state.vista_actual == 'configuracion':
                             st.rerun()
             else:
                 st.info("No hay cursos para mostrar o eliminar.")
-        
-                st.caption("1. Registra aquí todas las materias que estudias en tu preparación y asígnales un color.")
-                
-                # Recuperamos el ID del usuario actual para aislar la sesión
-                user_id = st.session_state.get('user_id', 'anonimo')
-                key_lista_cursos = f"lista_cursos_config_{user_id}"
-                
-                # Inicializamos la lista de cursos en la sesión del usuario si no existe
-                if key_lista_cursos not in st.session_state:
-                    st.session_state[key_lista_cursos] = config_actual.get("catalogo_cursos", [])
-        
-                # Contenedor para mostrar la tabla dinámica de cursos y colores
-                container_cursos = st.container()
-                
-                with container_cursos:
-                    col_eliminar, col_nombre_c, col_color_c = st.columns([0.5, 2, 1.5])
-                    with col_nombre_c:
-                        st.markdown("**Curso:**")
-                    with col_color_c:
-                        st.markdown("**Color asignado:**")
-        
-                    # Iteramos usando la clave aislada por usuario
-                    for idx, item in enumerate(st.session_state[key_lista_cursos]):
-                        c_eliminar, c_nombre, c_color = st.columns([0.5, 2, 1.5])
-                        with c_eliminar:
-                            if st.button("❌", key=f"del_curso_{user_id}_{idx}"):
-                                st.session_state[key_lista_cursos].pop(idx)
-                                st.rerun()
-                        with c_nombre:
-                            nombre_val = st.text_input(
-                                "Nombre del curso", 
-                                value=item.get("nombre", ""), 
-                                key=f"nom_curso_{user_id}_{idx}", 
-                                label_visibility="collapsed"
-                            )
-                            st.session_state[key_lista_cursos][idx]["nombre"] = nombre_val.strip()
-                        with c_color:
-                            color_val = st.color_picker(
-                                "Elige un color", 
-                                value=item.get("color", "#1F77B4"), 
-                                key=f"col_curso_{user_id}_{idx}", 
-                                label_visibility="collapsed"
-                            )
-                            st.session_state[key_lista_cursos][idx]["color"] = color_val
-        
-                if st.button("➕ Añadir curso al catálogo", key=f"btn_add_curso_row_{user_id}"):
-                    st.session_state[key_lista_cursos].append({"nombre": "", "color": "#2E7D32"})
-                    st.rerun()
-        
-                st.divider()
         
                 # ============================================================
                 # CRONOGRAMA SEMANAL (BLOQUES DESPLEGABLES POR DÍA)
