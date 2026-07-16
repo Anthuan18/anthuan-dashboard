@@ -715,21 +715,34 @@ if st.session_state.vista_actual == 'general':
         fechas_sim, notas_sim, tipos_sim = [], [], []
         
         if datos["semanal"]:
+            # Ordenamos por fecha asegurándonos de que no falle la comparación
             for sim in sorted(datos["semanal"], key=lambda x: x["fecha"]):
                 f = datetime.strptime(sim["fecha"], "%Y-%m-%d")
                 fechas_sim.append(f)
+                
+                # Caso 1: Examen Semanal
                 if sim["tipo"] == "Semanal":
                     notas_sim.append(sim["Puntaje_Simulacro"])
                     prom_sem += sim["Puntaje_Simulacro"]
                     cnt_sem += 1
                     tipos_sim.append("Semanal")
-                    if "Precisión" in sim: prec_sem_total += sim["Precisión"]
+                    if "Precisión" in sim: 
+                        prec_sem_total += sim["Precisión"]
+                
+                # Caso 2: Examen Simulacro (Maneja formato nuevo "Simulacro" y formato antiguo "UNI")
                 else:
-                    notas_sim.append(sim["Promedio_Notas"])
-                    prom_uni += sim["Promedio_Notas"]
+                    # Soporte flexible para la nota: busca "Puntaje_Simulacro" o "Promedio_Notas" como respaldo
+                    nota_val = sim.get("Puntaje_Simulacro", sim.get("Promedio_Notas", 0))
+                    notas_sim.append(nota_val)
+                    prom_uni += nota_val
                     cnt_uni += 1
+                    
+                    # Lo guardamos internamente como "UNI" para que la lógica de gráficos de abajo siga funcionando igual
                     tipos_sim.append("UNI")
-                    if "Promedio_Precision" in sim: prec_uni_total += sim["Promedio_Precision"]
+                    
+                    # Soporte flexible para la precisión
+                    precision_val = sim.get("Precisión", sim.get("Promedio_Precision", 0))
+                    prec_uni_total += precision_val
         
         if cnt_sem: prom_sem /= cnt_sem
         if cnt_uni: prom_uni /= cnt_uni
@@ -741,7 +754,8 @@ if st.session_state.vista_actual == 'general':
             st.metric("🥇 Promedio Semanales", f"{prom_sem:.1f}")
             st.metric("🎯 Precisión", f"{prec_sem_prom:.1f}%")
         with col2: 
-            st.metric("🏆 Promedio Tipo UNI", f"{prom_uni:.1f}")
+            # Cambiamos la etiqueta a "Simulacros" para que coincida con tu nueva terminología
+            st.metric("🏆 Promedio Simulacros", f"{prom_uni:.1f}")
             st.metric("🎯 Precisión", f"{prec_uni_prom:.1f}%")
             
         if fechas_sim:
@@ -751,17 +765,39 @@ if st.session_state.vista_actual == 'general':
             notas_uni = [n for n, t in zip(notas_sim, tipos_sim) if t == "UNI"]
             
             fig_exam = go.Figure()
+            # Línea de tendencia general
             fig_exam.add_trace(go.Scatter(x=fechas_sim, y=notas_sim, mode='lines', line=dict(color='green', width=2), showlegend=False))
-            if fechas_sem:
-                fig_exam.add_trace(go.Scatter(x=fechas_sem, y=notas_sem, mode='markers', name='Semanal', marker=dict(size=10, color='blue', symbol='circle'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Semanal: %{y:.1f}<extra></extra>'))
-            if fechas_uni:
-                fig_exam.add_trace(go.Scatter(x=fechas_uni, y=notas_uni, mode='markers', name='Tipo UNI', marker=dict(size=10, color='red', symbol='square'), hovertemplate='<b>%{x|%Y-%m-%d}</b><br>UNI: %{y:.1f}<extra></extra>'))
             
-            fig_exam.update_layout(yaxis_title='Nota (0-20)', yaxis=dict(range=[0, 20]), xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), hovermode='closest', height=400, margin=dict(l=50, r=20, t=20, b=50))
+            if fechas_sem:
+                fig_exam.add_trace(go.Scatter(
+                    x=fechas_sem, 
+                    y=notas_sem, 
+                    mode='markers', 
+                    name='Semanal', 
+                    marker=dict(size=10, color='blue', symbol='circle'), 
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Semanal: %{y:.1f}<extra></extra>'
+                ))
+            if fechas_uni:
+                fig_exam.add_trace(go.Scatter(
+                    x=fechas_uni, 
+                    y=notas_uni, 
+                    mode='markers', 
+                    name='Simulacro', 
+                    marker=dict(size=10, color='red', symbol='square'), 
+                    hovertemplate='<b>%{x|%Y-%m-%d}</b><br>Simulacro: %{y:.1f}<extra></extra>'
+                ))
+            
+            fig_exam.update_layout(
+                yaxis_title='Nota (0-20)', 
+                yaxis=dict(range=[0, 20]), 
+                xaxis=dict(tickformat='%Y-%m-%d', tickangle=45), 
+                hovermode='closest', 
+                height=400, 
+                margin=dict(l=50, r=20, t=20, b=50)
+            )
             st.plotly_chart(fig_exam, use_container_width=True)
         else:
             st.info("⚠️ Aún no hay datos de exámenes registrados.")
-
 
 # ============================================
 # VISTA: RENDIMIENTO POR CURSO (AISLADO Y DINÁMICO)
