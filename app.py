@@ -1590,7 +1590,41 @@ elif st.session_state.vista_actual == 'configuracion':
 
     with tab3:
         st.subheader("📝 Configuración de Exámenes")
-        st.info("Configuraciones específicas para tus simulacros (próximamente)")
+        st.info("Configura la cantidad total de preguntas para tus evaluaciones semanales y simulacros generales.")
+    
+        # 1. Recuperamos de forma segura la configuración actual de evaluaciones
+        config_evals = config_actual.get("evaluaciones", {})
+        val_semanal = config_evals.get("preguntas_semanal", 60)
+        val_simulacro = config_evals.get("preguntas_simulacro", 100)
+    
+        # 2. Creamos las dos sub-pestañas internas
+        sub_tab1, sub_tab2 = st.tabs(["🥇 Examen Semanal", "🏆 Examen Simulacro"])
+    
+        with sub_tab1:
+            st.write("### Ajustes del Examen Semanal")
+            # Input numérico de enteros para las preguntas semanales
+            preguntas_semanal = st.number_input(
+                "Cantidad total de preguntas (Semanal):",
+                min_value=1,
+                max_value=200,
+                value=int(val_semanal),
+                step=1,
+                key="input_preguntas_semanal"
+            )
+            st.caption("Esta cantidad definirá el límite superior al momento de registrar tus preguntas correctas en el examen semanal.")
+    
+        with sub_tab2:
+            st.write("### Ajustes del Examen Simulacro")
+            # Input numérico de enteros para las preguntas del simulacro
+            preguntas_simulacro = st.number_input(
+                "Cantidad total de preguntas (Simulacro):",
+                min_value=1,
+                max_value=200,
+                value=int(val_simulacro),
+                step=1,
+                key="input_preguntas_simulacro"
+            )
+            st.caption("Esta cantidad definirá el límite superior al registrar tus preguntas correctas en los simulacros de admisión.")
 
     st.divider()
 
