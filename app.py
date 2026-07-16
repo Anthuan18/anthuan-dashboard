@@ -1416,7 +1416,7 @@ elif st.session_state.vista_actual == 'configuracion':
             st.write("### ➕ Añadir Nuevo Curso")
             c1, c2 = st.columns([4, 1])
             with c1:
-                nuevo_curso_nombre = st.text_input("Nombre del Curso:", placeholder="Ej: Aritmética", key="nuevo_curso")
+                nuevo_curso_nombre = st.text_input("Nombre del Curso:", placeholder="Ej: Aritmética", key="nuevo_curso", label_visibility="collapsed")
             with c2:
                 nuevo_curso_color = st.color_picker("Color:", "#2E8B57", key="nuevo_color", label_visibility="collapsed")
             
