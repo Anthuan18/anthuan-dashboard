@@ -1111,7 +1111,7 @@ elif st.session_state.vista_actual == 'registro':
         if not catalogo_usuario:
             st.info("💡 **Aún no tienes cursos registrados en tu catálogo.** Ve a la sección de **Configuración del Ciclo** para registrar tus materias.")
         else:
-            st.info(f"📅 Hoy es **{nd}**. Tienes **{hd:} horas** totales programadas para estudiar.")
+            st.info(f"📅 Hoy es **{nd}**. Tienes **{hd:.1f} horas** totales programadas para estudiar.")
         
         reg_mat = {}
         tot_ej, tot_hr = 0, 0
@@ -1134,11 +1134,11 @@ elif st.session_state.vista_actual == 'registro':
                 st.caption(f"⏱️ Horas programadas para este curso hoy: {hd_m}h")
                 c1, c2 = st.columns(2)
                 with c1: 
-                    h_in = st.number_input(f"Horas reales dedicadas", min_value=0.0, max_value=24.0, value=0.0, step=0.5, key=f"h_{m}")
+                    h_in = st.number_input(f"Horas de estudio", min_value=0, max_value=24, value=0, step=1, key=f"h_{m}")
                 with c2: 
                     e_in = st.number_input(f"Ejercicios resueltos", min_value=0, value=0, step=1, key=f"e_{m}")
                 
-                temas_in = st.text_input("Tema/s estudiado", placeholder="Ej: Vectores, Polinomios", key=f"temas_{m}")
+                temas_in = st.text_input("Tema/s estudiado", placeholder="Ej: Vectores, Polinomios, Repaso", key=f"temas_{m}")
                 
                 disc = (h_in / hd_m) * 100 if hd_m > 0 else 0
                 vel = e_in / h_in if h_in > 0 else 0
