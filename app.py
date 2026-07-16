@@ -752,11 +752,11 @@ if st.session_state.vista_actual == 'general':
         col1, col2 = st.columns(2)
         with col1: 
             st.metric("🥇 Promedio Semanales", f"{prom_sem:.1f}")
-            st.metric("🎯 Precisión", f"{prec_sem_prom:.1f}%")
+            st.metric("🎯 Precisión", f"{int(prec_sem_prom)}%")
         with col2: 
             # Cambiamos la etiqueta a "Simulacros" para que coincida con tu nueva terminología
             st.metric("🏆 Promedio Simulacros", f"{prom_uni:.1f}")
-            st.metric("🎯 Precisión", f"{prec_uni_prom:.1f}%")
+            st.metric("🎯 Precisión", f"{int(prec_sem_prom)}%")
             
         if fechas_sim:
             fechas_sem = [f for f, t in zip(fechas_sim, tipos_sim) if t == "Semanal"]
