@@ -1310,9 +1310,13 @@ elif st.session_state.vista_actual == 'configuracion':
         if "modo_edicion" not in st.session_state:
             st.session_state.modo_edicion = False
 
-        # El botón de editar exactamente con el texto "✏️Editar"
-        if st.button("✏️Editar", key="btn_modo_edicion", use_container_width=False):
+        # El botón de editar dinámico (Cambia de texto y color según el estado)
+        texto_btn = "❌ Salir del modo edición" if st.session_state.modo_edicion else "✏️ Editar"
+        tipo_btn = "secondary" if st.session_state.modo_edicion else "primary"
+        
+        if st.button(texto_btn, key="btn_modo_edicion", type=tipo_btn, use_container_width=False):
             st.session_state.modo_edicion = not st.session_state.modo_edicion
+            st.rerun()
 
         # Indicación (1.)
         st.markdown("1. Registra aquí todas las materias que estudias en tu preparación y asígnales un color.")
