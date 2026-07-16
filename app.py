@@ -35,7 +35,7 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 def guardar_datos_ciclo_automatico():
-    """Consolida la configuración actual y la guarda en Firestore de forma segura."""
+    """Consolida la configuración actual (incluyendo evaluaciones) y la guarda de forma segura."""
     try:
         user_id = st.session_state['user_id']
         key_lista_cursos = f"lista_cursos_config_{user_id}"
@@ -50,14 +50,14 @@ def guardar_datos_ciclo_automatico():
             else:
                 horario_consolidado[dia] = config_actual.get("horario", {}).get(dia, [])
 
-        # 2. Recuperar de forma segura los valores de la pestaña 1 (usando la sesión o la config guardada)
+        # 2. Recuperar de forma segura los valores de la pestaña 1
         tipo_prep = st.session_state.get("input_tipo_preparacion", config_actual.get("tipo_preparacion", "Semestral"))
         proc_adm = st.session_state.get("input_proces_admision", config_actual.get("proceso_admision", ""))
         
         # Reconstruir nombre del ciclo
         nombre_ciclo_completo = f"{tipo_prep} {proc_adm}".strip()
 
-        # 3. Manejar las fechas de forma segura (si son objetos de fecha o strings)
+        # 3. Manejar las fechas de forma segura
         f_inicio = st.session_state.get("input_fecha_inicio")
         if f_inicio:
             fecha_inicio_str = f_inicio.strftime("%Y/%m/%d")
@@ -70,7 +70,14 @@ def guardar_datos_ciclo_automatico():
         else:
             fecha_fin_str = config_actual.get("fecha_fin", "2026/12/31")
 
-        # 4. Armar estructura JSON limpia sin que nada falle
+        # 4. NUEVO: Recuperar configuración de evaluaciones de forma segura
+        config_evals_actual = config_actual.get("evaluaciones", {})
+        
+        # Leemos el input de la pantalla, si no está renderizado en ese momento, mantenemos el que ya existía
+        preguntas_semanal_val = st.session_state.get("input_preguntas_semanal", config_evals_actual.get("preguntas_semanal", 60))
+        preguntas_simulacro_val = st.session_state.get("input_preguntas_simulacro", config_evals_actual.get("preguntas_simulacro", 100))
+
+        # 5. Armar estructura JSON completa con la nueva sección 'evaluaciones'
         nueva_config = {
             'ciclo': nombre_ciclo_completo,
             'universidad': config_actual.get("universidad", "UNI"),
@@ -79,13 +86,17 @@ def guardar_datos_ciclo_automatico():
             'fecha_inicio': fecha_inicio_str,
             'fecha_fin': fecha_fin_str,
             'catalogo_cursos': st.session_state.get(key_lista_cursos, config_actual.get("catalogo_cursos", [])),
-            'horario': horario_consolidado
+            'horario': horario_consolidado,
+            'evaluaciones': {
+                'preguntas_semanal': int(preguntas_semanal_val),
+                'preguntas_simulacro': int(preguntas_simulacro_val)
+            }
         }
 
-        # 5. Guardar en Firestore y actualizar caché local
+        # 6. Guardar en Firestore
         db.collection('usuarios').document(user_id).set({'config': nueva_config}, merge=True)
         
-        # Actualizar variables en memoria para evitar desfases
+        # 7. Actualizar caché y variables locales de forma segura
         config_actual.update(nueva_config)
         
         key_cache = f"cached_datos_{user_id}"
