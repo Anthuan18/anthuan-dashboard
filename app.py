@@ -34,6 +34,50 @@ if not firebase_admin._apps:
 # Inicializar cliente de Firestore
 db = firestore.client()
 
+def guardar_datos_ciclo_automatico():
+    """Consolida la configuración actual y la guarda en Firestore de forma transparente."""
+    try:
+        user_id = st.session_state['user_id']
+        key_lista_cursos = f"lista_cursos_config_{user_id}"
+        
+        # 1. Consolidar el horario semanal
+        dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        horario_consolidado = {}
+        for dia in dias_semana:
+            key_estado_dia = f"items_horario_{dia}_{user_id}"
+            if key_estado_dia in st.session_state:
+                horario_consolidado[dia] = st.session_state[key_estado_dia]
+            else:
+                horario_consolidado[dia] = config_actual.get("horario", {}).get(dia, [])
+
+        # 2. Reconstruir nombre del ciclo
+        nombre_ciclo_completo = f"{st.session_state.input_tipo_preparacion} {st.session_state.input_proces_admision}"
+
+        # 3. Armar estructura JSON limpia
+        nueva_config = {
+            'ciclo': nombre_ciclo_completo,
+            'universidad': config_actual.get("universidad", "UNI"),
+            'tipo_preparacion': st.session_state.input_tipo_preparacion,
+            'proceso_admision': st.session_state.input_proces_admision,
+            'fecha_inicio': st.session_state.input_fecha_inicio.strftime("%Y/%m/%d"),
+            'fecha_fin': st.session_state.input_fecha_fin.strftime("%Y/%m/%d"),
+            'catalogo_cursos': st.session_state.get(key_lista_cursos, config_actual.get("catalogo_cursos", [])),
+            'horario': horario_consolidado
+        }
+
+        # 4. Guardar en Firestore y actualizar caché local
+        db.collection('usuarios').document(user_id).set({'config': nueva_config}, merge=True)
+        
+        # Actualizar variables en memoria para evitar desfases
+        datos["config"] = nueva_config
+        config_actual.update(nueva_config)
+        st.session_state[f"cached_datos_{user_id}"] = datos
+        
+        return True
+    except Exception as e:
+        st.error(f"Error al guardar automáticamente: {e}")
+        return False
+
 # ============================================
 # SISTEMA DE LOGIN
 # ============================================
@@ -1200,10 +1244,16 @@ elif st.session_state.vista_actual == 'registro':
 # ============================================
 elif st.session_state.vista_actual == 'configuracion':
     st.header("⚙️ CONFIGURACIÓN DEL CICLO ACADÉMICO")
-    
+
     if st.button("⬅️ Volver al inicio", key="back_config"):
-        st.session_state.vista_actual = 'inicio'
-        st.rerun()
+        # 1. Guardamos en segundo plano automáticamente
+        guardado_exitoso = guardar_datos_ciclo_automatico()
+        
+        # 2. Si guardó bien, redirigimos a la vista de inicio
+        if guardado_exitoso:
+            st.session_state.vista_actual = 'inicio'
+            st.rerun()
+
     st.divider()
     
     datos = cargar_datos()
@@ -1519,58 +1569,11 @@ elif st.session_state.vista_actual == 'configuracion':
 
     # Botón de guardado unificado al final de las pestañas
     if st.button("💾 Guardar Cambios Generales", type="primary", key="btn_guardar_config"):
-        user_id = st.session_state['user_id']
-        key_lista_cursos = f"lista_cursos_config_{user_id}"
-        
-        # Reconstruimos el horario consolidando directamente desde las claves de sesión por día
-        dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-        horario_consolidado = {}
-        for dia in dias_semana:
-            key_estado_dia = f"items_horario_{dia}_{user_id}"
-            if key_estado_dia in st.session_state:
-                horario_consolidado[dia] = st.session_state[key_estado_dia]
-            else:
-                horario_consolidado[dia] = config_actual.get("horario", {}).get(dia, [])
-        
-        # Reconstruimos el nombre del ciclo usando las selecciones de la pestaña 1
-        nombre_ciclo_completo = f"{st.session_state.input_tipo_preparacion} {st.session_state.input_proceso_admision}"
-        
-        # Armamos la estructura de guardado limpia y persistente
-        nueva_config = {
-            'ciclo': nombre_ciclo_completo,
-            'universidad': config_actual.get("universidad", "UNI"),
-            'tipo_preparacion': st.session_state.input_tipo_preparacion,
-            'proceso_admision': st.session_state.input_proceso_admision,
-            'fecha_inicio': st.session_state.input_fecha_inicio.strftime("%Y-%m-%d"),
-            'fecha_fin': st.session_state.input_fecha_fin.strftime("%Y-%m-%d"),
-            'catalogo_cursos': st.session_state.get(key_lista_cursos, config_actual.get("catalogo_cursos", [])),
-            'horario': horario_consolidado
-        }
-        
-        try:
-            # # 1. Guardar en Firestore (Base de datos remota) (Línea 1547)
-            db.collection('usuarios').document(user_id).set({'config': nueva_config}, merge=True)
-            
-            # # 2. Guardar en la estructura local (Línea 1549 aprox.)
-            datos["config"] = nueva_config
-            if 'config_actual' in locals() or 'config_actual' in globals():
-                config_actual.update(nueva_config)
-                
-            st.session_state[f"cached_datos_{user_id}"] = datos
-            
-            # Forzamos la actualización de los estados diarios de la sesión con los nuevos valores
-            for dia in dias_semana:
-                key_estado_dia = f"items_horario_{dia}_{user_id}"
-                st.session_state[key_estado_dia] = horario_consolidado[dia]
-            
-            # ==========================================
-            # PUNTO #2: ACTIVAR BANDERA Y REINICIAR
-            # ==========================================
+        # Llamamos a nuestra función unificada de guardado automático
+        if guardar_datos_ciclo_automatico():
+            # Activamos la bandera para pintar el cuadro verde y lanzar los globos
             st.session_state["mensaje_guardado"] = True
-            st.rerun()  # Al hacer rerun, la app se recargará con los datos nuevos
-            
-        except Exception as e:
-            st.error(f"Error al guardar: {e}")
+            st.rerun()
 
 # ========================================================
 # PUNTO #3: MOSTRAR EL MENSAJE SI LA BANDERA ES TRUE
