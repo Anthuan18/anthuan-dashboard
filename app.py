@@ -1131,7 +1131,7 @@ elif st.session_state.vista_actual == 'registro':
                 hd_m = float(m_prog.get("horas", 3))  # Obtenemos las horas programadas (por defecto 3 si no se guardó)
                 
                 st.markdown(f"### {simbolo} {m}")
-                st.caption(f"⏱️ Horas programadas para este curso hoy: {hd_m}h")
+                st.caption(f"⏱️ Horas programadas para este curso hoy: {int(hd_m)}h")
                 c1, c2 = st.columns(2)
                 with c1: 
                     h_in = st.number_input(f"Horas de estudio", min_value=0, max_value=24, value=0, step=1, key=f"h_{m}")
