@@ -108,7 +108,6 @@ def guardar_datos_ciclo_automatico():
     except Exception as e:
         st.error(f"Error al guardar automáticamente: {e}")
         return False
-
 # ============================================
 # SISTEMA DE LOGIN
 # ============================================
