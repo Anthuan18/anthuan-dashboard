@@ -35,7 +35,7 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 def guardar_datos_ciclo_automatico():
-    """Consolida la configuración actual y la guarda en Firestore de forma transparente."""
+    """Consolida la configuración actual y la guarda en Firestore de forma segura."""
     try:
         user_id = st.session_state['user_id']
         key_lista_cursos = f"lista_cursos_config_{user_id}"
@@ -50,26 +50,44 @@ def guardar_datos_ciclo_automatico():
             else:
                 horario_consolidado[dia] = config_actual.get("horario", {}).get(dia, [])
 
-        # 2. Reconstruir nombre del ciclo
-        nombre_ciclo_completo = f"{st.session_state.input_tipo_preparacion} {st.session_state.input_proces_admision}"
+        # 2. Recuperar de forma segura los valores de la pestaña 1 (usando la sesión o la config guardada)
+        tipo_prep = st.session_state.get("input_tipo_preparacion", config_actual.get("tipo_preparacion", "Semestral"))
+        proc_adm = st.session_state.get("input_proces_admision", config_actual.get("proceso_admision", ""))
+        
+        # Reconstruir nombre del ciclo
+        nombre_ciclo_completo = f"{tipo_prep} {proc_adm}".strip()
 
-        # 3. Armar estructura JSON limpia
+        # 3. Manejar las fechas de forma segura (si son objetos de fecha o strings)
+        f_inicio = st.session_state.get("input_fecha_inicio")
+        if f_inicio:
+            fecha_inicio_str = f_inicio.strftime("%Y/%m/%d")
+        else:
+            fecha_inicio_str = config_actual.get("fecha_inicio", "2026/01/01")
+
+        f_fin = st.session_state.get("input_fecha_fin")
+        if f_fin:
+            fecha_fin_str = f_fin.strftime("%Y/%m/%d")
+        else:
+            fecha_fin_str = config_actual.get("fecha_fin", "2026/12/31")
+
+        # 4. Armar estructura JSON limpia sin que nada falle
         nueva_config = {
             'ciclo': nombre_ciclo_completo,
             'universidad': config_actual.get("universidad", "UNI"),
-            'tipo_preparacion': st.session_state.input_tipo_preparacion,
-            'proceso_admision': st.session_state.input_proces_admision,
-            'fecha_inicio': st.session_state.input_fecha_inicio.strftime("%Y/%m/%d"),
-            'fecha_fin': st.session_state.input_fecha_fin.strftime("%Y/%m/%d"),
+            'tipo_preparacion': tipo_prep,
+            'proceso_admision': proc_adm,
+            'fecha_inicio': fecha_inicio_str,
+            'fecha_fin': fecha_fin_str,
             'catalogo_cursos': st.session_state.get(key_lista_cursos, config_actual.get("catalogo_cursos", [])),
             'horario': horario_consolidado
         }
 
-        # 4. Guardar en Firestore y actualizar caché local
+        # 5. Guardar en Firestore y actualizar caché local
         db.collection('usuarios').document(user_id).set({'config': nueva_config}, merge=True)
         
         # Actualizar variables en memoria para evitar desfases
-        datos["config"] = nueva_config
+        if 'datos' in globals():
+            datos["config"] = nueva_config
         config_actual.update(nueva_config)
         st.session_state[f"cached_datos_{user_id}"] = datos
         
