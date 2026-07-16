@@ -947,7 +947,7 @@ elif st.session_state.vista_actual == 'curso':
                 registro_dia = next((d for d in datos["diario"] if d["fecha"] == fecha_str), None)
                 tiene_registro_real = registro_dia and mat in registro_dia.get("materias", {})
                 
-                # OPTIMIZACIÓN: Si el curso estaba programado O si de verdad se registraron datos reales (Ej: Biología recién creado)
+                # OPTIMIZACIÓN: Si el curso estaba programado O si de verdad se registraron datos reales (Ej: Aritmética recién creado)
                 if mat in nombres_programados or tiene_registro_real:
                     # Guardamos la fecha como string para que Plotly fuerce el renderizado del eje temporal correcto
                     fechas_mat.append(fecha_str)
@@ -1111,7 +1111,7 @@ elif st.session_state.vista_actual == 'registro':
         if not catalogo_usuario:
             st.info("💡 **Aún no tienes cursos registrados en tu catálogo.** Ve a la sección de **Configuración del Ciclo** para registrar tus materias.")
         else:
-            st.info(f"📅 Hoy es **{nd}**. Tienes **{hd:.1f} horas** totales programadas para estudiar.")
+            st.info(f"📅 Hoy es **{nd}**. Tienes **{hd:} horas** totales programadas para estudiar.")
         
         reg_mat = {}
         tot_ej, tot_hr = 0, 0
@@ -1416,9 +1416,9 @@ elif st.session_state.vista_actual == 'configuracion':
             st.write("### ➕ Añadir Nuevo Curso")
             c1, c2 = st.columns([4, 1])
             with c1:
-                nuevo_curso_nombre = st.text_input("Nombre del Curso:", placeholder="Ej: Biología", key="nuevo_curso")
+                nuevo_curso_nombre = st.text_input("Nombre del Curso:", placeholder="Ej: Aritmética", key="nuevo_curso")
             with c2:
-                nuevo_curso_color = st.color_picker("Color:", "#2E8B57", key="nuevo_color")
+                nuevo_curso_color = st.color_picker("Color:", "#2E8B57", key="nuevo_color", label_visibility="collapsed")
             
             col_add, col_spacer = st.columns([1, 2])
             with col_add:
@@ -1471,9 +1471,9 @@ elif st.session_state.vista_actual == 'configuracion':
                     
                     col_nom, col_col, col_del = st.columns([4, 1, 1])
                     with col_nom:
-                        st.text_input(f"Curso {idx+1}", value=nombre_curso, disabled=True, key=key_input_nom)
+                        st.text_input(f"Curso {idx+1}", value=nombre_curso, disabled=True, key=key_input_nom, label_visibility="collapsed")
                     with col_col:
-                        st.color_picker(f"Color {idx+1}", value=color_curso, disabled=True, key=key_input_col)
+                        st.color_picker(f"Color {idx+1}", value=color_curso, disabled=True, key=key_input_col, label_visibility="collapsed")
                     with col_del:
                         st.write("") 
                         # Usamos la clave única basada en el nombre del curso actual
