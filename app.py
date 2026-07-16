@@ -1358,10 +1358,10 @@ elif st.session_state.vista_actual == 'configuracion':
                 if tipo_guardado not in tipos_ciclo:
                     tipo_guardado = tipos_ciclo[0]
                     
-                tipo_prep_in = st.text_input(
+                tipo_sel = st.text_input(
                     "Tipo de Preparación",
                     value=config_actual.get("tipo_preparacion", "Semestral"),
-                    placeholder="Ej: Semestral básico, Intensivo, Paralelo Cepre",
+                    placeholder="Ej: Anual, Semestral, Repaso",
                     key="input_tipo_preparacion"
                 )
                 
