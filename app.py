@@ -1346,21 +1346,10 @@ elif st.session_state.vista_actual == 'configuracion':
             
             # 1. Selectores para construir el nombre del ciclo de forma dinámica
             col_tipo, col_meta = st.columns(2)
-            with col_tipo:
-                tipos_ciclo = [
-                    "Semestral básico (Semianual)",
-                    "Semestral",
-                    "Anual",
-                    "Intensivo / Repaso"
-                ]
-                # Intentamos recuperar qué tipo estaba guardado antes
-                tipo_guardado = config_actual.get("tipo_preparacion", "Semestral básico (Semianual)")
-                if tipo_guardado not in tipos_ciclo:
-                    tipo_guardado = tipos_ciclo[0]
-                    
+            with col_tipo:                  
                 tipo_sel = st.text_input(
                     "Tipo de Preparación",
-                    value=config_actual.get("tipo_preparacion", "Semestral"),
+                    value=config_actual.get("tipo_preparacion", ""),
                     placeholder="Ej: Anual, Semestral, Repaso",
                     key="input_tipo_preparacion"
                 )
