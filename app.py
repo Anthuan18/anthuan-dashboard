@@ -86,10 +86,12 @@ def guardar_datos_ciclo_automatico():
         db.collection('usuarios').document(user_id).set({'config': nueva_config}, merge=True)
         
         # Actualizar variables en memoria para evitar desfases
-        if 'datos' in globals():
-            datos["config"] = nueva_config
         config_actual.update(nueva_config)
-        st.session_state[f"cached_datos_{user_id}"] = datos
+        
+        key_cache = f"cached_datos_{user_id}"
+        datos_locales = st.session_state.get(key_cache, {})
+        datos_locales["config"] = nueva_config
+        st.session_state[key_cache] = datos_locales
         
         return True
     except Exception as e:
