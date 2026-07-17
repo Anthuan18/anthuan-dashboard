@@ -1355,12 +1355,12 @@ elif st.session_state.vista_actual == 'configuracion':
                 )
                 
             with col_meta:
-                meta_guardada = config_actual.get("proceso_admision", "2027-1")
+                meta_guardada = config_actual.get("proceso_admision", "")
                 meta_sel = st.text_input(
                     "Proceso de Admisión Objetivo",
                     value=meta_guardada,
                     placeholder="Ej: 2027-1, 2026-2",
-                    key="input_proceso_admision"
+                    key="input_proces_admision"
                 )
                 
             # Combinamos ambos para generar el nombre completo del ciclo
