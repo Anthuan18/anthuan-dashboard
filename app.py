@@ -1375,11 +1375,18 @@ elif st.session_state.vista_actual == 'configuracion':
             
             # Convertir strings de Firebase a objetos date de Python de forma segura
             try:
-                fecha_inicio_def = datetime.strptime(config_actual.get("fecha_inicio", fecha_hoy_peru()), "%Y-%m-%d").date()
-                fecha_fin_def = datetime.strptime(config_actual.get("fecha_fin", fecha_hoy_peru()), "%Y-%m-%d").date()
+                # 1. Intentamos leer con el formato de barras (el que usa el guardado automático)
+                fecha_inicio_def = datetime.strptime(config_actual.get("fecha_inicio", "2026/07/17"), "%Y/%m/%d").date()
+                fecha_fin_def = datetime.strptime(config_actual.get("fecha_fin", "2026/07/17"), "%Y/%m/%d").date()
             except Exception:
-                fecha_inicio_def = hora_peru().date()
-                fecha_fin_def = hora_peru().date()
+                try:
+                    # 2. Respaldo por si hay registros antiguos con guiones
+                    fecha_inicio_def = datetime.strptime(config_actual.get("fecha_inicio", "2026-07-17"), "%Y-%m-%d").date()
+                    fecha_fin_def = datetime.strptime(config_actual.get("fecha_fin", "2026-07-17"), "%Y-%m-%d").date()
+                except Exception:
+                    # 3. Si no hay nada guardado, usa la fecha de hoy
+                    fecha_inicio_def = hora_peru().date()
+                    fecha_fin_def = hora_peru().date()
                 
             with col_ini:
                 f_inicio = st.date_input("Fecha de inicio del ciclo", value=fecha_inicio_def, key="input_fecha_inicio")
