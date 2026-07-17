@@ -476,7 +476,7 @@ if not catalogo_cursos:
 else:
     nombre_cycle_display = config_actual.get("ciclo", "Semestral básico 2027-1")
 
-st.title(f"🎓 EDRA de {usuario_actual} - {nombre_cycle_display}")
+st.title(f"🎓 EDRA de {usuario_actual} - Ciclo {nombre_cycle_display}")
 
 # ------------------------------------------------------
 # MENSAJE DE BIENVENIDA DINÁMICO
@@ -1430,12 +1430,8 @@ elif st.session_state.vista_actual == 'configuracion':
             st.session_state.modo_edicion = not st.session_state.modo_edicion
             st.rerun()
 
-        # Indicación (1.)
-        st.markdown("1. Registra aquí todas las materias que estudias en tu preparación y asígnales un color.")
-
         # --- MODO LECTURA (Por defecto: Todo limpio) ---
         if not st.session_state.modo_edicion:
-            st.info("ℹ️ Presiona el botón **✏️Editar** de arriba para añadir nuevos cursos o eliminar existentes.")
             
             # Vista simple de los cursos guardados en el catálogo
             if catalogo_usuario:
@@ -1452,6 +1448,7 @@ elif st.session_state.vista_actual == 'configuracion':
 
         # --- MODO EDICIÓN ACTIVO ---
         else:
+            st.markdown("1. Registra aquí todas las materias que estudias en tu preparación y asígnales un color.")
             st.success("🛠️ **Modo Edición Activo**: Ahora puedes modificar tu catálogo.")
             
             # Formulario para agregar un nuevo curso
