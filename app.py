@@ -293,6 +293,37 @@ st.sidebar.markdown(f"### 👤 {username}")
 if st.sidebar.button("🚪 Cerrar Sesión"):
     st.session_state['logged_in'] = False
     st.rerun()
+# ========================================================
+# 📂 PASO 2: SELECTOR HISTÓRICO EN LA BARRA LATERAL
+# ========================================================
+# 1. Cargamos los nombres de los ciclos archivados desde Firestore
+ciclos_pasados = ["Ciclo Activo (Actual)"]
+try:
+    historial_ref = db.collection('usuarios').document(user_id).collection('historial_ciclos').stream()
+    for doc_historia in historial_ref:
+        data_h = doc_historia.to_dict()
+        if "nombre_ciclo" in data_h:
+            ciclos_pasados.append(data_h["nombre_ciclo"])
+except Exception:
+    pass  # Si no hay historial todavía, se queda solo con el Activo
+
+# 2. Dibujamos el selector en la barra lateral
+ciclo_elegido = st.sidebar.selectbox(
+    "📂 Ver Periodo:", 
+    options=ciclos_pasados, 
+    key="selector_ciclo_historico"
+)
+
+# 3. EL INTERRUPTOR LÓGICO: Si seleccionas un ciclo pasado, cambiamos los datos en memoria
+if ciclo_elegido != "Ciclo Activo (Actual)":
+    historial_ref = db.collection('usuarios').document(user_id).collection('historial_ciclos').where("nombre_ciclo", "==", ciclo_elegido).limit(1).stream()
+    for doc_historia in historial_ref:
+        data_h = doc_historia.to_dict()
+        # Interceptamos temporalmente los datos que alimentan tus gráficos
+        datos["diario"] = data_h.get("diario", [])
+        datos["semanal"] = data_h.get("semanal", [])
+        datos["config"] = data_h.get("config_ciclo", {})
+
 
 # ============================================
 # AQUÍ VA EL RESTO DE TU DASHBOARD ACTUAL
@@ -384,6 +415,48 @@ def cargar_datos():
             if 'horario' not in datos['config']:
                 datos['config']['horario'] = {}
             
+            # ========================================================
+            # VERIFICACIÓN AUTOMÁTICA DE FIN DE CICLO (POR FECHA)
+            # ========================================================
+            config_actual = datos.get("config", {})
+            fecha_fin_str = config_actual.get("fecha_fin", "2026/12/31")
+    
+            try:
+                fecha_fin_ciclo = datetime.strptime(fecha_fin_str, "%Y/%m/%d").date()
+            except ValueError:
+                try:
+                    fecha_fin_ciclo = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
+                except ValueError:
+                    fecha_fin_ciclo = hora_peru().date()
+    
+            # Comparamos usando tu función de hora de Perú
+            if hora_peru().date() > fecha_fin_ciclo and len(datos.get("diario", [])) > 0:
+                ciclo_vencido = config_actual.get("ciclo", f"Ciclo Terminado {fecha_fin_str}")
+                
+                # 1. Guardamos el respaldo histórico usando la hora de Perú como timestamp
+                historial_registro = {
+                    "nombre_ciclo": ciclo_vencido,
+                    "config_ciclo": config_actual,
+                    "diario": datos.get("diario", []),
+                    "semanal": datos.get("semanal", []),
+                    "fecha_archivado": hora_peru().isoformat()
+                }
+                db.collection('usuarios').document(user_id).collection('historial_ciclos').add(historial_registro)
+                
+                # 2. Reseteamos el horario y actualizamos fechas usando tu hora local
+                config_actual["horario"] = {dia: [] for dia in ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]}
+                config_actual["fecha_inicio"] = hora_peru().strftime("%Y/%m/%d")
+                config_actual["fecha_fin"] = (hora_peru() + timedelta(days=120)).strftime("%Y/%m/%d")
+                config_actual["ciclo"] = "Nuevo Ciclo Configurable"
+                
+                # 3. Limpiamos la pizarra activa en la BD
+                datos["diario"] = []
+                datos["semanal"] = []
+                datos["config"] = config_actual
+                db.collection('usuarios').document(user_id).set(datos, merge=True)
+                
+                st.rerun()
+    
             # Guardar en cache para próximas lecturas
             st.session_state[cache_key] = datos
             return datos
@@ -506,19 +579,25 @@ if st.session_state.vista_actual == 'inicio':
             st.session_state.vista_actual = 'curso'
             st.rerun()
             
-    st.divider()
+    # --- 🛡️ FILTRO PROTECTOR DE BOTONES ---
+    # Capturamos cuál ciclo está seleccionado en la barra lateral
+    ciclo_en_pantalla = st.session_state.get("selector_ciclo_historico", "Ciclo Activo (Actual)")
+
+    # Solo si estamos en el Ciclo Activo se muestran los botones de modificar e ingresar datos
+    if ciclo_en_pantalla == "Ciclo Activo (Actual)":
+        st.divider()
     
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("📥 S", use_container_width=True, key="btn_registro"):
-            st.session_state.vista_actual = 'registro'
-            st.rerun()
-            
-        if st.button("⚙️ Configuración del Ciclo", use_container_width=True, key="btn_config_normal"):
-            st.session_state.vista_actual = 'configuracion'
-            st.rerun()
-            
-    st.divider()
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("📥 REGISTRO DIARIO/EXAMEN", use_container_width=True, key="btn_registro"):
+                st.session_state.vista_actual = 'registro'
+                st.rerun()
+                
+            if st.button("⚙️ Configuración del Ciclo", use_container_width=True, key="btn_config_normal"):
+                st.session_state.vista_actual = 'configuracion'
+                st.rerun()
+                
+        st.divider()
 # ============================================
 # VISTA: RENDIMIENTO GENERAL
 # ============================================
