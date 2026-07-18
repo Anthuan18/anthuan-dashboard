@@ -547,9 +547,19 @@ if st.session_state.vista_actual == 'general':
         # Traer el horario del config actual del usuario (o el de respaldo si no hay)
         horario_usuario = config_actual.get("horario", {})
         
-        # Generar lista completa de días desde el primer registro hasta hoy
+        # Generar lista completa de días respetando la fecha de inicio real del ciclo
         dias_completos = []
         dia_actual = fecha_inicio
+        
+        # Recuperamos la fecha de inicio del ciclo configurada en la base de datos
+        try:
+            inicio_ciclo_real = datetime.strptime(config_actual.get("fecha_inicio", "2026/07/30"), "%Y/%m/%d").date()
+        except Exception:
+            try:
+                inicio_ciclo_real = datetime.strptime(config_actual.get("fecha_inicio", "2026-07-30"), "%Y-%m-%d").date()
+            except Exception:
+                inicio_ciclo_real = fecha_inicio.date()
+
         while dia_actual.date() <= fecha_hoy.date():
             fecha_str = dia_actual.strftime("%Y-%m-%d")
     
@@ -563,26 +573,25 @@ if st.session_state.vista_actual == 'general':
                 dia_data = next(d for d in datos["diario"] if d["fecha"] == fecha_str)
                 dias_completos.append(dia_data)
             else:
-                # Día NO registrado, crear registro ficticio con 0%
+                # --- 🛡️ EL ESCUDO PROTECTOR ---
+                # Si el día actual evaluado es MENOR que la fecha en que inicia tu ciclo,
+                # NO creamos ningún registro ficticio en 0% (así no te ensucia el gráfico).
+                if dia_actual.date() < inicio_ciclo_real:
+                    dia_actual += timedelta(days=1)
+                    continue
+                
+                # Si ya empezó el ciclo, entonces sí se considera falta si no registraste nada:
                 dia_semana = dia_actual.weekday()
                 nombre_dia = NOMBRES_DIAS[dia_semana]
                 
-                # OBTENER HORAS PROGRAMADAS DINÁMICAMENTE
-                # Primero buscamos en su horario personalizado
                 materias_dia = horario_usuario.get(nombre_dia, [])
-                
-                # Si no tiene nada asignado en su horario personalizado, usamos el respaldo temporal
                 if not materias_dia:
                     materias_dia = HORARIO_PREDETERMINADO.get(nombre_dia, [])
                 
-                # Sumamos las horas de todos los cursos programados para ese día
                 horas_disponibles = sum(int(m.get("horas", 0)) for m in materias_dia)
-                
-                # Si por alguna razón la suma da 0, le damos un mínimo de 1 para evitar divisiones por cero en tus métricas
                 if horas_disponibles <= 0:
                     horas_disponibles = 4
                 
-                # Crear registro ficticio con 0 horas y 0 ejercicios
                 registro_ficticio = {
                     "fecha": fecha_str,
                     "dia": nombre_dia,
@@ -590,7 +599,7 @@ if st.session_state.vista_actual == 'general':
                     "materias": {},
                     "Total_Ejercicios_Resueltos_Dia": 0,
                     "Total_Horas_Estudiadas": 0,
-                    "es_ficticio": True  # Marcador para saber que es un día no registrado
+                    "es_ficticio": True
                 }
                 dias_completos.append(registro_ficticio)
             
