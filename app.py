@@ -420,6 +420,7 @@ def cargar_datos():
             # ========================================================
             config_actual = datos.get("config", {})
             fecha_fin_str = config_actual.get("fecha_fin", "2026/12/31")
+            nombre_ciclo_actual = config_actual.get("ciclo", "Ciclo sin configurar")
     
             try:
                 fecha_fin_ciclo = datetime.strptime(fecha_fin_str, "%Y/%m/%d").date()
@@ -429,11 +430,15 @@ def cargar_datos():
                 except ValueError:
                     fecha_fin_ciclo = hora_peru().date()
     
-            # Comparamos usando tu función de hora de Perú
-            if hora_peru().date() > fecha_fin_ciclo and len(datos.get("diario", [])) > 0:
-                ciclo_vencido = config_actual.get("ciclo", f"Ciclo Terminado {fecha_fin_str}")
+            # 🔥 SEGURIDAD: Solo se auto-archiva si la fecha venció, hay datos Y NO es un ciclo "sin configurar"
+            if (hora_peru().date() > fecha_fin_ciclo and 
+                len(datos.get("diario", [])) > 0 and 
+                "sin configurar" not in nombre_ciclo_actual.lower() and 
+                nombre_ciclo_actual != "Nuevo Ciclo Configurable"):
                 
-                # 1. Guardamos el respaldo histórico usando la hora de Perú como timestamp
+                ciclo_vencido = nombre_ciclo_actual
+                
+                # 1. Guardamos el respaldo histórico
                 historial_registro = {
                     "nombre_ciclo": ciclo_vencido,
                     "config_ciclo": config_actual,
@@ -443,7 +448,7 @@ def cargar_datos():
                 }
                 db.collection('usuarios').document(user_id).collection('historial_ciclos').add(historial_registro)
                 
-                # 2. Reseteamos el horario y actualizamos fechas usando tu hora local
+                # 2. Reseteamos el horario y actualizamos fechas por defecto hacia el futuro
                 config_actual["horario"] = {dia: [] for dia in ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]}
                 config_actual["fecha_inicio"] = hora_peru().strftime("%Y/%m/%d")
                 config_actual["fecha_fin"] = (hora_peru() + timedelta(days=120)).strftime("%Y/%m/%d")
