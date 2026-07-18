@@ -451,7 +451,7 @@ def cargar_datos():
                 "sin configurar" not in nombre_ciclo_actual.lower() and 
                 "nuevo ciclo" not in nombre_ciclo_actual.lower() and
                 fecha_fin_str != "2026/12/31" and  # Evita que se active con la fecha por defecto
-                nombre_ciclo_actual.strip() != ""): and false
+                nombre_ciclo_actual.strip() != "" and False):
                 
                 ciclo_vencido = nombre_ciclo_actual
                 
