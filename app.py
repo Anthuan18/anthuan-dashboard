@@ -422,19 +422,36 @@ def cargar_datos():
             fecha_fin_str = config_actual.get("fecha_fin", "2026/12/31")
             nombre_ciclo_actual = config_actual.get("ciclo", "Ciclo sin configurar")
     
+            # Obtenemos el día de hoy usando tu función nativa del sistema
+            hoy = fecha_hoy_peru()
+            if hasattr(hoy, "strftime"):
+                hoy_str = hoy.strftime("%Y/%m/%d")
+                hoy_date = hoy
+            else:
+                # Si fecha_hoy_peru() ya devuelve un string tipo "2026-07-18"
+                hoy_str = str(hoy).replace("-", "/")
+                try:
+                    hoy_date = datetime.strptime(hoy_str, "%Y/%m/%d").date()
+                except ValueError:
+                    hoy_date = datetime.now().date()
+    
+            # Parsear la fecha de fin del ciclo para comparar objetos .date()
             try:
                 fecha_fin_ciclo = datetime.strptime(fecha_fin_str, "%Y/%m/%d").date()
             except ValueError:
                 try:
                     fecha_fin_ciclo = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
                 except ValueError:
-                    fecha_fin_ciclo = hora_peru().date()
+                    fecha_fin_ciclo = hoy_date
     
-            # 🔥 SEGURIDAD: Solo se auto-archiva si la fecha venció, hay datos Y NO es un ciclo "sin configurar"
-            if (hora_peru().date() > fecha_fin_ciclo and 
+            # 🔥 CONTROL ANTIBUCLE DEFENSIVO REFORZADO
+            # Solo se ejecuta el archivo automático si se cumplen TODAS estas condiciones:
+            if (hoy_date > fecha_fin_ciclo and 
                 len(datos.get("diario", [])) > 0 and 
                 "sin configurar" not in nombre_ciclo_actual.lower() and 
-                nombre_ciclo_actual != "Nuevo Ciclo Configurable"):
+                "nuevo ciclo" not in nombre_ciclo_actual.lower() and
+                fecha_fin_str != "2026/12/31" and  # Evita que se active con la fecha por defecto
+                nombre_ciclo_actual.strip() != ""):
                 
                 ciclo_vencido = nombre_ciclo_actual
                 
@@ -444,17 +461,19 @@ def cargar_datos():
                     "config_ciclo": config_actual,
                     "diario": datos.get("diario", []),
                     "semanal": datos.get("semanal", []),
-                    "fecha_archivado": hora_peru().isoformat()
+                    "fecha_archivado": hoy_str
                 }
                 db.collection('usuarios').document(user_id).collection('historial_ciclos').add(historial_registro)
                 
-                # 2. Reseteamos el horario y actualizamos fechas por defecto hacia el futuro
+                # 2. Reseteamos el horario y actualizamos fechas tentativas a futuro
                 config_actual["horario"] = {dia: [] for dia in ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]}
-                config_actual["fecha_inicio"] = hora_peru().strftime("%Y/%m/%d")
-                config_actual["fecha_fin"] = (hora_peru() + timedelta(days=120)).strftime("%Y/%m/%d")
+                config_actual["fecha_inicio"] = hoy_str
+                # Proyectamos el siguiente ciclo a 4 meses en el futuro
+                futuro = hoy_date + timedelta(days=120)
+                config_actual["fecha_fin"] = futuro.strftime("%Y/%m/%d")
                 config_actual["ciclo"] = "Nuevo Ciclo Configurable"
                 
-                # 3. Limpiamos la pizarra activa en la BD
+                # 3. Limpiamos las colecciones activas en la BD principal
                 datos["diario"] = []
                 datos["semanal"] = []
                 datos["config"] = config_actual
