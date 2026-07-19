@@ -297,7 +297,20 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     st.stop() # Frena la carga si no hay sesión ni link de monitor válido
 
 # Si está logueado, continuar con el dashboard
+# 1. Intentamos obtener el nombre actual de la sesión
 username = st.session_state.get('username', 'Usuario')
+
+# 2. TRUCO DE REFRESCO: Si sigue diciendo 'Usuario', revisamos si cargar_datos() ya guardó el nombre real en el caché
+if username == 'Usuario':
+    cached_key = f"cached_datos_{st.session_state.get('user_id')}"
+    datos_cache = st.session_state.get(cached_key)
+    
+    if datos_cache and "config" in datos_cache:
+        nombre_real = datos_cache["config"].get("username") or datos_cache["config"].get("nombre")
+        if nombre_real:
+            # Guardamos el nombre real y forzamos a Streamlit a volver a renderizar desde arriba
+            st.session_state['username'] = nombre_real
+            st.rerun()
 
 if not username:
     cached_key = f"cached_datos_{st.session_state.get('user_id')}"
