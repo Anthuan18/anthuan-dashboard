@@ -298,10 +298,25 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
 
 # Si está logueado, continuar con el dashboard
 username = st.session_state.get('username', 'Usuario')
-st.sidebar.markdown(f"### 👤 {username}")
-if st.sidebar.button("🚪 Cerrar Sesión"):
-    st.session_state['logged_in'] = False
-    st.rerun()
+
+# 🛠️ Ocultamos la barra lateral por completo si es el monitor externo
+if st.session_state.get('modo_lectura'):
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebar"] {display: none;}
+            [data-testid="stHeader"] {background: rgba(0,0,0,0); color: transparent;}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+else:
+
+    # Si es tu sesión normal de estudio, sí se muestra la barra lateral
+    st.sidebar.markdown(f"### 👤 {username}")
+    if st.sidebar.button("🚪 Cerrar Sesión"):
+        st.session_state['logged_in'] = False
+        st.rerun()
 # ========================================================
 # 📂 PASO 2: SELECTOR HISTÓRICO EN LA BARRA LATERAL
 # ========================================================
@@ -1463,6 +1478,17 @@ elif st.session_state.vista_actual == 'configuracion':
         'horario': {}
     })
 
+    # Pon esto dentro de tu pestaña de configuración o perfil:
+    st.subheader("🔗 Monitor de Visualización Externa")
+    
+    # Reemplaza con la URL real de tu app cuando la despliegues en Streamlit Community Cloud
+    url_produccion = "https://tu-app-edra.streamlit.app" 
+    enlace_monitor = f"{url_produccion}/?vista=externa&user_id={st.session_state['user_id']}"
+    
+    st.text_input("Copia este enlace para tu pantalla secundaria o tablet:", value=enlace_monitor, disabled=True)
+    st.caption("Copia este enlace para dejarlo fijo en tu monitor de estudio. No modificará tu base de datos.")
+    st.divider()
+    
     # Creamos las tres pestañas solicitadas
     tab1, tab2, tab3 = st.tabs(["📅 Cronograma", "📚 Cursos", "📝 Exámenes"], key=f"tabs_configuracion_{st.session_state.get('user_id', 'anonimo')}")
     
