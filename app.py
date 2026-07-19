@@ -59,7 +59,13 @@ def guardar_datos_ciclo_automatico():
         proc_adm = st.session_state.get("input_proces_admision", config_actual.get("proceso_admision", ""))
 
         # 🌟 TRUCO INVISIBLE: Extraemos el nombre desde el correo de la sesión actual
-        correo_sesion = st.session_state.get('user_email') or st.session_state.get('email', '')
+        # --- BUSCADOR MULTICAPA DE CORREO (Reemplaza tu línea 62) ---
+        correo_sesion = (
+            st.session_state.get('user_email') or 
+            st.session_state.get('email') or 
+            st.session_state.get('auth_user', {}).get('email') or 
+            st.session_state.get('user', {}).get('email') or ''
+        )
         if correo_sesion and '@' in correo_sesion:
             nombre_extraido = correo_sesion.split('@')[0].capitalize()
         else:
