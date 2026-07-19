@@ -297,6 +297,11 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     st.stop() # Frena la carga si no hay sesión ni link de monitor válido
 
 # Si está logueado, continuar con el dashboard
+# Reemplaza tu línea 300 vieja por esto:
+if 'username' not in st.session_state or st.session_state['username'] == 'Usuario':
+    # Forzamos una carga rápida para obtener el nombre real antes de pintar el título
+    datos_primer_milisegundo = cargar_datos()
+
 username = st.session_state.get('username', 'Usuario')
 
 # 🛠️ Ocultamos la barra lateral por completo si es el monitor externo
@@ -432,7 +437,11 @@ def cargar_datos():
                 datos['semanal'] = []
             if 'config' not in datos or not isinstance(datos['config'], dict):
                 datos['config'] = {}
-            
+
+            nombre_real = datos['config'].get('username') or datos['config'].get('nombre')
+            if nombre_real:
+                st.session_state['username'] = nombre_real
+                
             # Asegurar campos clave dentro de config para evitar fallos de lectura
             if 'catalogo_cursos' not in datos['config']:
                 datos['config']['catalogo_cursos'] = []
