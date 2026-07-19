@@ -1485,8 +1485,7 @@ elif st.session_state.vista_actual == 'configuracion':
     url_produccion = "https://tu-app-edra.streamlit.app" 
     enlace_monitor = f"{url_produccion}/?vista=externa&user_id={st.session_state['user_id']}"
     
-    st.text_input("Copia este enlace para tu pantalla secundaria o tablet:", value=enlace_monitor, disabled=True)
-    st.caption("Copia este enlace para dejarlo fijo en tu monitor de estudio. No modificará tu base de datos.")
+    st.text_input("Copia este enlace para visualización de terceros:", value=enlace_monitor, disabled=True)
     st.divider()
     
     # Creamos las tres pestañas solicitadas
