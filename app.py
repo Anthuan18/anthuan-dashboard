@@ -427,8 +427,14 @@ def cargar_datos():
     
     # CACHE: Si ya cargamos en esta sesión, devolver desde memoria (¡instantáneo!)
     if cache_key in st.session_state:
-        return st.session_state[cache_key]
-    
+        datos_cache = st.session_state[cache_key]
+        # 🌟 Extraemos el nombre también desde la caché para que no se quede en "Usuario"
+        if datos_cache and "config" in datos_cache:
+            nombre_real = datos_cache["config"].get("username") or datos_cache["config"].get("nombre")
+            if nombre_real:
+                st.session_state['username'] = nombre_real
+        return datos_cache
+        
     # Primera carga: leer de Firestore
     try:
         doc_ref = db.collection('usuarios').document(user_id)
