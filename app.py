@@ -57,7 +57,17 @@ def guardar_datos_ciclo_automatico():
         # 2. Recuperar de forma segura los valores de la pestaña 1
         tipo_prep = st.session_state.get("input_tipo_preparacion", config_actual.get("tipo_preparacion", "Semestral"))
         proc_adm = st.session_state.get("input_proces_admision", config_actual.get("proceso_admision", ""))
+
+        # 🌟 TRUCO INVISIBLE: Extraemos el nombre desde el correo de la sesión actual
+        correo_sesion = st.session_state.get('user_email') or st.session_state.get('email', '')
+        if correo_sesion and '@' in correo_sesion:
+            nombre_extraido = correo_sesion.split('@')[0].capitalize()
+        else:
+            nombre_extraido = "Postulante UNI"
         
+        # Inyectamos el nombre directamente en el st.session_state para que las funciones lo lean
+        st.session_state['username'] = nombre_extraido
+
         # Reconstruir nombre del ciclo
         nombre_ciclo_completo = f"{tipo_prep} {proc_adm}".strip()
 
@@ -85,6 +95,8 @@ def guardar_datos_ciclo_automatico():
         nueva_config = {
             'ciclo': nombre_ciclo_completo,
             'universidad': config_actual.get("universidad", "UNI"),
+            'username': nombre_extraido,
+            'nombre': nombre_extraido,
             'tipo_preparacion': tipo_prep,
             'proceso_admision': proc_adm,
             'fecha_inicio': fecha_inicio_str,
