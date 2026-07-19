@@ -297,25 +297,21 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     st.stop() # Frena la carga si no hay sesión ni link de monitor válido
 
 # Si está logueado, continuar con el dashboard
-# --- REEMPLAZO DEFINITIVO DE LA LÍNEA 300 ---
-if 'username' not in st.session_state or st.session_state['username'] == 'Usuario':
-    user_id_actual = st.session_state.get('user_id')
-    if user_id_actual:
-        try:
-            doc_ref = db.collection('usuarios').document(user_id_actual)
-            doc = doc_ref.get()
-            if doc.exists:
-                datos_init = doc.to_dict()
-                if datos_init and 'config' in datos_init:
-                    nombre_real = datos_init['config'].get('username') or datos_init['config'].get('nombre')
-                    if nombre_real:
-                        st.session_state['username'] = nombre_real
-                        # 🌟 OBLIGAMOS A STREAMLIT A REDIBUJAR LOS TÍTULOS CON EL NOMBRE REAL
-                        st.rerun()
-        except Exception:
-            pass
+# --- DETECTOR TEMPORAL EN LA LÍNEA 300 ---
+user_id_actual = st.session_state.get('user_id')
+if user_id_actual:
+    try:
+        doc_ref = db.collection('usuarios').document(user_id_actual)
+        doc = doc_ref.get()
+        if doc.exists:
+            datos_init = doc.to_dict()
+            # Esto va a mostrar en la pantalla qué llaves tienes guardadas exactamente
+            st.write("Campos encontrados en config:", datos_init.get('config', {}).keys())
+            st.write("Contenido de config:", datos_init.get('config', {}))
+    except Exception as e:
+        st.write("Error al leer:", e)
 
-username = st.session_state.get('username', 'Usuario')
+username = "Probando"
 # 🛠️ Ocultamos la barra lateral por completo si es el monitor externo
 if st.session_state.get('modo_lectura'):
     st.markdown(
