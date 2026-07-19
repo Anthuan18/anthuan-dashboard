@@ -637,7 +637,7 @@ if st.session_state.vista_actual == 'inicio':
     ciclo_en_pantalla = st.session_state.get("selector_ciclo_historico", "Ciclo Activo (Actual)")
 
     # Solo si estamos en el Ciclo Activo se muestran los botones de modificar e ingresar datos
-    if ciclo_en_pantalla == "Ciclo Activo (Actual)":
+    if ciclo_en_pantalla == "Ciclo Activo (Actual)" and not st.session_state.get('modo_lectura'):
         st.divider()
     
         col1, col2, col3 = st.columns([1, 2, 1])
