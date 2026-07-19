@@ -534,6 +534,10 @@ def guardar_datos(datos):
                 # ACTUALIZAR CACHE: Guardar datos frescos en session_state
         # para que las próximas cargas sean instantáneas
         cache_key = f"cached_datos_{user_id}"
+        
+        # Recuperamos la configuración que ya existía en caché para no perderla
+        config_existente = st.session_state.get(cache_key, {}).get('config', {})
+        
         st.session_state[cache_key] = {
             'diario': datos_a_guardar['diario'],
             'semanal': datos_a_guardar['semanal'],
