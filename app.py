@@ -417,7 +417,7 @@ HORARIO_PREDETERMINADO = {}
 
 NOMBRES_DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
-def cargar_datos():
+def cargar_datos():       
     """Carga los datos del usuario actual desde Firestore (con cache en session_state)"""
     if 'user_id' not in st.session_state:
         return {"diario": [], "semanal": [], "config": {}}
@@ -442,7 +442,11 @@ def cargar_datos():
                 datos['semanal'] = []
             if 'config' not in datos or not isinstance(datos['config'], dict):
                 datos['config'] = {}
-            
+
+            nombre_real = datos['config'].get('username') or datos['config'].get('nombre')
+            if nombre_real:
+                st.session_state['username'] = nombre_real
+                
             # Asegurar campos clave dentro de config para evitar fallos de lectura
             if 'catalogo_cursos' not in datos['config']:
                 datos['config']['catalogo_cursos'] = []
