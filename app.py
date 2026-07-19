@@ -1482,10 +1482,10 @@ elif st.session_state.vista_actual == 'configuracion':
     st.subheader("🔗 Monitor de Visualización Externa")
     
     # Reemplaza con la URL real de tu app cuando la despliegues en Streamlit Community Cloud
-    url_produccion = "https://tu-app-edra.streamlit.app" 
+    url_produccion = "https://edra-pre-uni.streamlit.app/" 
     enlace_monitor = f"{url_produccion}/?vista=externa&user_id={st.session_state['user_id']}"
     
-    st.text_input("Copia este enlace para visualización de terceros:", value=enlace_monitor, disabled=True)
+    st.text_input("Copia este enlace para visualización de padres:", value=enlace_monitor, disabled=True)
     st.divider()
     
     # Creamos las tres pestañas solicitadas
