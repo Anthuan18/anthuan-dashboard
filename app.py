@@ -297,31 +297,8 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     st.stop() # Frena la carga si no hay sesión ni link de monitor válido
 
 # Si está logueado, continuar con el dashboard
-# 1. Intentamos obtener el nombre actual de la sesión
 username = st.session_state.get('username', 'Usuario')
 
-# 2. TRUCO DE REFRESCO: Si sigue diciendo 'Usuario', revisamos si cargar_datos() ya guardó el nombre real en el caché
-if username == 'Usuario':
-    cached_key = f"cached_datos_{st.session_state.get('user_id')}"
-    datos_cache = st.session_state.get(cached_key)
-    
-    if datos_cache and "config" in datos_cache:
-        nombre_real = datos_cache["config"].get("username") or datos_cache["config"].get("nombre")
-        if nombre_real:
-            # Guardamos el nombre real y forzamos a Streamlit a volver a renderizar desde arriba
-            st.session_state['username'] = nombre_real
-            st.rerun()
-
-if not username:
-    cached_key = f"cached_datos_{st.session_state.get('user_id')}"
-    datos_en_memoria = st.session_state.get(cached_key)
-
-    if datos_en_memoria and "config" in datos_en_memoria:
-        username = datos_en_memoria["config"].get("username") or datos_en_memoria["config"].get("nombre")
-
-if not username:
-    username = "Usuario"
-    
 # 🛠️ Ocultamos la barra lateral por completo si es el monitor externo
 if st.session_state.get('modo_lectura'):
     st.markdown(
@@ -430,7 +407,7 @@ HORARIO_PREDETERMINADO = {}
 
 NOMBRES_DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
-def cargar_datos():       
+def cargar_datos():
     """Carga los datos del usuario actual desde Firestore (con cache en session_state)"""
     if 'user_id' not in st.session_state:
         return {"diario": [], "semanal": [], "config": {}}
@@ -440,14 +417,8 @@ def cargar_datos():
     
     # CACHE: Si ya cargamos en esta sesión, devolver desde memoria (¡instantáneo!)
     if cache_key in st.session_state:
-        datos_cache = st.session_state[cache_key]
-        # 🌟 Extraemos el nombre también desde la caché para que no se quede en "Usuario"
-        if datos_cache and "config" in datos_cache:
-            nombre_real = datos_cache["config"].get("username") or datos_cache["config"].get("nombre")
-            if nombre_real:
-                st.session_state['username'] = nombre_real
-        return datos_cache
-        
+        return st.session_state[cache_key]
+    
     # Primera carga: leer de Firestore
     try:
         doc_ref = db.collection('usuarios').document(user_id)
@@ -461,11 +432,7 @@ def cargar_datos():
                 datos['semanal'] = []
             if 'config' not in datos or not isinstance(datos['config'], dict):
                 datos['config'] = {}
-
-            nombre_real = datos['config'].get('username') or datos['config'].get('nombre')
-            if nombre_real:
-                st.session_state['username'] = nombre_real
-                
+            
             # Asegurar campos clave dentro de config para evitar fallos de lectura
             if 'catalogo_cursos' not in datos['config']:
                 datos['config']['catalogo_cursos'] = []
