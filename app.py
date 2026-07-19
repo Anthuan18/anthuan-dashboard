@@ -297,35 +297,8 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     st.stop() # Frena la carga si no hay sesión ni link de monitor válido
 
 # Si está logueado, continuar con el dashboard
-# --- BUSCADOR DE GMAIL EN LA RAÍZ DEL DOCUMENTO ---
-if 'username' not in st.session_state or st.session_state['username'] == 'Usuario' or st.session_state['username'].startswith("Postulante "):
-    user_id_actual = st.session_state.get('user_id')
-    if user_id_actual:
-        try:
-            doc_ref = db.collection('usuarios').document(user_id_actual)
-            doc = doc_ref.get()
-            if doc.exists:
-                datos_init = doc.to_dict()
-                if datos_init:
-                    # 1. Intentamos buscar si guardaste el campo 'email' o 'correo' en la raíz
-                    correo = datos_init.get('email') or datos_init.get('correo')
-                    
-                    # 2. Si no está en la raíz, lo buscamos dentro de 'config' por si acaso
-                    if not correo and 'config' in datos_init:
-                        correo = datos_init['config'].get('email') or datos_init['config'].get('correo')
-                    
-                    # 3. Si encontramos el correo, extraemos el nombre antes del @
-                    if correo and '@' in correo:
-                        nombre_real = correo.split('@')[0].capitalize() # Ejemplo: "anthuan.p" de anthuan.p@gmail.com
-                    else:
-                        nombre_real = "Postulante UNI" # Salvavidas si de verdad no hay correo escrito en Firestore
-                    
-                    st.session_state['username'] = nombre_real
-                    st.rerun()
-        except Exception:
-            pass
-
 username = st.session_state.get('username', 'Usuario')
+
 # 🛠️ Ocultamos la barra lateral por completo si es el monitor externo
 if st.session_state.get('modo_lectura'):
     st.markdown(
@@ -459,11 +432,7 @@ def cargar_datos():
                 datos['semanal'] = []
             if 'config' not in datos or not isinstance(datos['config'], dict):
                 datos['config'] = {}
-
-            nombre_real = datos['config'].get('username') or datos['config'].get('nombre')
-            if nombre_real:
-                st.session_state['username'] = nombre_real
-                
+            
             # Asegurar campos clave dentro de config para evitar fallos de lectura
             if 'catalogo_cursos' not in datos['config']:
                 datos['config']['catalogo_cursos'] = []
