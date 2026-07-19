@@ -292,30 +292,6 @@ if es_vista_externa and user_id_externo:
     st.session_state['logged_in'] = True
     st.session_state['user_id'] = user_id_externo
     st.session_state['modo_lectura'] = True  
-
-    try:
-        # Cargamos los datos específicos de este usuario desde Firestore
-        datos_usuario = cargar_datos()  
-        
-        if datos_usuario and "config" in datos_usuario:
-            # 1. Intentamos sacar el nombre de usuario de la base de datos
-            # Revisa si en tu registro usaste 'username', 'nombre' o 'usuario'
-            nombre_real = datos_usuario["config"].get("username") or datos_usuario["config"].get("nombre")
-            
-            if nombre_real:
-                st.session_state['username'] = nombre_real
-            else:
-                # 2. Si no hay campo de nombre, usamos el correo que esté en config (quitándole el @gmail.com)
-                correo = datos_usuario["config"].get("email", "Estudiante")
-                st.session_state['username'] = correo.split("@")[0].capitalize()
-    
-        else:
-            st.session_state['username'] = "Estudiante"
-
-
-    except Exception:
-        st.session_state['username'] = "Estudiante"
-
 elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     pantalla_login()
     st.stop() # Frena la carga si no hay sesión ni link de monitor válido
@@ -626,13 +602,13 @@ if not catalogo_cursos:
 else:
     nombre_cycle_display = config_actual.get("ciclo", "Semestral básico 2027-1")
 
-st.title(f"🎓 EDRA de {username} - Ciclo ...")
+st.title(f"🎓 EDRA de {usuario_actual} - Ciclo {nombre_cycle_display}")
 
 # ------------------------------------------------------
 # MENSAJE DE BIENVENIDA DINÁMICO
 # ------------------------------------------------------
 if not catalogo_cursos:
-    st.markdown(f"👋 Hola {username}, aquí verás tus estadísticas de rendimiento académico.")
+    st.markdown(f"### 👋 ¡Hola {usuario_actual}! Bienvenido a tu panel de preparación.")
     st.info(
         "💡 **Consejo:** Para empezar a medir tu rendimiento y llevar un control exacto de tu disciplina diario, "
         "ve a la sección de **Configuración del Ciclo** para registrar las materias y horas que les dedicarás a solas."
