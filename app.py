@@ -297,9 +297,8 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     st.stop() # Frena la carga si no hay sesión ni link de monitor válido
 
 # Si está logueado, continuar con el dashboard
-# --- REEMPLAZO DE LA LÍNEA 300 ---
+# --- REEMPLAZO DEFINITIVO DE LA LÍNEA 300 ---
 if 'username' not in st.session_state or st.session_state['username'] == 'Usuario':
-    # Hacemos la consulta directa a Firestore de manera segura antes de pintar el título
     user_id_actual = st.session_state.get('user_id')
     if user_id_actual:
         try:
@@ -311,6 +310,8 @@ if 'username' not in st.session_state or st.session_state['username'] == 'Usuari
                     nombre_real = datos_init['config'].get('username') or datos_init['config'].get('nombre')
                     if nombre_real:
                         st.session_state['username'] = nombre_real
+                        # 🌟 OBLIGAMOS A STREAMLIT A REDIBUJAR LOS TÍTULOS CON EL NOMBRE REAL
+                        st.rerun()
         except Exception:
             pass
 
