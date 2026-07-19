@@ -297,8 +297,8 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     st.stop() # Frena la carga si no hay sesión ni link de monitor válido
 
 # Si está logueado, continuar con el dashboard
-# --- REEMPLAZO DEFINITIVO Y SEGURO DE LA LÍNEA 300 ---
-if 'username' not in st.session_state or st.session_state['username'] == 'Usuario':
+# --- BUSCADOR DE GMAIL EN LA RAÍZ DEL DOCUMENTO ---
+if 'username' not in st.session_state or st.session_state['username'] == 'Usuario' or st.session_state['username'].startswith("Postulante "):
     user_id_actual = st.session_state.get('user_id')
     if user_id_actual:
         try:
@@ -306,13 +306,19 @@ if 'username' not in st.session_state or st.session_state['username'] == 'Usuari
             doc = doc_ref.get()
             if doc.exists:
                 datos_init = doc.to_dict()
-                if datos_init and 'config' in datos_init:
-                    # 1. Buscamos si existe un nombre (por si acaso)
-                    nombre_real = datos_init['config'].get('username') or datos_init['config'].get('nombre')
+                if datos_init:
+                    # 1. Intentamos buscar si guardaste el campo 'email' o 'correo' en la raíz
+                    correo = datos_init.get('email') or datos_init.get('correo')
                     
-                    # 2. Si no existe nombre (como en este caso), usamos su ID recortado o un texto personalizado
-                    if not nombre_real:
-                        nombre_real = f"Postulante {user_id_actual[:5]}" # Ejemplo: Postulante BSJCM
+                    # 2. Si no está en la raíz, lo buscamos dentro de 'config' por si acaso
+                    if not correo and 'config' in datos_init:
+                        correo = datos_init['config'].get('email') or datos_init['config'].get('correo')
+                    
+                    # 3. Si encontramos el correo, extraemos el nombre antes del @
+                    if correo and '@' in correo:
+                        nombre_real = correo.split('@')[0].capitalize() # Ejemplo: "anthuan.p" de anthuan.p@gmail.com
+                    else:
+                        nombre_real = "Postulante UNI" # Salvavidas si de verdad no hay correo escrito en Firestore
                     
                     st.session_state['username'] = nombre_real
                     st.rerun()
