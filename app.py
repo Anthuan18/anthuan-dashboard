@@ -541,7 +541,7 @@ def guardar_datos(datos):
         st.session_state[cache_key] = {
             'diario': datos_a_guardar['diario'],
             'semanal': datos_a_guardar['semanal'],
-            'materias': datos_a_guardar.get('materias', {})
+            'materias': datos_a_guardar.get('materias', {}),
             'config': config_existente
         }
         
