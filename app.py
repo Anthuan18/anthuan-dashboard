@@ -299,6 +299,16 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
 # Si está logueado, continuar con el dashboard
 username = st.session_state.get('username', 'Usuario')
 
+if not username:
+    cached_key = f"cached_datos_{st.session_state.get('user_id')}"
+    datos_en_memoria = st.session_state.get(cached_key)
+
+    if datos_en_memoria and "config" in datos_en_memoria:
+        username = datos_en_memoria["config"].get("username") or datos_en_memoria["config"].get("nombre")
+
+if not username:
+    username = "Usuario"
+    
 # 🛠️ Ocultamos la barra lateral por completo si es el monitor externo
 if st.session_state.get('modo_lectura'):
     st.markdown(
