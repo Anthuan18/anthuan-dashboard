@@ -209,7 +209,6 @@ def login_usuario(username, password):
 
 def pantalla_login():
     """Muestra la pantalla de login con pestañas organizadas"""
-    st.set_page_config(page_title="EDRA - Pre UNI", layout="wide")
     
     st.title("🎓 EDRA - Preu")
     st.markdown("### Tu camino hacia la universidad")
