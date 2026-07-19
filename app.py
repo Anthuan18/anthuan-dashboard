@@ -297,21 +297,29 @@ elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     st.stop() # Frena la carga si no hay sesión ni link de monitor válido
 
 # Si está logueado, continuar con el dashboard
-# --- DETECTOR TEMPORAL EN LA LÍNEA 300 ---
-user_id_actual = st.session_state.get('user_id')
-if user_id_actual:
-    try:
-        doc_ref = db.collection('usuarios').document(user_id_actual)
-        doc = doc_ref.get()
-        if doc.exists:
-            datos_init = doc.to_dict()
-            # Esto va a mostrar en la pantalla qué llaves tienes guardadas exactamente
-            st.write("Campos encontrados en config:", datos_init.get('config', {}).keys())
-            st.write("Contenido de config:", datos_init.get('config', {}))
-    except Exception as e:
-        st.write("Error al leer:", e)
+# --- REEMPLAZO DEFINITIVO Y SEGURO DE LA LÍNEA 300 ---
+if 'username' not in st.session_state or st.session_state['username'] == 'Usuario':
+    user_id_actual = st.session_state.get('user_id')
+    if user_id_actual:
+        try:
+            doc_ref = db.collection('usuarios').document(user_id_actual)
+            doc = doc_ref.get()
+            if doc.exists:
+                datos_init = doc.to_dict()
+                if datos_init and 'config' in datos_init:
+                    # 1. Buscamos si existe un nombre (por si acaso)
+                    nombre_real = datos_init['config'].get('username') or datos_init['config'].get('nombre')
+                    
+                    # 2. Si no existe nombre (como en este caso), usamos su ID recortado o un texto personalizado
+                    if not nombre_real:
+                        nombre_real = f"Postulante {user_id_actual[:5]}" # Ejemplo: Postulante BSJCM
+                    
+                    st.session_state['username'] = nombre_real
+                    st.rerun()
+        except Exception:
+            pass
 
-username = "Probando"
+username = st.session_state.get('username', 'Usuario')
 # 🛠️ Ocultamos la barra lateral por completo si es el monitor externo
 if st.session_state.get('modo_lectura'):
     st.markdown(
