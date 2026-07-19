@@ -542,6 +542,7 @@ def guardar_datos(datos):
             'diario': datos_a_guardar['diario'],
             'semanal': datos_a_guardar['semanal'],
             'materias': datos_a_guardar.get('materias', {})
+            'config': config_existente
         }
         
         st.success("✅ Datos guardados correctamente")
