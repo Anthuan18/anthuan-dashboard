@@ -281,14 +281,20 @@ def pantalla_login():
 # CONTROL DE ACCESO
 # ============================================
 
-# Inicializar estado de sesión
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
+# 🚀 NUEVO: Capturar parámetros de la URL para la pantalla externa
+query_params = st.query_params
 
-# Si no está logueado, mostrar pantalla de login
-if not st.session_state['logged_in']:
+es_vista_externa = query_params.get("vista") == "externa"
+user_id_externo = query_params.get("user_id")
+
+# Evaluar el tipo de acceso
+if es_vista_externa and user_id_externo:
+    st.session_state['logged_in'] = True
+    st.session_state['user_id'] = user_id_externo
+    st.session_state['modo_lectura'] = True  
+elif 'logged_in' not in st.session_state or not st.session_state['logged_in']:
     pantalla_login()
-    st.stop()  # Detiene la ejecución del resto del código
+    st.stop() # Frena la carga si no hay sesión ni link de monitor válido
 
 # Si está logueado, continuar con el dashboard
 username = st.session_state.get('username', 'Usuario')
