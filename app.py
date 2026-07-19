@@ -40,6 +40,10 @@ def guardar_datos_ciclo_automatico():
         user_id = st.session_state['user_id']
         key_lista_cursos = f"lista_cursos_config_{user_id}"
         
+        # 🛠️ AGREGA ESTAS 2 LÍNEAS AQUÍ
+        key_cache = f"cached_datos_{user_id}"
+        config_actual = st.session_state.get(key_cache, {}).get("config", {})
+        
         # 1. Consolidar el horario semanal
         dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
         horario_consolidado = {}
