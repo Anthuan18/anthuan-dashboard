@@ -57,23 +57,7 @@ def guardar_datos_ciclo_automatico():
         # 2. Recuperar de forma segura los valores de la pestaña 1
         tipo_prep = st.session_state.get("input_tipo_preparacion", config_actual.get("tipo_preparacion", "Semestral"))
         proc_adm = st.session_state.get("input_proces_admision", config_actual.get("proceso_admision", ""))
-
-        # 🌟 TRUCO INVISIBLE: Extraemos el nombre desde el correo de la sesión actual
-        # --- BUSCADOR MULTICAPA DE CORREO (Reemplaza tu línea 62) ---
-        correo_sesion = (
-            st.session_state.get('user_email') or 
-            st.session_state.get('email') or 
-            st.session_state.get('auth_user', {}).get('email') or 
-            st.session_state.get('user', {}).get('email') or ''
-        )
-        if correo_sesion and '@' in correo_sesion:
-            nombre_extraido = correo_sesion.split('@')[0].capitalize()
-        else:
-            nombre_extraido = "Postulante UNI"
         
-        # Inyectamos el nombre directamente en el st.session_state para que las funciones lo lean
-        st.session_state['username'] = nombre_extraido
-
         # Reconstruir nombre del ciclo
         nombre_ciclo_completo = f"{tipo_prep} {proc_adm}".strip()
 
@@ -101,8 +85,6 @@ def guardar_datos_ciclo_automatico():
         nueva_config = {
             'ciclo': nombre_ciclo_completo,
             'universidad': config_actual.get("universidad", "UNI"),
-            'username': nombre_extraido,
-            'nombre': nombre_extraido,
             'tipo_preparacion': tipo_prep,
             'proceso_admision': proc_adm,
             'fecha_inicio': fecha_inicio_str,
@@ -620,19 +602,19 @@ if not catalogo_cursos:
 else:
     nombre_cycle_display = config_actual.get("ciclo", "Semestral básico 2027-1")
 
-st.title(f"🎓 EDRA de {usuario_actual} - Ciclo {nombre_cycle_display}")
+st.title(f"🎓 EDRA - Ciclo {nombre_cycle_display}")
 
 # ------------------------------------------------------
 # MENSAJE DE BIENVENIDA DINÁMICO
 # ------------------------------------------------------
 if not catalogo_cursos:
-    st.markdown(f"### 👋 ¡Hola {usuario_actual}! Bienvenido a tu panel de preparación.")
+    st.markdown(f"### 👋 ¡Hola! Bienvenido a tu panel de preparación.")
     st.info(
         "💡 **Consejo:** Para empezar a medir tu rendimiento y llevar un control exacto de tu disciplina diario, "
         "ve a la sección de **Configuración del Ciclo** para registrar las materias y horas que les dedicarás a solas."
     )
 else:
-    st.markdown(f"### 👋 Hola {usuario_actual}, aquí verás tus estadísticas de rendimiento académico.")
+    st.markdown(f"### 👋 Hola, aquí verás tus estadísticas de rendimiento académico.")
 
 st.divider()
 
